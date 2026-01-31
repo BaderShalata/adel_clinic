@@ -1,0 +1,5 @@
+# Ignore compiled code
+lib/
+
+# Ignore node modules
+node_modules/

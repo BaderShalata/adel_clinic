@@ -1,0 +1,31 @@
+{
+  "name": "adel-clinic-backend",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions backend for Adel Clinic",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.3",
+    "firebase-functions": "^6.6.0",
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.1.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.18",
+    "typescript": "^5.7.3",
+    "firebase-functions-test": "^3.3.0"
+  },
+  "private": true
+}
