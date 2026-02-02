@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Change this to your Firebase Cloud Function URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api-zotx6w4dua-uc.a.run.app/api';
+// Firebase Cloud Function URL
+// The function is named 'api' and routes are prefixed with '/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://us-central1-adelclinic-35393.cloudfunctions.net/api/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

@@ -73,30 +73,36 @@ const StatCard: React.FC<{
 );
 
 export const Dashboard: React.FC = () => {
-  const { getToken } = useAuth();
+  const { getToken, user } = useAuth();
 
-  const { data: analytics, isLoading } = useQuery<AnalyticsData>({
+  const { data: analytics, isLoading, error: analyticsError } = useQuery<AnalyticsData>({
     queryKey: ['analytics'],
     queryFn: async () => {
       const token = await getToken();
-      if (token) {
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      if (!token) {
+        throw new Error('Not authenticated');
       }
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       const response = await apiClient.get('/analytics');
       return response.data;
     },
+    enabled: !!user,
+    retry: 1,
   });
 
-  const { data: trends } = useQuery<Array<{ date: string; count: number }>>({
+  const { data: trends, error: trendsError } = useQuery<Array<{ date: string; count: number }>>({
     queryKey: ['appointment-trends'],
     queryFn: async () => {
       const token = await getToken();
-      if (token) {
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      if (!token) {
+        throw new Error('Not authenticated');
       }
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       const response = await apiClient.get('/analytics/trends?days=30');
       return response.data;
     },
+    enabled: !!user,
+    retry: 1,
   });
 
   const hasData = analytics && (
@@ -120,6 +126,18 @@ export const Dashboard: React.FC = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
           <CircularProgress />
         </Box>
+      ) : analyticsError ? (
+        <Paper sx={{ p: 4, textAlign: 'center', mb: 3, bgcolor: '#fff3e0' }}>
+          <Typography variant="h6" color="error" gutterBottom>
+            Failed to load analytics
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {analyticsError instanceof Error ? analyticsError.message : 'Unknown error occurred'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {trendsError instanceof Error ? trendsError.message : ''}
+          </Typography>
+        </Paper>
       ) : (
         <>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 3, mb: 3 }}>

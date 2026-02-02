@@ -404,7 +404,6 @@ export const Appointments: React.FC = () => {
               <TableCell>Doctor</TableCell>
               <TableCell>Service</TableCell>
               <TableCell>Date & Time</TableCell>
-              <TableCell>Duration</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -412,13 +411,13 @@ export const Appointments: React.FC = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={6} align="center">
                   <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
             ) : appointments?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">No appointments found</TableCell>
+                <TableCell colSpan={6} align="center">No appointments found</TableCell>
               </TableRow>
             ) : (
               appointments?.map((appointment) => (
@@ -430,7 +429,6 @@ export const Appointments: React.FC = () => {
                     {dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD, YYYY')}
                     {appointment.appointmentTime && ` at ${appointment.appointmentTime}`}
                   </TableCell>
-                  <TableCell>{appointment.duration} min</TableCell>
                   <TableCell>
                     <Chip label={appointment.status} color={getStatusColor(appointment.status)} size="small" />
                   </TableCell>

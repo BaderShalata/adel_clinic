@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 interface Patient {
   id: string;
   fullName: string;
+  idNumber?: string;
   dateOfBirth: { _seconds: number };
   gender: string;
   phoneNumber: string;
@@ -24,6 +25,7 @@ export const Patients: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: '',
+    idNumber: '',
     dateOfBirth: '',
     gender: 'male',
     phoneNumber: '',
@@ -84,6 +86,7 @@ export const Patients: React.FC = () => {
       setEditingId(patient.id);
       setFormData({
         fullName: patient.fullName,
+        idNumber: patient.idNumber || '',
         dateOfBirth: dayjs(patient.dateOfBirth._seconds * 1000).format('YYYY-MM-DD'),
         gender: patient.gender,
         phoneNumber: patient.phoneNumber,
@@ -92,7 +95,7 @@ export const Patients: React.FC = () => {
       });
     } else {
       setEditingId(null);
-      setFormData({ fullName: '', dateOfBirth: '', gender: 'male', phoneNumber: '', email: '', address: '' });
+      setFormData({ fullName: '', idNumber: '', dateOfBirth: '', gender: 'male', phoneNumber: '', email: '', address: '' });
     }
     setOpen(true);
   };
@@ -124,6 +127,7 @@ export const Patients: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
+              <TableCell>ID Number</TableCell>
               <TableCell>Date of Birth</TableCell>
               <TableCell>Gender</TableCell>
               <TableCell>Phone</TableCell>
@@ -135,6 +139,7 @@ export const Patients: React.FC = () => {
             {patients?.map((patient) => (
               <TableRow key={patient.id}>
                 <TableCell>{patient.fullName}</TableCell>
+                <TableCell>{patient.idNumber || '-'}</TableCell>
                 <TableCell>{dayjs(patient.dateOfBirth._seconds * 1000).format('MMM DD, YYYY')}</TableCell>
                 <TableCell>{patient.gender}</TableCell>
                 <TableCell>{patient.phoneNumber}</TableCell>
@@ -162,6 +167,14 @@ export const Patients: React.FC = () => {
             value={formData.fullName}
             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             margin="normal"
+          />
+          <TextField
+            fullWidth
+            label="ID Number"
+            value={formData.idNumber}
+            onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
+            margin="normal"
+            placeholder="National ID / Teudat Zehut"
           />
           <TextField
             fullWidth
