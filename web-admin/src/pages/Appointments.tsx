@@ -737,7 +737,6 @@ export const Appointments: React.FC = () => {
               const dayAppts = getAppointmentsForDate(selectedDay);
 
               return hours.map(hour => {
-                const timeStr = `${hour.toString().padStart(2, '0')}:00`;
                 const hourAppts = dayAppts.filter(apt => {
                   if (!apt.appointmentTime) return false;
                   const aptHour = parseInt(apt.appointmentTime.split(':')[0], 10);
