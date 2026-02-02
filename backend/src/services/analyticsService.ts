@@ -140,7 +140,18 @@ export class AnalyticsService {
 
       snapshot.docs.forEach(doc => {
         const data = doc.data();
-        const date = data.appointmentDate.toDate();
+        // Handle different date formats
+        let date: Date;
+        const dateVal = data.appointmentDate as any;
+        if (typeof dateVal.toDate === 'function') {
+          date = dateVal.toDate();
+        } else if (typeof dateVal._seconds === 'number') {
+          date = new Date(dateVal._seconds * 1000);
+        } else if (typeof dateVal === 'string') {
+          date = new Date(dateVal);
+        } else {
+          return;
+        }
         const dateStr = date.toISOString().split('T')[0];
         trendMap.set(dateStr, (trendMap.get(dateStr) || 0) + 1);
       });

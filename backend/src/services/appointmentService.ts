@@ -38,14 +38,17 @@ export class AppointmentService {
         }
       }
 
-      // Convert appointmentDate to Date object
+      // Convert appointmentDate to Date object - handle all formats
       let appointmentDateObj: Date;
-      if (data.appointmentDate instanceof Date) {
-        appointmentDateObj = data.appointmentDate;
-      } else if (typeof data.appointmentDate === 'string') {
-        appointmentDateObj = new Date(data.appointmentDate);
-      } else if (data.appointmentDate && typeof (data.appointmentDate as any).toDate === 'function') {
-        appointmentDateObj = (data.appointmentDate as any).toDate();
+      const aptDateInput = data.appointmentDate as any;
+      if (aptDateInput instanceof Date) {
+        appointmentDateObj = aptDateInput;
+      } else if (typeof aptDateInput === 'string') {
+        appointmentDateObj = new Date(aptDateInput);
+      } else if (typeof aptDateInput._seconds === 'number') {
+        appointmentDateObj = new Date(aptDateInput._seconds * 1000);
+      } else if (typeof aptDateInput.toDate === 'function') {
+        appointmentDateObj = aptDateInput.toDate();
       } else {
         throw new Error('Invalid appointment date format');
       }
@@ -101,7 +104,18 @@ export class AppointmentService {
       for (const doc of existingAppointments.docs) {
         const data = doc.data();
         if (data.appointmentDate && data.appointmentTime === time) {
-          const aptDate = data.appointmentDate.toDate();
+          // Handle different date formats
+          let aptDate: Date;
+          const dateVal = data.appointmentDate as any;
+          if (typeof dateVal.toDate === 'function') {
+            aptDate = dateVal.toDate();
+          } else if (typeof dateVal._seconds === 'number') {
+            aptDate = new Date(dateVal._seconds * 1000);
+          } else if (typeof dateVal === 'string') {
+            aptDate = new Date(dateVal);
+          } else {
+            continue;
+          }
           const aptDateStr = aptDate.toISOString().split('T')[0];
           if (aptDateStr === dateStr && ['scheduled', 'completed'].includes(data.status)) {
             return false;
@@ -154,8 +168,20 @@ export class AppointmentService {
     try {
       const updateData: any = { ...data, updatedAt: admin.firestore.Timestamp.now() };
 
-      if (data.appointmentDate && data.appointmentDate instanceof Date) {
-        updateData.appointmentDate = admin.firestore.Timestamp.fromDate(data.appointmentDate);
+      // Handle appointmentDate conversion - support Date, string (ISO), Timestamp, and serialized Timestamp formats
+      if (data.appointmentDate) {
+        const aptDate = data.appointmentDate as any;
+        if (aptDate instanceof Date) {
+          updateData.appointmentDate = admin.firestore.Timestamp.fromDate(aptDate);
+        } else if (typeof aptDate === 'string') {
+          updateData.appointmentDate = admin.firestore.Timestamp.fromDate(new Date(aptDate));
+        } else if (typeof aptDate._seconds === 'number') {
+          // Serialized Timestamp format { _seconds, _nanoseconds }
+          updateData.appointmentDate = new admin.firestore.Timestamp(aptDate._seconds, aptDate._nanoseconds || 0);
+        } else if (typeof aptDate.toDate === 'function') {
+          // Already a Timestamp instance, keep as is
+          updateData.appointmentDate = aptDate;
+        }
       }
 
       await this.appointmentsCollection.doc(id).update(updateData);

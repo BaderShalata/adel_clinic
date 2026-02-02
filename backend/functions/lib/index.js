@@ -66,10 +66,10 @@ app.use((req, res, next) => {
 // ----- JSON Middleware -----
 app.use(express_1.default.json());
 // ----- Rate Limiting -----
-// General limiter: 100 requests per 15 minutes per IP
+// General limiter: 500 requests per 15 minutes per IP
 const generalLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 10000, // limit each IP to 500 requests per windowMs
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
     legacyHeaders: false, // Disable `X-RateLimit-*` headers

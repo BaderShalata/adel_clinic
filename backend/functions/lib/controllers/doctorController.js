@@ -413,7 +413,21 @@ class DoctorController {
                 const data = doc.data();
                 // Check if appointment is on the same date
                 if (data.appointmentDate) {
-                    const appointmentDate = data.appointmentDate.toDate();
+                    // Handle different date formats
+                    let appointmentDate;
+                    const dateVal = data.appointmentDate;
+                    if (typeof dateVal.toDate === 'function') {
+                        appointmentDate = dateVal.toDate();
+                    }
+                    else if (typeof dateVal._seconds === 'number') {
+                        appointmentDate = new Date(dateVal._seconds * 1000);
+                    }
+                    else if (typeof dateVal === 'string') {
+                        appointmentDate = new Date(dateVal);
+                    }
+                    else {
+                        return;
+                    }
                     const aptDateStr = appointmentDate.toISOString().split('T')[0];
                     // Only count active appointments on this date as booked
                     if (aptDateStr === dateStr && data.appointmentTime && ['scheduled', 'completed'].includes(data.status)) {

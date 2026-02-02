@@ -64,16 +64,20 @@ class AppointmentService {
                     throw new Error('Cannot create appointment for another user');
                 }
             }
-            // Convert appointmentDate to Date object
+            // Convert appointmentDate to Date object - handle all formats
             let appointmentDateObj;
-            if (data.appointmentDate instanceof Date) {
-                appointmentDateObj = data.appointmentDate;
+            const aptDateInput = data.appointmentDate;
+            if (aptDateInput instanceof Date) {
+                appointmentDateObj = aptDateInput;
             }
-            else if (typeof data.appointmentDate === 'string') {
-                appointmentDateObj = new Date(data.appointmentDate);
+            else if (typeof aptDateInput === 'string') {
+                appointmentDateObj = new Date(aptDateInput);
             }
-            else if (data.appointmentDate && typeof data.appointmentDate.toDate === 'function') {
-                appointmentDateObj = data.appointmentDate.toDate();
+            else if (typeof aptDateInput._seconds === 'number') {
+                appointmentDateObj = new Date(aptDateInput._seconds * 1000);
+            }
+            else if (typeof aptDateInput.toDate === 'function') {
+                appointmentDateObj = aptDateInput.toDate();
             }
             else {
                 throw new Error('Invalid appointment date format');
@@ -119,7 +123,21 @@ class AppointmentService {
             for (const doc of existingAppointments.docs) {
                 const data = doc.data();
                 if (data.appointmentDate && data.appointmentTime === time) {
-                    const aptDate = data.appointmentDate.toDate();
+                    // Handle different date formats
+                    let aptDate;
+                    const dateVal = data.appointmentDate;
+                    if (typeof dateVal.toDate === 'function') {
+                        aptDate = dateVal.toDate();
+                    }
+                    else if (typeof dateVal._seconds === 'number') {
+                        aptDate = new Date(dateVal._seconds * 1000);
+                    }
+                    else if (typeof dateVal === 'string') {
+                        aptDate = new Date(dateVal);
+                    }
+                    else {
+                        continue;
+                    }
                     const aptDateStr = aptDate.toISOString().split('T')[0];
                     if (aptDateStr === dateStr && ['scheduled', 'completed'].includes(data.status)) {
                         return false;
@@ -167,8 +185,23 @@ class AppointmentService {
     async updateAppointment(id, data) {
         try {
             const updateData = { ...data, updatedAt: admin.firestore.Timestamp.now() };
-            if (data.appointmentDate && data.appointmentDate instanceof Date) {
-                updateData.appointmentDate = admin.firestore.Timestamp.fromDate(data.appointmentDate);
+            // Handle appointmentDate conversion - support Date, string (ISO), Timestamp, and serialized Timestamp formats
+            if (data.appointmentDate) {
+                const aptDate = data.appointmentDate;
+                if (aptDate instanceof Date) {
+                    updateData.appointmentDate = admin.firestore.Timestamp.fromDate(aptDate);
+                }
+                else if (typeof aptDate === 'string') {
+                    updateData.appointmentDate = admin.firestore.Timestamp.fromDate(new Date(aptDate));
+                }
+                else if (typeof aptDate._seconds === 'number') {
+                    // Serialized Timestamp format { _seconds, _nanoseconds }
+                    updateData.appointmentDate = new admin.firestore.Timestamp(aptDate._seconds, aptDate._nanoseconds || 0);
+                }
+                else if (typeof aptDate.toDate === 'function') {
+                    // Already a Timestamp instance, keep as is
+                    updateData.appointmentDate = aptDate;
+                }
             }
             await this.appointmentsCollection.doc(id).update(updateData);
             const updatedAppointment = await this.getAppointmentById(id);

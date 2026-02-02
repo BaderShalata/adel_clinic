@@ -44,7 +44,7 @@ interface Appointment {
   patientName: string;
   doctorId: string;
   doctorName: string;
-  appointmentDate: { _seconds: number };
+  appointmentDate: { _seconds: number } | string;
   appointmentTime: string;
   serviceType: string;
   duration: number;
@@ -236,7 +236,17 @@ export const Appointments: React.FC = () => {
       const patient = patients?.find(p => p.id === appointment.patientId);
       setSelectedDoctor(doctor || null);
       setSelectedPatient(patient || null);
-      setSelectedDate(dayjs(appointment.appointmentDate._seconds * 1000).format('YYYY-MM-DD'));
+      // Handle both Firestore Timestamp format and ISO string format
+      const appointmentDate = appointment.appointmentDate;
+      let dateValue: string;
+      if (appointmentDate && typeof (appointmentDate as any)._seconds === 'number') {
+        dateValue = dayjs((appointmentDate as any)._seconds * 1000).format('YYYY-MM-DD');
+      } else if (typeof appointmentDate === 'string') {
+        dateValue = dayjs(appointmentDate).format('YYYY-MM-DD');
+      } else {
+        dateValue = dayjs().format('YYYY-MM-DD');
+      }
+      setSelectedDate(dateValue);
       setSelectedTime(appointment.appointmentTime || '');
       setSelectedService(appointment.serviceType || '');
       setIsNewPatient(false);
@@ -426,7 +436,9 @@ export const Appointments: React.FC = () => {
                   <TableCell>{appointment.doctorName}</TableCell>
                   <TableCell>{appointment.serviceType || '-'}</TableCell>
                   <TableCell>
-                    {dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD, YYYY')}
+                    {typeof appointment.appointmentDate === 'string'
+                      ? dayjs(appointment.appointmentDate).format('MMM DD, YYYY')
+                      : dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD, YYYY')}
                     {appointment.appointmentTime && ` at ${appointment.appointmentTime}`}
                   </TableCell>
                   <TableCell>
