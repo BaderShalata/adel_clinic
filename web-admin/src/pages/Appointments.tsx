@@ -26,6 +26,9 @@ import {
   Switch,
   Divider,
   Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -33,6 +36,10 @@ import {
   Delete as DeleteIcon,
   HourglassEmpty as WaitingListIcon,
   PersonAdd as PersonAddIcon,
+  ViewList as ViewListIcon,
+  CalendarMonth as CalendarIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -79,7 +86,11 @@ interface AvailableSlotsResponse {
   totalSlots: number;
 }
 
+type ViewMode = 'list' | 'calendar';
+
 export const Appointments: React.FC = () => {
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [calendarDate, setCalendarDate] = useState(dayjs());
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -397,16 +408,74 @@ export const Appointments: React.FC = () => {
 
   const availableTimeSlots = availableSlots.filter(s => s.available);
 
+  // Calendar helper functions
+  const getDaysInMonth = (date: dayjs.Dayjs) => {
+    const startOfMonth = date.startOf('month');
+    const startDay = startOfMonth.day(); // 0 = Sunday
+    const daysInMonth = date.daysInMonth();
+
+    const days: (dayjs.Dayjs | null)[] = [];
+
+    // Add empty slots for days before the first of the month
+    for (let i = 0; i < startDay; i++) {
+      days.push(null);
+    }
+
+    // Add all days of the month
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(date.date(i));
+    }
+
+    // Fill remaining slots to complete the grid (6 rows x 7 days = 42)
+    while (days.length < 42) {
+      days.push(null);
+    }
+
+    return days;
+  };
+
+  const getAppointmentsForDate = (date: dayjs.Dayjs) => {
+    return appointments?.filter(apt => {
+      const aptDate = typeof apt.appointmentDate === 'string'
+        ? dayjs(apt.appointmentDate)
+        : dayjs(apt.appointmentDate._seconds * 1000);
+      return aptDate.format('YYYY-MM-DD') === date.format('YYYY-MM-DD');
+    }) || [];
+  };
+
+  const calendarDays = getDaysInMonth(calendarDate);
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Appointments</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
-          Add Appointment
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, newView) => newView && setViewMode(newView)}
+            size="small"
+          >
+            <ToggleButton value="list">
+              <Tooltip title="List View">
+                <ViewListIcon />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="calendar">
+              <Tooltip title="Calendar View">
+                <CalendarIcon />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
+            Add Appointment
+          </Button>
+        </Box>
       </Box>
 
-      <TableContainer component={Paper}>
+      {viewMode === 'list' ? (
+        <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
@@ -458,6 +527,92 @@ export const Appointments: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      ) : (
+        /* Calendar View */
+        <Paper sx={{ p: 2 }}>
+          {/* Calendar Header */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <IconButton onClick={() => setCalendarDate(calendarDate.subtract(1, 'month'))}>
+              <ChevronLeftIcon />
+            </IconButton>
+            <Typography variant="h6" fontWeight={600}>
+              {calendarDate.format('MMMM YYYY')}
+            </Typography>
+            <IconButton onClick={() => setCalendarDate(calendarDate.add(1, 'month'))}>
+              <ChevronRightIcon />
+            </IconButton>
+          </Box>
+
+          {/* Week Days Header */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5, mb: 1 }}>
+            {weekDays.map(day => (
+              <Box key={day} sx={{ textAlign: 'center', py: 1 }}>
+                <Typography variant="caption" fontWeight={600} color="text.secondary">
+                  {day}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+
+          {/* Calendar Grid */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5 }}>
+            {calendarDays.map((day, index) => {
+              if (!day) {
+                return <Box key={`empty-${index}`} sx={{ minHeight: 100 }} />;
+              }
+
+              const dayAppointments = getAppointmentsForDate(day);
+              const isToday = day.format('YYYY-MM-DD') === dayjs().format('YYYY-MM-DD');
+
+              return (
+                <Box
+                  key={day.format('YYYY-MM-DD')}
+                  sx={{
+                    minHeight: 100,
+                    border: '1px solid',
+                    borderColor: isToday ? 'primary.main' : 'divider',
+                    borderRadius: 1,
+                    p: 0.5,
+                    bgcolor: isToday ? 'primary.50' : 'background.paper',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    fontWeight={isToday ? 700 : 500}
+                    color={isToday ? 'primary.main' : 'text.secondary'}
+                    sx={{ display: 'block', mb: 0.5 }}
+                  >
+                    {day.date()}
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                    {dayAppointments.slice(0, 3).map(apt => (
+                      <Chip
+                        key={apt.id}
+                        label={`${apt.appointmentTime || ''} ${apt.patientName}`}
+                        size="small"
+                        color={getStatusColor(apt.status)}
+                        onClick={() => handleOpen(apt)}
+                        sx={{
+                          height: 20,
+                          fontSize: '0.65rem',
+                          cursor: 'pointer',
+                          '& .MuiChip-label': { px: 0.5 },
+                        }}
+                      />
+                    ))}
+                    {dayAppointments.length > 3 && (
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem' }}>
+                        +{dayAppointments.length - 3} more
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        </Paper>
+      )}
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>
