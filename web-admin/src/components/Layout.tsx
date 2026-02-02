@@ -193,7 +193,10 @@ export const Layout: React.FC = () => {
         elevation={0}
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
+          ...(direction === 'rtl'
+            ? { mr: { sm: `${drawerWidth}px` } }
+            : { ml: { sm: `${drawerWidth}px` } }
+          ),
           bgcolor: 'background.paper',
           borderBottom: '1px solid',
           borderColor: 'divider',
@@ -203,9 +206,13 @@ export const Layout: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <IconButton
               color="inherit"
-              edge="start"
+              edge={direction === 'rtl' ? 'end' : 'start'}
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { sm: 'none' }, color: 'text.primary' }}
+              sx={{
+                display: { sm: 'none' },
+                color: 'text.primary',
+                ...(direction === 'rtl' ? { ml: 2 } : { mr: 2 })
+              }}
             >
               <MenuIcon />
             </IconButton>
@@ -296,6 +303,7 @@ export const Layout: React.FC = () => {
       >
         <Drawer
           variant="temporary"
+          anchor={direction === 'rtl' ? 'right' : 'left'}
           open={mobileOpen}
           onClose={handleDrawerToggle}
           ModalProps={{ keepMounted: true }}
@@ -304,7 +312,7 @@ export const Layout: React.FC = () => {
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
-              borderRight: 'none',
+              border: 'none',
             },
           }}
         >
@@ -312,12 +320,16 @@ export const Layout: React.FC = () => {
         </Drawer>
         <Drawer
           variant="permanent"
+          anchor={direction === 'rtl' ? 'right' : 'left'}
           sx={{
             display: { xs: 'none', sm: 'block' },
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: drawerWidth,
-              borderRight: '1px solid',
+              ...(direction === 'rtl'
+                ? { borderLeft: '1px solid', borderRight: 'none' }
+                : { borderRight: '1px solid', borderLeft: 'none' }
+              ),
               borderColor: 'divider',
             },
           }}

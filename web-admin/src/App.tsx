@@ -1,8 +1,9 @@
+import { useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { AuthProvider } from './contexts/AuthContext';
-import { LanguageProvider } from './contexts/LanguageContext';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
@@ -17,7 +18,8 @@ import { Users } from './pages/Users';
 
 const queryClient = new QueryClient();
 
-const theme = createTheme({
+const getTheme = (direction: 'ltr' | 'rtl') => createTheme({
+  direction,
   palette: {
     primary: {
       main: '#0D9488', // Teal - medical/clinic feel
@@ -114,39 +116,49 @@ const theme = createTheme({
   },
 });
 
+function ThemedApp() {
+  const { direction } = useLanguage();
+
+  const theme = useMemo(() => getTheme(direction), [direction]);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Dashboard />} />
+              <Route path="appointments" element={<Appointments />} />
+              <Route path="waiting-list" element={<WaitingList />} />
+              <Route path="patients" element={<Patients />} />
+              <Route path="doctors" element={<Doctors />} />
+              <Route path="news" element={<News />} />
+              <Route path="users" element={<Users />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <LanguageProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <Layout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<Dashboard />} />
-                  <Route path="appointments" element={<Appointments />} />
-                  <Route path="waiting-list" element={<WaitingList />} />
-                  <Route path="patients" element={<Patients />} />
-                  <Route path="doctors" element={<Doctors />} />
-                  <Route path="news" element={<News />} />
-                  <Route path="users" element={<Users />} />
-                </Route>
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </BrowserRouter>
-          </AuthProvider>
-        </LanguageProvider>
-      </ThemeProvider>
+      <LanguageProvider>
+        <ThemedApp />
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
