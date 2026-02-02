@@ -65,16 +65,19 @@ class AuthService {
             const role = data.role || 'patient';
             // Set custom claims for role
             await auth.setCustomUserClaims(uid, { role });
-            // Create Firestore user document
+            // Create Firestore user document - avoid undefined values
             const userData = {
                 email: data.email,
                 fullName: data.displayName,
-                phoneNumber: data.phoneNumber,
                 role,
                 createdAt: admin.firestore.Timestamp.now(),
                 updatedAt: admin.firestore.Timestamp.now(),
                 isActive: true,
             };
+            // Only add optional fields if they have values
+            if (data.phoneNumber) {
+                userData.phoneNumber = data.phoneNumber;
+            }
             await this.usersCollection.doc(uid).set(userData);
             let patientId;
             // If role is patient, also create a patient record

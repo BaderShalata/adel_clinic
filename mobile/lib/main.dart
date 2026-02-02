@@ -6,6 +6,7 @@ import 'providers/auth_provider.dart';
 import 'providers/doctor_provider.dart';
 import 'providers/news_provider.dart';
 import 'providers/appointment_provider.dart';
+import 'providers/booking_provider.dart';
 import 'services/api_service.dart';
 import 'services/storage_service.dart';
 import 'screens/shell/main_shell.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DoctorProvider()),
         ChangeNotifierProvider(create: (_) => NewsProvider()),
         ChangeNotifierProvider(create: (_) => AppointmentProvider()),
+        ChangeNotifierProvider(create: (_) => BookingProvider()),
       ],
       child: MaterialApp(
         title: 'Adel Clinic',

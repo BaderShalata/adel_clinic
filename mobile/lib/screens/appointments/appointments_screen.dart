@@ -10,6 +10,7 @@ import '../../widgets/common/modern_card.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_view.dart';
 import '../auth/login_screen.dart';
+import '../booking/service_selection_screen.dart';
 
 class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
@@ -108,6 +109,17 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
             Tab(text: 'Past'),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ServiceSelectionScreen()),
+          );
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Book'),
+        backgroundColor: AppTheme.primaryColor,
       ),
       body: appointmentProvider.isLoading
           ? const LoadingIndicator(message: 'Loading appointments...')

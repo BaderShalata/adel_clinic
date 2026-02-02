@@ -1,4 +1,4 @@
-import * as admin from 'firebase-admin';
+import * as admin from 'firebase-admin'; 
 import { Appointment, CreateAppointmentInput, UpdateAppointmentInput } from '../models/Appointment';
 
 const db = admin.firestore();
@@ -8,7 +8,11 @@ export class AppointmentService {
   private patientsCollection = db.collection('patients');
   private doctorsCollection = db.collection('doctors');
 
-  async createAppointment(data: CreateAppointmentInput, createdBy: string): Promise<Appointment> {
+  async createAppointment(
+    data: CreateAppointmentInput, 
+    createdBy: string,
+    role: 'admin' | 'user'
+  ): Promise<Appointment> {
     try {
       // Fetch patient and doctor details
       const [patientDoc, doctorDoc] = await Promise.all([
@@ -26,14 +30,47 @@ export class AppointmentService {
       const patient = patientDoc.data();
       const doctor = doctorDoc.data();
 
+      // === ROLE-BASED ACCESS ===
+      // Admin can create for anyone
+      if (role !== 'admin') {
+        if (patient?.createdBy && patient.createdBy !== createdBy) {
+          throw new Error('Cannot create appointment for another user');
+        }
+      }
+
+      // Convert appointmentDate to Date object
+      let appointmentDateObj: Date;
+      if (data.appointmentDate instanceof Date) {
+        appointmentDateObj = data.appointmentDate;
+      } else if (typeof data.appointmentDate === 'string') {
+        appointmentDateObj = new Date(data.appointmentDate);
+      } else if (data.appointmentDate && typeof (data.appointmentDate as any).toDate === 'function') {
+        appointmentDateObj = (data.appointmentDate as any).toDate();
+      } else {
+        throw new Error('Invalid appointment date format');
+      }
+
+      // Check for double-booking if appointmentTime is provided
+      if (data.appointmentTime) {
+        const isAvailable = await this.checkSlotAvailability(
+          data.doctorId,
+          appointmentDateObj,
+          data.appointmentTime
+        );
+
+        if (!isAvailable) {
+          throw new Error('This time slot is no longer available. Please select another time.');
+        }
+      }
+
       const appointmentData: Omit<Appointment, 'id'> = {
         patientId: data.patientId,
         patientName: patient?.fullName || '',
         doctorId: data.doctorId,
         doctorName: doctor?.fullName || '',
-        appointmentDate: data.appointmentDate instanceof Date
-          ? admin.firestore.Timestamp.fromDate(data.appointmentDate)
-          : data.appointmentDate,
+        appointmentDate: admin.firestore.Timestamp.fromDate(appointmentDateObj),
+        appointmentTime: data.appointmentTime || '',
+        serviceType: data.serviceType || '',
         duration: data.duration,
         status: 'scheduled',
         notes: data.notes,
@@ -53,12 +90,35 @@ export class AppointmentService {
     }
   }
 
+  async checkSlotAvailability(doctorId: string, date: Date, time: string): Promise<boolean> {
+    try {
+      const dateStr = date.toISOString().split('T')[0];
+
+      const existingAppointments = await this.appointmentsCollection
+        .where('doctorId', '==', doctorId)
+        .get();
+
+      for (const doc of existingAppointments.docs) {
+        const data = doc.data();
+        if (data.appointmentDate && data.appointmentTime === time) {
+          const aptDate = data.appointmentDate.toDate();
+          const aptDateStr = aptDate.toISOString().split('T')[0];
+          if (aptDateStr === dateStr && ['scheduled', 'completed'].includes(data.status)) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    } catch (error: any) {
+      throw new Error(`Failed to check slot availability: ${error.message}`);
+    }
+  }
+
   async getAppointmentById(id: string): Promise<Appointment | null> {
     try {
       const doc = await this.appointmentsCollection.doc(id).get();
-      if (!doc.exists) {
-        return null;
-      }
+      if (!doc.exists) return null;
       return { id: doc.id, ...doc.data() } as Appointment;
     } catch (error: any) {
       throw new Error(`Failed to get appointment: ${error.message}`);
@@ -75,29 +135,16 @@ export class AppointmentService {
     try {
       let query: FirebaseFirestore.Query = this.appointmentsCollection;
 
-      if (filters?.status) {
-        query = query.where('status', '==', filters.status);
-      }
-      if (filters?.doctorId) {
-        query = query.where('doctorId', '==', filters.doctorId);
-      }
-      if (filters?.patientId) {
-        query = query.where('patientId', '==', filters.patientId);
-      }
-      if (filters?.startDate) {
-        query = query.where('appointmentDate', '>=', admin.firestore.Timestamp.fromDate(filters.startDate));
-      }
-      if (filters?.endDate) {
-        query = query.where('appointmentDate', '<=', admin.firestore.Timestamp.fromDate(filters.endDate));
-      }
+      if (filters?.status) query = query.where('status', '==', filters.status);
+      if (filters?.doctorId) query = query.where('doctorId', '==', filters.doctorId);
+      if (filters?.patientId) query = query.where('patientId', '==', filters.patientId);
+      if (filters?.startDate) query = query.where('appointmentDate', '>=', admin.firestore.Timestamp.fromDate(filters.startDate));
+      if (filters?.endDate) query = query.where('appointmentDate', '<=', admin.firestore.Timestamp.fromDate(filters.endDate));
 
       query = query.orderBy('appointmentDate', 'desc');
 
       const snapshot = await query.get();
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Appointment));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
     } catch (error: any) {
       throw new Error(`Failed to get appointments: ${error.message}`);
     }
@@ -105,10 +152,7 @@ export class AppointmentService {
 
   async updateAppointment(id: string, data: UpdateAppointmentInput): Promise<Appointment> {
     try {
-      const updateData: any = {
-        ...data,
-        updatedAt: admin.firestore.Timestamp.now(),
-      };
+      const updateData: any = { ...data, updatedAt: admin.firestore.Timestamp.now() };
 
       if (data.appointmentDate && data.appointmentDate instanceof Date) {
         updateData.appointmentDate = admin.firestore.Timestamp.fromDate(data.appointmentDate);
@@ -117,9 +161,7 @@ export class AppointmentService {
       await this.appointmentsCollection.doc(id).update(updateData);
 
       const updatedAppointment = await this.getAppointmentById(id);
-      if (!updatedAppointment) {
-        throw new Error('Appointment not found after update');
-      }
+      if (!updatedAppointment) throw new Error('Appointment not found after update');
 
       return updatedAppointment;
     } catch (error: any) {
@@ -146,15 +188,10 @@ export class AppointmentService {
         .where('appointmentDate', '>=', admin.firestore.Timestamp.fromDate(today))
         .where('appointmentDate', '<', admin.firestore.Timestamp.fromDate(tomorrow));
 
-      if (doctorId) {
-        query = query.where('doctorId', '==', doctorId);
-      }
+      if (doctorId) query = query.where('doctorId', '==', doctorId);
 
       const snapshot = await query.get();
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Appointment));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
     } catch (error: any) {
       throw new Error(`Failed to get today's appointments: ${error.message}`);
     }

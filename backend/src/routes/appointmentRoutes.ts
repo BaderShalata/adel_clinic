@@ -4,14 +4,19 @@ import { authenticate, authorizeDoctorOrAdmin } from '../middleware/auth';
 
 const router = Router();
 
+// All routes require authentication
 router.use(authenticate);
-router.use(authorizeDoctorOrAdmin);
 
-router.post('/', appointmentController.createAppointment.bind(appointmentController));
-router.get('/', appointmentController.getAllAppointments.bind(appointmentController));
-router.get('/today', appointmentController.getTodayAppointments.bind(appointmentController));
-router.get('/:id', appointmentController.getAppointmentById.bind(appointmentController));
-router.put('/:id', appointmentController.updateAppointment.bind(appointmentController));
-router.delete('/:id', appointmentController.deleteAppointment.bind(appointmentController));
+// Patient-facing routes (any authenticated user can book)
+router.post('/book', appointmentController.bookAppointment.bind(appointmentController));
+router.get('/my', appointmentController.getMyAppointments.bind(appointmentController));
+
+// Admin/Doctor routes
+router.post('/', authorizeDoctorOrAdmin, appointmentController.createAppointment.bind(appointmentController));
+router.get('/', authorizeDoctorOrAdmin, appointmentController.getAllAppointments.bind(appointmentController));
+router.get('/today', authorizeDoctorOrAdmin, appointmentController.getTodayAppointments.bind(appointmentController));
+router.get('/:id', authorizeDoctorOrAdmin, appointmentController.getAppointmentById.bind(appointmentController));
+router.put('/:id', authorizeDoctorOrAdmin, appointmentController.updateAppointment.bind(appointmentController));
+router.delete('/:id', authorizeDoctorOrAdmin, appointmentController.deleteAppointment.bind(appointmentController));
 
 export default router;

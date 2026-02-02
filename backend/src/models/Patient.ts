@@ -10,6 +10,7 @@ export interface Patient {
   id: string;
   userId?: string; // link to User if patient has account
   fullName: string;
+  idNumber?: string; // National ID / Teudat Zehut
   dateOfBirth: Timestamp;
   gender: 'male' | 'female' | 'other';
   phoneNumber: string;
@@ -25,9 +26,10 @@ export interface Patient {
 export interface CreatePatientInput {
   userId?: string;
   fullName: string;
+  idNumber?: string;
   dateOfBirth: Date | Timestamp;
   gender: 'male' | 'female' | 'other';
-  phoneNumber: string;
+  phoneNumber?: string;
   email?: string;
   address?: string;
   medicalHistory?: string;
@@ -37,6 +39,7 @@ export interface CreatePatientInput {
 
 export interface UpdatePatientInput {
   fullName?: string;
+  idNumber?: string;
   dateOfBirth?: Date | Timestamp;
   gender?: 'male' | 'female' | 'other';
   phoneNumber?: string;

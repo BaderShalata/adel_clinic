@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import * as admin from 'firebase-admin';
 import { doctorService } from '../services/doctorService';
 import { CreateDoctorInput, UpdateDoctorInput } from '../models/Doctor';
 import {
@@ -324,6 +325,140 @@ export class DoctorController {
         doctorName: doctor.fullName,
         specialties: doctor.specialties,
         weeklySchedule
+      });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Get available time slots for a doctor on a specific date
+   * Query params: date (YYYY-MM-DD), serviceType (optional)
+   * Returns slots with availability status based on existing appointments
+   */
+  async getAvailableSlotsForDate(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { date, serviceType } = req.query;
+
+      if (!date) {
+        res.status(400).json({ error: 'date query parameter is required (YYYY-MM-DD)' });
+        return;
+      }
+
+      // Parse the date
+      const dateStr = date as string;
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(dateStr)) {
+        res.status(400).json({ error: 'date must be in YYYY-MM-DD format' });
+        return;
+      }
+
+      // Parse date parts directly to avoid timezone issues
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const requestedDate = new Date(Date.UTC(year, month - 1, day));
+      if (isNaN(requestedDate.getTime())) {
+        res.status(400).json({ error: 'Invalid date' });
+        return;
+      }
+
+      // Get the day of week using UTC to avoid timezone issues (0 = Sunday, 6 = Saturday)
+      const dayOfWeek = requestedDate.getUTCDay();
+
+      const doctor = await doctorService.getDoctorById(id as string);
+      if (!doctor) {
+        res.status(404).json({ error: 'Doctor not found' });
+        return;
+      }
+
+      // Debug logging
+      console.log('Available slots request:', {
+        doctorId: id,
+        dateStr,
+        dayOfWeek,
+        serviceType,
+        doctorSchedule: doctor.schedule.map(s => ({ dayOfWeek: s.dayOfWeek, type: s.type }))
+      });
+
+      // Filter schedules for the requested day
+      let daySchedules = doctor.schedule.filter(s => s.dayOfWeek === dayOfWeek);
+      console.log('Day schedules found:', daySchedules.length);
+
+      // If serviceType is provided, strictly filter schedules by type
+      if (serviceType && daySchedules.length > 0) {
+        daySchedules = daySchedules.filter(s => s.type === serviceType);
+        console.log('After serviceType filter:', daySchedules.length);
+      }
+
+      if (daySchedules.length === 0) {
+        res.status(200).json({
+          doctorId: doctor.id,
+          doctorName: doctor.fullName,
+          date: dateStr,
+          dayOfWeek,
+          dayName: getDayName(dayOfWeek),
+          serviceType: serviceType || null,
+          slots: [],
+          totalSlots: 0,
+          availableSlots: 0,
+          bookedSlots: 0,
+          message: serviceType
+            ? `Doctor is not available for ${serviceType} on this day`
+            : 'Doctor is not available on this day'
+        });
+        return;
+      }
+
+      // Generate all time slots for this day
+      const allSlots: string[] = [];
+      for (const schedule of daySchedules) {
+        const slots = generateTimeSlots(schedule);
+        allSlots.push(...slots);
+      }
+
+      // Remove duplicates and sort
+      const uniqueSlots = [...new Set(allSlots)].sort();
+
+      // Get existing appointments for this doctor
+      // Query only by doctorId to avoid needing composite index
+      // Filter date and status in memory
+      const db = admin.firestore();
+      const appointmentsSnapshot = await db.collection('appointments')
+        .where('doctorId', '==', id)
+        .get();
+
+      // Get booked time slots for this specific date
+      const bookedSlots = new Set<string>();
+      appointmentsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        // Check if appointment is on the same date
+        if (data.appointmentDate) {
+          const appointmentDate = data.appointmentDate.toDate();
+          const aptDateStr = appointmentDate.toISOString().split('T')[0];
+          // Only count active appointments on this date as booked
+          if (aptDateStr === dateStr && data.appointmentTime && ['scheduled', 'completed'].includes(data.status)) {
+            bookedSlots.add(data.appointmentTime);
+          }
+        }
+      });
+
+      // Build slots with availability status
+      const slotsWithAvailability = uniqueSlots.map(time => ({
+        time,
+        available: !bookedSlots.has(time)
+      }));
+
+      res.status(200).json({
+        doctorId: doctor.id,
+        doctorName: doctor.fullName,
+        date: dateStr,
+        dayOfWeek,
+        dayName: getDayName(dayOfWeek),
+        serviceType: serviceType || null,
+        totalSlots: uniqueSlots.length,
+        availableSlots: slotsWithAvailability.filter(s => s.available).length,
+        bookedSlots: slotsWithAvailability.filter(s => !s.available).length,
+        slots: slotsWithAvailability
       });
     } catch (error: any) {
       res.status(400).json({ error: error.message });

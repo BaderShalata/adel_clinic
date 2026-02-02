@@ -1,14 +1,95 @@
 import { Request, Response } from 'express';
+import * as admin from 'firebase-admin';
 import { appointmentService } from '../services/appointmentService';
 import { CreateAppointmentInput, UpdateAppointmentInput } from '../models/Appointment';
+import { AuthRequest } from '../middleware/auth';
 
 export class AppointmentController {
   async createAppointment(req: Request, res: Response): Promise<void> {
     try {
       const data: CreateAppointmentInput = req.body;
       const createdBy = (req as any).user?.uid || '';
-      const appointment = await appointmentService.createAppointment(data, createdBy);
+      const role = (req as any).user?.role || 'user';
+      const appointment = await appointmentService.createAppointment(data, createdBy, role);
       res.status(201).json(appointment);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Patient booking endpoint - allows patients to book their own appointments
+   * POST /api/appointments/book
+   */
+  async bookAppointment(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const uid = req.user?.uid;
+      const userEmail = req.user?.email;
+      const userName = req.user?.name;
+
+      if (!uid) {
+        res.status(401).json({ error: 'User not authenticated' });
+        return;
+      }
+
+      const { doctorId, appointmentDate, appointmentTime, serviceType, duration, notes } = req.body;
+
+      if (!doctorId || !appointmentDate || !appointmentTime || !serviceType) {
+        res.status(400).json({ error: 'Missing required fields: doctorId, appointmentDate, appointmentTime, serviceType' });
+        return;
+      }
+
+      // Ensure patient exists - create if not
+      const db = admin.firestore();
+      const patientDoc = await db.collection('patients').doc(uid).get();
+
+      if (!patientDoc.exists) {
+        // Create patient document for this user
+        await db.collection('patients').doc(uid).set({
+          userId: uid,
+          email: userEmail || '',
+          fullName: userName || 'Patient',
+          role: 'patient',
+          isActive: true,
+          createdAt: admin.firestore.Timestamp.now(),
+          updatedAt: admin.firestore.Timestamp.now(),
+        });
+        console.log('Created patient document for user:', uid);
+      }
+
+      // Patient ID is the user's UID (patients collection uses UID as document ID)
+      const data: CreateAppointmentInput = {
+        patientId: uid,
+        doctorId,
+        appointmentDate: new Date(appointmentDate),
+        appointmentTime,
+        serviceType,
+        duration: duration || 15,
+        notes,
+      };
+
+      const appointment = await appointmentService.createAppointment(data, uid, 'user');
+      res.status(201).json(appointment);
+    } catch (error: any) {
+      console.error('Booking error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Get patient's own appointments
+   * GET /api/appointments/my
+   */
+  async getMyAppointments(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const uid = req.user?.uid;
+      if (!uid) {
+        res.status(401).json({ error: 'User not authenticated' });
+        return;
+      }
+
+      const appointments = await appointmentService.getAllAppointments({ patientId: uid });
+      res.status(200).json(appointments);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

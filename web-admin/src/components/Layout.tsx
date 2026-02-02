@@ -20,6 +20,7 @@ import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   EventNote as AppointmentIcon,
+  HourglassEmpty as WaitingIcon,
   People as PatientsIcon,
   LocalHospital as DoctorsIcon,
   Article as NewsIcon,
@@ -33,6 +34,7 @@ const drawerWidth = 240;
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'Appointments', icon: <AppointmentIcon />, path: '/appointments' },
+  { text: 'Waiting List', icon: <WaitingIcon />, path: '/waiting-list' },
   { text: 'Patients', icon: <PatientsIcon />, path: '/patients' },
   { text: 'Doctors', icon: <DoctorsIcon />, path: '/doctors' },
   { text: 'News', icon: <NewsIcon />, path: '/news' },

@@ -8,7 +8,9 @@ export class PatientController {
     try {
       const data = req.body;
 
-      if (data.userId !== req.user!.uid) {
+      // Admins can create patients for anyone
+      // Regular users can only create patients linked to themselves
+      if (req.user?.role !== 'admin' && data.userId && data.userId !== req.user!.uid) {
         res.status(403).json({ error: 'Cannot create patient for another user' });
         return;
       }

@@ -46,16 +46,20 @@ export class AuthService {
       // Set custom claims for role
       await auth.setCustomUserClaims(uid, { role });
 
-      // Create Firestore user document
-      const userData: Omit<User, 'uid'> = {
+      // Create Firestore user document - avoid undefined values
+      const userData: Record<string, any> = {
         email: data.email,
         fullName: data.displayName,
-        phoneNumber: data.phoneNumber,
         role,
         createdAt: admin.firestore.Timestamp.now(),
         updatedAt: admin.firestore.Timestamp.now(),
         isActive: true,
       };
+
+      // Only add optional fields if they have values
+      if (data.phoneNumber) {
+        userData.phoneNumber = data.phoneNumber;
+      }
 
       await this.usersCollection.doc(uid).set(userData);
 
@@ -78,7 +82,7 @@ export class AuthService {
         uid,
         ...userData,
         patientId,
-      };
+      } as AuthUser;
     } catch (error: any) {
       throw new Error(`Failed to register user: ${error.message}`);
     }

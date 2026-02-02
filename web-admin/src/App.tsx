@@ -8,6 +8,7 @@ import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './pages/Dashboard';
 import { Appointments } from './pages/Appointments';
+import { WaitingList } from './pages/WaitingList';
 import { Patients } from './pages/Patients';
 import { Doctors } from './pages/Doctors';
 import { News } from './pages/News';
@@ -46,6 +47,7 @@ function App() {
               >
                 <Route index element={<Dashboard />} />
                 <Route path="appointments" element={<Appointments />} />
+                <Route path="waiting-list" element={<WaitingList />} />
                 <Route path="patients" element={<Patients />} />
                 <Route path="doctors" element={<Doctors />} />
                 <Route path="news" element={<News />} />

@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../constants.dart';
 import '../models/doctor.dart';
 import '../models/appointment.dart';
 import '../models/news.dart';
-import 'storage_service.dart';
+import '../models/slot_info.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -11,7 +12,7 @@ class ApiService {
   ApiService._internal();
 
   late Dio _dio;
-  final _storage = StorageService();
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   void init() {
     _dio = Dio(
@@ -25,21 +26,24 @@ class ApiService {
       ),
     );
 
-    // Add interceptor for auth token
+    // Add interceptor for auth token - always get fresh token from Firebase
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final token = await _storage.getToken();
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
+          final user = _firebaseAuth.currentUser;
+          if (user != null) {
+            // Always get a fresh token (Firebase caches it if still valid)
+            final token = await user.getIdToken();
+            if (token != null) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
           }
           return handler.next(options);
         },
         onError: (error, handler) {
-          // Handle 401 errors
+          // Log 401 errors for debugging
           if (error.response?.statusCode == 401) {
-            // Token expired or invalid
-            _storage.deleteToken();
+            print('DEBUG: 401 Unauthorized - Token may be invalid');
           }
           return handler.next(error);
         },
@@ -89,11 +93,46 @@ class ApiService {
     }
   }
 
+  Future<List<Doctor>> getDoctorsBySpecialty(String specialty) async {
+    try {
+      final response = await _dio.get('/doctors/specialty/$specialty');
+      return (response.data as List)
+          .map((json) => Doctor.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to load doctors by specialty: $e');
+    }
+  }
+
+  Future<AvailableSlotsResponse> getAvailableSlots(
+    String doctorId,
+    DateTime date, {
+    String? serviceType,
+  }) async {
+    try {
+      final dateStr =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final queryParams = <String, dynamic>{'date': dateStr};
+      if (serviceType != null) {
+        queryParams['serviceType'] = serviceType;
+      }
+
+      final response = await _dio.get(
+        '/doctors/$doctorId/available-slots',
+        queryParameters: queryParams,
+      );
+      return AvailableSlotsResponse.fromJson(
+          response.data as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Failed to load available slots: $e');
+    }
+  }
+
   // Appointment APIs
   Future<Appointment> createAppointment(Appointment appointment) async {
     try {
       final response = await _dio.post(
-        '/appointments',
+        '/appointments/book',
         data: appointment.toJson(),
       );
       return Appointment.fromJson(response.data as Map<String, dynamic>);
@@ -104,7 +143,7 @@ class ApiService {
 
   Future<List<Appointment>> getMyAppointments() async {
     try {
-      final response = await _dio.get('/appointments');
+      final response = await _dio.get('/appointments/my');
       return (response.data as List)
           .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
           .toList();

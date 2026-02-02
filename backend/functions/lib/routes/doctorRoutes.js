@@ -10,6 +10,7 @@ router.get('/specialty/:specialty', doctorController_1.doctorController.getDocto
 router.get('/:id', doctorController_1.doctorController.getDoctorById.bind(doctorController_1.doctorController));
 router.get('/:id/schedule/weekly', doctorController_1.doctorController.getDoctorWeeklySchedule.bind(doctorController_1.doctorController));
 router.get('/:id/schedule/slots', doctorController_1.doctorController.getDoctorAvailableSlots.bind(doctorController_1.doctorController));
+router.get('/:id/available-slots', doctorController_1.doctorController.getAvailableSlotsForDate.bind(doctorController_1.doctorController));
 // Admin routes - require auth
 router.use(auth_1.authenticate);
 router.use(auth_1.authorizeAdmin);

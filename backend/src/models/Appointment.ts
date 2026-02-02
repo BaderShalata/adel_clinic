@@ -7,6 +7,8 @@ export interface Appointment {
   doctorId: string;
   doctorName: string;
   appointmentDate: Timestamp;
+  appointmentTime: string; // "HH:MM" format
+  serviceType: string; // The specialty/service type
   duration: number; // minutes
   status: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
   notes?: string;
@@ -19,6 +21,8 @@ export interface CreateAppointmentInput {
   patientId: string;
   doctorId: string;
   appointmentDate: Date | Timestamp;
+  appointmentTime: string; // "HH:MM" format
+  serviceType: string;
   duration: number;
   notes?: string;
 }

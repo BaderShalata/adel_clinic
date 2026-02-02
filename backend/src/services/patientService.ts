@@ -9,7 +9,6 @@ export class PatientService {
   async createPatient(data: CreatePatientInput): Promise<Patient> {
     try {
       const patientData: Record<string, any> = {
-        userId: data.userId,
         fullName: data.fullName,
         dateOfBirth: data.dateOfBirth instanceof Date
           ? admin.firestore.Timestamp.fromDate(data.dateOfBirth)
@@ -23,6 +22,8 @@ export class PatientService {
       };
 
       // Only add optional fields if they have values (Firestore doesn't accept undefined)
+      if (data.userId) patientData.userId = data.userId;
+      if (data.idNumber) patientData.idNumber = data.idNumber;
       if (data.address) patientData.address = data.address;
       if (data.medicalHistory) patientData.medicalHistory = data.medicalHistory;
       if (data.emergencyContact) patientData.emergencyContact = data.emergencyContact;
