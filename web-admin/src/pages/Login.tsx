@@ -12,7 +12,7 @@ import {
   IconButton,
   InputAdornment,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff, MedicalServices as ClinicIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Login: React.FC = () => {
@@ -47,12 +47,30 @@ export const Login: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          py: 4,
         }}
       >
-        <Card sx={{ width: '100%' }}>
+        <Card sx={{ width: '100%', boxShadow: 3 }}>
           <CardContent sx={{ p: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom align="center">
-              Adel Clinic Admin
+            {/* Logo */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+              <Box
+                sx={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 2,
+                  bgcolor: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <ClinicIcon sx={{ color: 'white', fontSize: 32 }} />
+              </Box>
+            </Box>
+
+            <Typography variant="h4" component="h1" gutterBottom align="center" fontWeight={600}>
+              Adel Clinic
             </Typography>
             <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
               Sign in to access the admin panel

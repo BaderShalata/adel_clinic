@@ -12,10 +12,9 @@ import {
   IconButton,
   InputAdornment,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff, MedicalServices as ClinicIcon } from '@mui/icons-material';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import apiClient from '../lib/api';
 
 export const Signup: React.FC = () => {
@@ -59,21 +58,19 @@ export const Signup: React.FC = () => {
       );
 
       const user = userCredential.user;
+      const token = await user.getIdToken();
 
-      // Create Firestore user document with admin role
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
+      // Use backend API to create user document (uses Admin SDK, bypasses Firestore rules)
+      await apiClient.post('/auth/register', {
         email: formData.email,
-        fullName: formData.fullName,
+        displayName: formData.fullName,
         phoneNumber: formData.phoneNumber || '',
         role: 'admin',
-        isActive: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       // Set admin custom claims in Firebase Auth
-      const token = await user.getIdToken();
       await apiClient.post('/auth/set-admin-claims', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -86,7 +83,8 @@ export const Signup: React.FC = () => {
       navigate('/login');
     } catch (err: any) {
       console.error('Signup error:', err);
-      setError(err.message || 'Failed to create account');
+      const errorMessage = err.response?.data?.error || err.message || 'Failed to create account';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -100,15 +98,33 @@ export const Signup: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          py: 4,
         }}
       >
-        <Card sx={{ width: '100%' }}>
+        <Card sx={{ width: '100%', boxShadow: 3 }}>
           <CardContent sx={{ p: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom align="center">
+            {/* Logo */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+              <Box
+                sx={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 2,
+                  bgcolor: 'primary.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <ClinicIcon sx={{ color: 'white', fontSize: 32 }} />
+              </Box>
+            </Box>
+
+            <Typography variant="h4" component="h1" gutterBottom align="center" fontWeight={600}>
               Create Admin Account
             </Typography>
             <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-              Register your first admin account for Adel Clinic
+              Register your admin account for Adel Clinic
             </Typography>
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
