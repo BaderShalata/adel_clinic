@@ -40,6 +40,7 @@ import {
   CalendarMonth as CalendarIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -86,11 +87,12 @@ interface AvailableSlotsResponse {
   totalSlots: number;
 }
 
-type ViewMode = 'list' | 'calendar';
+type ViewMode = 'list' | 'calendar' | 'day';
 
 export const Appointments: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [calendarDate, setCalendarDate] = useState(dayjs());
+  const [selectedDay, setSelectedDay] = useState<dayjs.Dayjs>(dayjs());
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -101,6 +103,8 @@ export const Appointments: React.FC = () => {
   const [availableSlots, setAvailableSlots] = useState<SlotInfo[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [noSlotsAvailable, setNoSlotsAvailable] = useState(false);
+  const [dayViewDoctorSlots, setDayViewDoctorSlots] = useState<Record<string, { doctorId: string; doctorName: string; time: string }[]>>({});
+  const [loadingDayViewSlots, setLoadingDayViewSlots] = useState(false);
   const [isNewPatient, setIsNewPatient] = useState(false);
   const [newPatientData, setNewPatientData] = useState({
     fullName: '',
@@ -183,6 +187,64 @@ export const Appointments: React.FC = () => {
 
     loadSlots();
   }, [selectedDoctor, selectedDate, selectedService, getToken]);
+
+  // Load all doctors' available slots for day view
+  useEffect(() => {
+    const loadDayViewSlots = async () => {
+      if (viewMode !== 'day' || !doctors || doctors.length === 0) {
+        return;
+      }
+
+      setLoadingDayViewSlots(true);
+      try {
+        const token = await getToken();
+        if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        const dateStr = selectedDay.format('YYYY-MM-DD');
+        const slotsByHour: Record<string, { doctorId: string; doctorName: string; time: string }[]> = {};
+
+        // Initialize all hours
+        for (let h = 8; h <= 20; h++) {
+          slotsByHour[h.toString()] = [];
+        }
+
+        // Fetch availability for all doctors in parallel
+        await Promise.all(
+          doctors.map(async (doctor) => {
+            try {
+              const response = await apiClient.get<AvailableSlotsResponse>(
+                `/doctors/${doctor.id}/available-slots?date=${dateStr}`
+              );
+              const slots = response.data.slots || [];
+
+              slots.forEach(slot => {
+                if (slot.available) {
+                  const hour = parseInt(slot.time.split(':')[0], 10);
+                  if (slotsByHour[hour.toString()]) {
+                    slotsByHour[hour.toString()].push({
+                      doctorId: doctor.id,
+                      doctorName: doctor.fullName,
+                      time: slot.time,
+                    });
+                  }
+                }
+              });
+            } catch {
+              // Ignore errors for individual doctors
+            }
+          })
+        );
+
+        setDayViewDoctorSlots(slotsByHour);
+      } catch (error) {
+        console.error('Failed to load day view slots:', error);
+      } finally {
+        setLoadingDayViewSlots(false);
+      }
+    };
+
+    loadDayViewSlots();
+  }, [viewMode, selectedDay, doctors, getToken]);
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -527,7 +589,7 @@ export const Appointments: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
-      ) : (
+      ) : viewMode === 'calendar' ? (
         /* Calendar View */
         <Paper sx={{ p: 2 }}>
           {/* Calendar Header */}
@@ -567,6 +629,10 @@ export const Appointments: React.FC = () => {
               return (
                 <Box
                   key={day.format('YYYY-MM-DD')}
+                  onClick={() => {
+                    setSelectedDay(day);
+                    setViewMode('day');
+                  }}
                   sx={{
                     minHeight: 100,
                     border: '1px solid',
@@ -575,6 +641,12 @@ export const Appointments: React.FC = () => {
                     p: 0.5,
                     bgcolor: isToday ? 'primary.50' : 'background.paper',
                     overflow: 'hidden',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      bgcolor: isToday ? 'primary.100' : 'action.hover',
+                      transform: 'scale(1.02)',
+                    },
                   }}
                 >
                   <Typography
@@ -592,7 +664,10 @@ export const Appointments: React.FC = () => {
                         label={`${apt.appointmentTime || ''} ${apt.patientName}`}
                         size="small"
                         color={getStatusColor(apt.status)}
-                        onClick={() => handleOpen(apt)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpen(apt);
+                        }}
                         sx={{
                           height: 20,
                           fontSize: '0.65rem',
@@ -610,6 +685,216 @@ export const Appointments: React.FC = () => {
                 </Box>
               );
             })}
+          </Box>
+        </Paper>
+      ) : (
+        /* Day View */
+        <Paper sx={{ p: 2 }}>
+          {/* Day View Header */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <IconButton onClick={() => setViewMode('calendar')}>
+                <ArrowBackIcon />
+              </IconButton>
+              <Box>
+                <Typography variant="h6" fontWeight={600}>
+                  {selectedDay.format('dddd, MMMM D, YYYY')}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {getAppointmentsForDate(selectedDay).length} appointment(s)
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <IconButton onClick={() => setSelectedDay(selectedDay.subtract(1, 'day'))}>
+                <ChevronLeftIcon />
+              </IconButton>
+              <IconButton onClick={() => setSelectedDay(selectedDay.add(1, 'day'))}>
+                <ChevronRightIcon />
+              </IconButton>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  setSelectedDate(selectedDay.format('YYYY-MM-DD'));
+                  handleOpen();
+                }}
+              >
+                Add
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Timeline */}
+          <Box sx={{ position: 'relative' }}>
+            {(() => {
+              const hours = [];
+              for (let h = 8; h <= 20; h++) {
+                hours.push(h);
+              }
+
+              const dayAppts = getAppointmentsForDate(selectedDay);
+
+              return hours.map(hour => {
+                const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+                const hourAppts = dayAppts.filter(apt => {
+                  if (!apt.appointmentTime) return false;
+                  const aptHour = parseInt(apt.appointmentTime.split(':')[0], 10);
+                  return aptHour === hour;
+                });
+
+                return (
+                  <Box
+                    key={hour}
+                    sx={{
+                      display: 'flex',
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                      minHeight: 60,
+                    }}
+                  >
+                    {/* Time Label */}
+                    <Box
+                      sx={{
+                        width: 80,
+                        flexShrink: 0,
+                        pr: 2,
+                        pt: 1,
+                        textAlign: 'right',
+                        borderRight: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                        {hour > 12 ? `${hour - 12}:00 PM` : hour === 12 ? '12:00 PM' : `${hour}:00 AM`}
+                      </Typography>
+                    </Box>
+
+                    {/* Appointments and available doctors for this hour */}
+                    <Box sx={{ flex: 1, p: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      {/* Show existing appointments */}
+                      {hourAppts.length > 0 && (
+                        hourAppts
+                          .sort((a, b) => (a.appointmentTime || '').localeCompare(b.appointmentTime || ''))
+                          .map(apt => (
+                            <Paper
+                              key={apt.id}
+                              elevation={0}
+                              sx={{
+                                p: 1.5,
+                                bgcolor: apt.status === 'completed' ? 'success.50' :
+                                         apt.status === 'cancelled' ? 'error.50' :
+                                         apt.status === 'no-show' ? 'warning.50' : 'primary.50',
+                                borderLeft: '3px solid',
+                                borderColor: apt.status === 'completed' ? 'success.main' :
+                                             apt.status === 'cancelled' ? 'error.main' :
+                                             apt.status === 'no-show' ? 'warning.main' : 'primary.main',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                '&:hover': { transform: 'scale(1.02)', boxShadow: 1 },
+                              }}
+                              onClick={() => handleOpen(apt)}
+                            >
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <Box>
+                                  <Typography variant="caption" fontWeight={700} color="primary.main">
+                                    {apt.appointmentTime}
+                                  </Typography>
+                                  <Typography variant="subtitle2" fontWeight={600}>
+                                    {apt.patientName}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {apt.doctorName} • {apt.serviceType || 'General'}
+                                  </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                                  <Chip
+                                    label={apt.status}
+                                    color={getStatusColor(apt.status)}
+                                    size="small"
+                                    sx={{ height: 20, fontSize: '0.65rem' }}
+                                  />
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteMutation.mutate(apt.id);
+                                    }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </Box>
+                              </Box>
+                            </Paper>
+                          ))
+                      )}
+
+                      {/* Show available doctors for this hour */}
+                      {loadingDayViewSlots ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+                          <CircularProgress size={14} />
+                          <Typography variant="caption" color="text.secondary">Loading...</Typography>
+                        </Box>
+                      ) : (
+                        (() => {
+                          const availableDoctors = dayViewDoctorSlots[hour.toString()] || [];
+                          // Get unique doctors (remove duplicates from different time slots in same hour)
+                          const uniqueDoctors = availableDoctors.reduce((acc, slot) => {
+                            if (!acc.find(d => d.doctorId === slot.doctorId)) {
+                              acc.push(slot);
+                            }
+                            return acc;
+                          }, [] as { doctorId: string; doctorName: string; time: string }[]);
+
+                          if (uniqueDoctors.length === 0) {
+                            return (
+                              <Typography variant="caption" color="text.disabled" sx={{ py: 1 }}>
+                                No doctors available
+                              </Typography>
+                            );
+                          }
+
+                          return (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {uniqueDoctors.map(slot => (
+                                <Chip
+                                  key={slot.doctorId}
+                                  label={slot.doctorName}
+                                  size="small"
+                                  color="success"
+                                  variant="outlined"
+                                  onClick={() => {
+                                    const doctor = doctors?.find(d => d.id === slot.doctorId);
+                                    if (doctor) {
+                                      // Open dialog with pre-filled values
+                                      setEditingId(null);
+                                      setSelectedDoctor(doctor);
+                                      setSelectedPatient(null);
+                                      setSelectedDate(selectedDay.format('YYYY-MM-DD'));
+                                      setSelectedTime(slot.time);
+                                      setSelectedService('');
+                                      setIsNewPatient(false);
+                                      setNewPatientData({ fullName: '', idNumber: '', phoneNumber: '' });
+                                      setFormData({ status: 'scheduled', notes: '' });
+                                      setOpen(true);
+                                    }
+                                  }}
+                                  sx={{
+                                    cursor: 'pointer',
+                                    '&:hover': { bgcolor: 'success.50' },
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          );
+                        })()
+                      )}
+                    </Box>
+                  </Box>
+                );
+              });
+            })()}
           </Box>
         </Paper>
       )}
@@ -876,6 +1161,7 @@ export const Appointments: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
     </Box>
   );
 };
