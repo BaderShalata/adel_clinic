@@ -6,7 +6,6 @@ import '../../providers/auth_provider.dart';
 import '../../providers/doctor_provider.dart';
 import '../../models/appointment.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/common/modern_card.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_view.dart';
 import '../auth/login_screen.dart';
@@ -198,87 +197,215 @@ class AppointmentCard extends StatelessWidget {
 
   const AppointmentCard({super.key, required this.appointment});
 
+  Color _getStatusColor() {
+    switch (appointment.status.toLowerCase()) {
+      case 'confirmed':
+        return AppTheme.successColor;
+      case 'scheduled':
+        return AppTheme.primaryColor;
+      case 'pending':
+        return AppTheme.warningColor;
+      case 'cancelled':
+        return AppTheme.errorColor;
+      case 'completed':
+        return AppTheme.accentColor;
+      default:
+        return AppTheme.textSecondary;
+    }
+  }
+
+  String _getLocalizedDoctorName(BuildContext context, DoctorProvider doctorProvider) {
+    if (doctorProvider.doctors.isEmpty) return appointment.doctorName ?? 'Doctor';
+
+    final doctor = doctorProvider.doctors.where((d) => d.id == appointment.doctorId).firstOrNull;
+    if (doctor == null) return appointment.doctorName ?? 'Doctor';
+
+    final locale = Localizations.localeOf(context);
+    if (locale.languageCode == 'en' && doctor.fullNameEn != null) {
+      return doctor.fullNameEn!;
+    } else if (locale.languageCode == 'he' && doctor.fullNameHe != null) {
+      return doctor.fullNameHe!;
+    }
+    return doctor.fullName;
+  }
+
+  String _getDoctorInitials(BuildContext context, DoctorProvider doctorProvider) {
+    final name = _getLocalizedDoctorName(context, doctorProvider);
+    if (name.isEmpty) return 'D';
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
+    final dateFormat = DateFormat('EEE, MMM d');
     final doctorProvider = context.watch<DoctorProvider>();
+    final statusColor = _getStatusColor();
+    final doctorName = _getLocalizedDoctorName(context, doctorProvider);
 
-    // Find doctor name from provider if available
-    String doctorName = 'Doctor';
-    if (doctorProvider.doctors.isNotEmpty) {
-      final doctor = doctorProvider.doctors.where(
-        (d) => d.id == appointment.doctorId,
-      ).firstOrNull;
-      if (doctor != null) {
-        doctorName = doctor.fullNameEn ?? doctor.fullName;
-      }
-    }
-
-    return ModernCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Status badge and time
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _StatusBadge(status: appointment.status),
-              Text(
-                appointment.appointmentTime,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppTheme.primaryColor,
-                    ),
-              ),
-            ],
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(height: AppTheme.spacingM),
-
-          // Date
-          Row(
-            children: [
-              const Icon(
-                Icons.calendar_today,
-                size: 18,
-                color: AppTheme.textSecondary,
-              ),
-              const SizedBox(width: AppTheme.spacingS),
-              Text(
-                dateFormat.format(appointment.appointmentDate),
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppTheme.spacingS),
-
-          // Doctor
-          Row(
-            children: [
-              const Icon(
-                Icons.person,
-                size: 18,
-                color: AppTheme.textSecondary,
-              ),
-              const SizedBox(width: AppTheme.spacingS),
-              Expanded(
-                child: Text(
-                  'Dr. $doctorName',
-                  style: Theme.of(context).textTheme.bodyLarge,
+        ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            // Status indicator bar
+            Container(
+              width: 4,
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(AppTheme.radiusM),
+                  bottomLeft: Radius.circular(AppTheme.radiusM),
                 ),
               ),
-            ],
-          ),
+            ),
+            // Main content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppTheme.spacingM),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Top row: Date/Time and Status
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Date and Time
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppTheme.spacingS,
+                                vertical: AppTheme.spacingXS,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.access_time,
+                                    size: 14,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    appointment.appointmentTime,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primaryColor,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spacingS),
+                            Text(
+                              dateFormat.format(appointment.appointmentDate),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppTheme.textSecondary,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        _StatusBadge(status: appointment.status),
+                      ],
+                    ),
+                    const SizedBox(height: AppTheme.spacingM),
 
-          // Notes if available
-          if (appointment.notes != null && appointment.notes!.isNotEmpty) ...[
-            const SizedBox(height: AppTheme.spacingM),
-            const Divider(),
-            const SizedBox(height: AppTheme.spacingS),
-            Text(
-              'Notes: ${appointment.notes}',
-              style: Theme.of(context).textTheme.bodyMedium,
+                    // Doctor info row
+                    Row(
+                      children: [
+                        // Doctor avatar
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: statusColor.withValues(alpha: 0.15),
+                          child: Text(
+                            _getDoctorInitials(context, doctorProvider),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppTheme.spacingS),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Dr. $doctorName',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                              if (appointment.serviceType.isNotEmpty)
+                                Text(
+                                  appointment.serviceType,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Notes if available
+                    if (appointment.notes != null && appointment.notes!.isNotEmpty) ...[
+                      const SizedBox(height: AppTheme.spacingS),
+                      Container(
+                        padding: const EdgeInsets.all(AppTheme.spacingS),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.note_outlined,
+                              size: 16,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: AppTheme.spacingXS),
+                            Expanded(
+                              child: Text(
+                                appointment.notes!,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.grey[700],
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }

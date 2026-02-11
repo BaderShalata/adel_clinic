@@ -89,21 +89,29 @@ class AppointmentService {
                     throw new Error('This time slot is no longer available. Please select another time.');
                 }
             }
+            // Build appointment data - only include fields with values
             const appointmentData = {
                 patientId: data.patientId,
-                patientName: patient?.fullName || '',
                 doctorId: data.doctorId,
-                doctorName: doctor?.fullName || '',
                 appointmentDate: admin.firestore.Timestamp.fromDate(appointmentDateObj),
-                appointmentTime: data.appointmentTime || '',
-                serviceType: data.serviceType || '',
-                duration: data.duration,
                 status: 'scheduled',
-                notes: data.notes,
                 createdAt: admin.firestore.Timestamp.now(),
                 updatedAt: admin.firestore.Timestamp.now(),
                 createdBy,
             };
+            // Only add optional fields if they have values (Firestore doesn't accept undefined)
+            if (patient?.fullName)
+                appointmentData.patientName = patient.fullName;
+            if (doctor?.fullName)
+                appointmentData.doctorName = doctor.fullName;
+            if (data.appointmentTime)
+                appointmentData.appointmentTime = data.appointmentTime;
+            if (data.serviceType)
+                appointmentData.serviceType = data.serviceType;
+            if (data.duration)
+                appointmentData.duration = data.duration;
+            if (data.notes)
+                appointmentData.notes = data.notes;
             const docRef = await this.appointmentsCollection.add(appointmentData);
             return {
                 id: docRef.id,

@@ -29,6 +29,7 @@ export class AuthController {
         displayName: req.body.displayName || decodedToken.name || 'Unknown',
         phoneNumber: req.body.phoneNumber,
         idNumber: req.body.idNumber,
+        gender: req.body.gender,
         role: req.body.role || 'patient',
       };
 

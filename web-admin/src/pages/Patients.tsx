@@ -140,9 +140,9 @@ export const Patients: React.FC = () => {
               <TableRow key={patient.id}>
                 <TableCell>{patient.fullName}</TableCell>
                 <TableCell>{patient.idNumber || '-'}</TableCell>
-                <TableCell>{dayjs(patient.dateOfBirth._seconds * 1000).format('MMM DD, YYYY')}</TableCell>
-                <TableCell>{patient.gender}</TableCell>
-                <TableCell>{patient.phoneNumber}</TableCell>
+                <TableCell>{patient.dateOfBirth?._seconds ? dayjs(patient.dateOfBirth._seconds * 1000).format('MMM DD, YYYY') : '-'}</TableCell>
+                <TableCell>{patient.gender || '-'}</TableCell>
+                <TableCell>{patient.phoneNumber || '-'}</TableCell>
                 <TableCell>{patient.email || '-'}</TableCell>
                 <TableCell>
                   <IconButton size="small" onClick={() => handleOpen(patient)}>

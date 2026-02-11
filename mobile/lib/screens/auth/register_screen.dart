@@ -18,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
+  String? _selectedGender;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -38,12 +39,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             email: _emailController.text.trim(),
             password: _passwordController.text,
             displayName: _nameController.text.trim(),
-            phoneNumber: _phoneController.text.trim().isEmpty
-                ? null
-                : _phoneController.text.trim(),
-            idNumber: _idNumberController.text.trim().isEmpty
-                ? null
-                : _idNumberController.text.trim(),
+            phoneNumber: _phoneController.text.trim(),
+            idNumber: _idNumberController.text.trim(),
+            gender: _selectedGender!,
           );
 
       if (mounted) {
@@ -161,6 +159,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your phone number';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+
+              // Gender
+              DropdownButtonFormField<String>(
+                initialValue: _selectedGender,
+                decoration: const InputDecoration(
+                  labelText: 'Gender',
+                  prefixIcon: Icon(Icons.wc_outlined),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'male', child: Text('Male')),
+                  DropdownMenuItem(value: 'female', child: Text('Female')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedGender = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select your gender';
                   }
                   return null;
                 },

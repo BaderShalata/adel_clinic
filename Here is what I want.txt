@@ -1,0 +1,11 @@
+Here is what I want:
+(1) Waiting list is showing all days even though doctor doES not have any time slots there (days he is off). Fix this, Waiting list should noly show up on days hes serving that service and the timeslots are full.
+(2) Moreover, let user book 1 appointment only (From the application), (In web admins can book more than one for the same user)
+(3) Make mobile application theme match the web application theme.
+(4) IN Weekly schedule for the doctor profile, show each day which service he provides (if he has more than one service being provided)
+(5) Enable user to cancel/Edit scheduled appointments which then updates the appointments list.
+(6) Ability for admin to login with same username and password in web in the mobile application, and see a different interaface than the users, the interface should be similar to the one on the web
+==== WEB ====
+(6) In addition on the web, enable admin to change status of the appointment from the list, if appointment is set to completed or its time is in the past, appear in archive and not in the active list
+(7) Also the confirmation dialogs for deleting a patient/user or an appointment are not showing... fix this
+

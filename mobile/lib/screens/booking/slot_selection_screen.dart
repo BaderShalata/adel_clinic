@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/booking_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/appointment_provider.dart';
+import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 
 class SlotSelectionScreen extends StatefulWidget {
@@ -50,6 +52,135 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  Future<void> _showJoinWaitingListDialog(BookingProvider bookingProvider) async {
+    final authProvider = context.read<AuthProvider>();
+    if (!authProvider.isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to join the waiting list'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
+
+    final waitingListNotesController = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Join Waiting List'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You will be added to the waiting list for:',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppTheme.radiusS),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.person, size: 16, color: AppTheme.primaryColor),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          bookingProvider.selectedDoctor?.fullName ?? 'Doctor',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.medical_services, size: 16, color: AppTheme.primaryColor),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(bookingProvider.selectedService ?? ''),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 16, color: AppTheme.primaryColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            TextField(
+              controller: waitingListNotesController,
+              decoration: const InputDecoration(
+                labelText: 'Notes (optional)',
+                hintText: 'Any specific requirements...',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Join Waiting List'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await ApiService().joinWaitingList(
+        doctorId: bookingProvider.selectedDoctor!.id,
+        preferredDate: _selectedDate,
+        serviceType: bookingProvider.selectedService!,
+        notes: waitingListNotesController.text.isNotEmpty
+            ? waitingListNotesController.text
+            : null,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Added to waiting list! We\'ll notify you when a slot opens.'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to join waiting list: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
   }
 
   Future<void> _confirmBooking() async {
@@ -120,6 +251,9 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
     if (!mounted) return;
 
     if (appointment != null) {
+      // Reload appointments so it shows in the list
+      context.read<AppointmentProvider>().loadAppointments();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Appointment booked successfully!'),
@@ -251,6 +385,27 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                                       .textTheme
                                       .titleMedium
                                       ?.copyWith(color: Colors.grey[600]),
+                                ),
+                                const SizedBox(height: AppTheme.spacingL),
+                                OutlinedButton.icon(
+                                  onPressed: () => _showJoinWaitingListDialog(bookingProvider),
+                                  icon: const Icon(Icons.schedule),
+                                  label: const Text('Join Waiting List'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppTheme.primaryColor,
+                                    side: const BorderSide(color: AppTheme.primaryColor),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppTheme.spacingL,
+                                      vertical: AppTheme.spacingM,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: AppTheme.spacingS),
+                                Text(
+                                  'Get notified when a slot opens up',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Colors.grey[500],
+                                      ),
                                 ),
                               ],
                             ),

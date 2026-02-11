@@ -107,6 +107,64 @@ export class WaitingListController {
   }
 
   /**
+   * Patient joins the waiting list (patient endpoint)
+   * POST /api/waiting-list/join
+   * Body: { doctorId, preferredDate, serviceType, notes? }
+   */
+  async patientJoinWaitingList(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) {
+        res.status(401).json({ error: 'Authentication required' });
+        return;
+      }
+
+      const { doctorId, preferredDate, serviceType, notes } = req.body;
+
+      if (!doctorId || !preferredDate || !serviceType) {
+        res.status(400).json({ error: 'doctorId, preferredDate, and serviceType are required' });
+        return;
+      }
+
+      // Patient ID is the same as user ID
+      const patientId = userId;
+
+      const data: CreateWaitingListInput = {
+        patientId,
+        doctorId,
+        serviceType,
+        preferredDate: new Date(preferredDate),
+        notes,
+      };
+
+      const entry = await waitingListService.addToWaitingList(data, userId);
+      res.status(201).json(entry);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Get current patient's waiting list entries
+   * GET /api/waiting-list/my
+   */
+  async getMyWaitingListEntries(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.uid;
+      if (!userId) {
+        res.status(401).json({ error: 'Authentication required' });
+        return;
+      }
+
+      // Patient ID is the same as user ID
+      const entries = await waitingListService.getWaitingList({ patientId: userId });
+      res.status(200).json(entries);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
    * Book an appointment from waiting list entry
    * POST /api/waiting-list/:id/book
    * Body: { appointmentDate: "YYYY-MM-DD", appointmentTime: "HH:MM" }

@@ -11,15 +11,29 @@ class AppointmentProvider with ChangeNotifier {
 
   List<Appointment> get appointments => _appointments;
 
-  List<Appointment> get upcomingAppointments => _appointments
-      .where((a) => a.appointmentDate.isAfter(DateTime.now()) && a.status != 'cancelled')
-      .toList()
-    ..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
+  List<Appointment> get upcomingAppointments {
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    return _appointments
+        .where((a) {
+          final appointmentDay = DateTime(a.appointmentDate.year, a.appointmentDate.month, a.appointmentDate.day);
+          // Include today and future dates, exclude cancelled
+          return !appointmentDay.isBefore(today) && a.status != 'cancelled';
+        })
+        .toList()
+      ..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
+  }
 
-  List<Appointment> get pastAppointments => _appointments
-      .where((a) => a.appointmentDate.isBefore(DateTime.now()) || a.status == 'completed')
-      .toList()
-    ..sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
+  List<Appointment> get pastAppointments {
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    return _appointments
+        .where((a) {
+          final appointmentDay = DateTime(a.appointmentDate.year, a.appointmentDate.month, a.appointmentDate.day);
+          // Past dates or completed status
+          return appointmentDay.isBefore(today) || a.status == 'completed';
+        })
+        .toList()
+      ..sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
+  }
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;

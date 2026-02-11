@@ -137,8 +137,34 @@ class _DoctorCard extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Get the doctor name based on current locale
+  String _getLocalizedName(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    if (locale.languageCode == 'en' && doctor.fullNameEn != null && doctor.fullNameEn!.isNotEmpty) {
+      return doctor.fullNameEn!;
+    } else if (locale.languageCode == 'he' && doctor.fullNameHe != null && doctor.fullNameHe!.isNotEmpty) {
+      return doctor.fullNameHe!;
+    }
+    return doctor.fullName;
+  }
+
+  /// Get initials from the localized name
+  String _getInitials(BuildContext context) {
+    final name = _getLocalizedName(context);
+    if (name.isEmpty) return 'D';
+
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      // Get first letter of first two words
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayName = _getLocalizedName(context);
+
     return Card(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
       child: InkWell(
@@ -152,9 +178,9 @@ class _DoctorCard extends StatelessWidget {
                 radius: 30,
                 backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
                 child: Text(
-                  doctor.fullName.isNotEmpty ? doctor.fullName[0].toUpperCase() : 'D',
+                  _getInitials(context),
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryColor,
                   ),
@@ -166,7 +192,7 @@ class _DoctorCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      doctor.fullName,
+                      displayName,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),

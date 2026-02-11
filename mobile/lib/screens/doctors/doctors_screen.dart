@@ -152,8 +152,33 @@ class ModernDoctorCard extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Get the doctor name based on current locale
+  String _getLocalizedName(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    if (locale.languageCode == 'en' && doctor.fullNameEn != null && doctor.fullNameEn!.isNotEmpty) {
+      return doctor.fullNameEn!;
+    } else if (locale.languageCode == 'he' && doctor.fullNameHe != null && doctor.fullNameHe!.isNotEmpty) {
+      return doctor.fullNameHe!;
+    }
+    return doctor.fullName;
+  }
+
+  /// Get initials from the localized name
+  String _getInitials(BuildContext context) {
+    final name = _getLocalizedName(context);
+    if (name.isEmpty) return 'D';
+
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayName = _getLocalizedName(context);
+
     return ModernCard(
       onTap: onTap,
       child: Row(
@@ -175,9 +200,9 @@ class ModernDoctorCard extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                doctor.fullName[0].toUpperCase(),
+                _getInitials(context),
                 style: const TextStyle(
-                  fontSize: 28,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -192,7 +217,7 @@ class ModernDoctorCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  doctor.fullNameEn ?? doctor.fullName,
+                  displayName,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 if (doctor.fullNameEn != null && doctor.fullNameHe != null)

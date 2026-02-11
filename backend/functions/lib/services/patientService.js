@@ -65,9 +65,23 @@ class PatientService {
                 patientData.medicalHistory = data.medicalHistory;
             if (data.emergencyContact)
                 patientData.emergencyContact = data.emergencyContact;
-            const docRef = await this.patientsCollection.add(patientData);
+            // Use userId as document ID if provided, otherwise auto-generate
+            let docId;
+            if (data.userId) {
+                // Check if patient already exists with this userId
+                const existingDoc = await this.patientsCollection.doc(data.userId).get();
+                if (existingDoc.exists) {
+                    return { id: existingDoc.id, ...existingDoc.data() };
+                }
+                await this.patientsCollection.doc(data.userId).set(patientData);
+                docId = data.userId;
+            }
+            else {
+                const docRef = await this.patientsCollection.add(patientData);
+                docId = docRef.id;
+            }
             return {
-                id: docRef.id,
+                id: docId,
                 ...patientData,
             };
         }
@@ -89,6 +103,12 @@ class PatientService {
     }
     async getPatientByUserId(userId) {
         try {
+            // First try direct lookup by document ID (new structure)
+            const directDoc = await this.patientsCollection.doc(userId).get();
+            if (directDoc.exists) {
+                return { id: directDoc.id, ...directDoc.data() };
+            }
+            // Fall back to query by userId field (legacy structure)
             const snapshot = await this.patientsCollection.where('userId', '==', userId).limit(1).get();
             if (snapshot.empty) {
                 return null;

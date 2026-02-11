@@ -86,9 +86,10 @@ class AuthService {
                     userId: uid,
                     fullName: data.displayName,
                     dateOfBirth: new Date(2000, 0, 1), // Default date, can be updated later
-                    gender: 'other', // Default, can be updated later
+                    gender: data.gender || 'other',
                     phoneNumber: data.phoneNumber || '',
                     email: data.email,
+                    idNumber: data.idNumber,
                 });
                 patientId = patient.id;
             }

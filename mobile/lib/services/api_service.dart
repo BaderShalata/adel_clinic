@@ -5,6 +5,7 @@ import '../models/doctor.dart';
 import '../models/appointment.dart';
 import '../models/news.dart';
 import '../models/slot_info.dart';
+import '../models/waiting_list.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -117,13 +118,25 @@ class ApiService {
         queryParams['serviceType'] = serviceType;
       }
 
+      print('DEBUG: Fetching slots for doctor $doctorId on $dateStr, serviceType: $serviceType');
+
       final response = await _dio.get(
         '/doctors/$doctorId/available-slots',
         queryParameters: queryParams,
       );
+
+      print('DEBUG: Slots response: ${response.data}');
+
       return AvailableSlotsResponse.fromJson(
           response.data as Map<String, dynamic>);
     } catch (e) {
+      print('DEBUG: Failed to load slots: $e');
+      if (e is DioException && e.response?.data != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['error'] != null) {
+          throw Exception(errorData['error']);
+        }
+      }
       throw Exception('Failed to load available slots: $e');
     }
   }
@@ -137,6 +150,12 @@ class ApiService {
       );
       return Appointment.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
+      if (e is DioException && e.response?.data != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['error'] != null) {
+          throw Exception(errorData['error']);
+        }
+      }
       throw Exception('Failed to create appointment: $e');
     }
   }
@@ -148,6 +167,12 @@ class ApiService {
           .map((json) => Appointment.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
+      if (e is DioException && e.response?.data != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['error'] != null) {
+          throw Exception(errorData['error']);
+        }
+      }
       throw Exception('Failed to load appointments: $e');
     }
   }
@@ -172,8 +197,9 @@ class ApiService {
     required String email,
     required String password,
     required String displayName,
-    String? phoneNumber,
-    String? idNumber,
+    required String phoneNumber,
+    required String idNumber,
+    required String gender,
   }) async {
     try {
       print('DEBUG: Calling register API');
@@ -184,8 +210,9 @@ class ApiService {
           'email': email,
           'password': password,
           'displayName': displayName,
-          if (phoneNumber != null) 'phoneNumber': phoneNumber,
-          if (idNumber != null) 'idNumber': idNumber,
+          'phoneNumber': phoneNumber,
+          'idNumber': idNumber,
+          'gender': gender,
           'role': 'patient',
         },
       );
@@ -210,6 +237,52 @@ class ApiService {
           .toList();
     } catch (e) {
       throw Exception('Failed to load news: $e');
+    }
+  }
+
+  // Waiting List APIs
+  Future<WaitingListEntry> joinWaitingList({
+    required String doctorId,
+    required DateTime preferredDate,
+    required String serviceType,
+    String? notes,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/waiting-list/join',
+        data: {
+          'doctorId': doctorId,
+          'preferredDate': preferredDate.toIso8601String(),
+          'serviceType': serviceType,
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
+        },
+      );
+      return WaitingListEntry.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      if (e is DioException && e.response?.data != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['error'] != null) {
+          throw Exception(errorData['error']);
+        }
+      }
+      throw Exception('Failed to join waiting list: $e');
+    }
+  }
+
+  Future<List<WaitingListEntry>> getMyWaitingListEntries() async {
+    try {
+      final response = await _dio.get('/waiting-list/my');
+      return (response.data as List)
+          .map((json) => WaitingListEntry.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      if (e is DioException && e.response?.data != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['error'] != null) {
+          throw Exception(errorData['error']);
+        }
+      }
+      throw Exception('Failed to load waiting list: $e');
     }
   }
 }

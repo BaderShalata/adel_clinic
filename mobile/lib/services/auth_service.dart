@@ -48,8 +48,9 @@ class AuthService {
     required String email,
     required String password,
     required String displayName,
-    String? phoneNumber,
-    String? idNumber,
+    required String phoneNumber,
+    required String idNumber,
+    required String gender,
   }) async {
     try {
       // Create Firebase user
@@ -78,6 +79,7 @@ class AuthService {
         displayName: displayName,
         phoneNumber: phoneNumber,
         idNumber: idNumber,
+        gender: gender,
       );
 
       return AppUser.fromJson(response);

@@ -4,7 +4,11 @@ import { authenticate, authorizeAdmin } from '../middleware/auth';
 
 const router = Router();
 
-// All waiting list routes require authentication and admin role
+// Patient endpoints (authenticated but not admin)
+router.post('/join', authenticate, waitingListController.patientJoinWaitingList.bind(waitingListController));
+router.get('/my', authenticate, waitingListController.getMyWaitingListEntries.bind(waitingListController));
+
+// Admin routes require authentication and admin role
 router.use(authenticate);
 router.use(authorizeAdmin);
 

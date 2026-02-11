@@ -369,9 +369,10 @@ class DoctorController {
             // Filter schedules for the requested day
             let daySchedules = doctor.schedule.filter(s => s.dayOfWeek === dayOfWeek);
             console.log('Day schedules found:', daySchedules.length);
-            // If serviceType is provided, strictly filter schedules by type
+            // If serviceType is provided, filter schedules by type
+            // But include schedules without a type (they're available for all services)
             if (serviceType && daySchedules.length > 0) {
-                daySchedules = daySchedules.filter(s => s.type === serviceType);
+                daySchedules = daySchedules.filter(s => !s.type || s.type === serviceType);
                 console.log('After serviceType filter:', daySchedules.length);
             }
             if (daySchedules.length === 0) {
