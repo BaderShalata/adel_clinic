@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Button, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Typography, Dialog, DialogTitle, DialogContent,
-  DialogActions, TextField, IconButton, MenuItem,
+  DialogContentText, DialogActions, TextField, MenuItem, Tooltip, Stack,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
@@ -23,6 +23,8 @@ interface Patient {
 export const Patients: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [formData, setFormData] = useState({
     fullName: '',
     idNumber: '',
@@ -78,6 +80,8 @@ export const Patients: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['patients'] });
+      setDeleteDialogOpen(false);
+      setPatientToDelete(null);
     },
   });
 
@@ -113,6 +117,22 @@ export const Patients: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = (patient: Patient) => {
+    setPatientToDelete(patient);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (patientToDelete) {
+      deleteMutation.mutate(patientToDelete.id);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setPatientToDelete(null);
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -132,25 +152,45 @@ export const Patients: React.FC = () => {
               <TableCell>Gender</TableCell>
               <TableCell>Phone</TableCell>
               <TableCell>Email</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {patients?.map((patient) => (
-              <TableRow key={patient.id}>
+              <TableRow key={patient.id} hover>
                 <TableCell>{patient.fullName}</TableCell>
                 <TableCell>{patient.idNumber || '-'}</TableCell>
                 <TableCell>{patient.dateOfBirth?._seconds ? dayjs(patient.dateOfBirth._seconds * 1000).format('MMM DD, YYYY') : '-'}</TableCell>
                 <TableCell>{patient.gender || '-'}</TableCell>
                 <TableCell>{patient.phoneNumber || '-'}</TableCell>
                 <TableCell>{patient.email || '-'}</TableCell>
-                <TableCell>
-                  <IconButton size="small" onClick={() => handleOpen(patient)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => deleteMutation.mutate(patient.id)}>
-                    <DeleteIcon />
-                  </IconButton>
+                <TableCell align="right">
+                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                    <Tooltip title="Edit Patient">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        startIcon={<EditIcon />}
+                        onClick={() => handleOpen(patient)}
+                        sx={{ minWidth: 'auto', px: 1.5 }}
+                      >
+                        Edit
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Delete Patient">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => handleDeleteClick(patient)}
+                        sx={{ minWidth: 'auto', px: 1.5 }}
+                      >
+                        Delete
+                      </Button>
+                    </Tooltip>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}
@@ -158,6 +198,7 @@ export const Patients: React.FC = () => {
         </Table>
       </TableContainer>
 
+      {/* Edit/Create Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>{editingId ? 'Edit Patient' : 'Add Patient'}</DialogTitle>
         <DialogContent>
@@ -224,6 +265,28 @@ export const Patients: React.FC = () => {
           <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained">
             {editingId ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
+        <DialogTitle>Delete Patient</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete <strong>{patientToDelete?.fullName}</strong>?
+            This action cannot be undone and will remove all associated data.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

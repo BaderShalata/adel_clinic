@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   TextField,
   MenuItem,
@@ -29,7 +30,12 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Tooltip,
+  Tabs,
+  Tab,
+  Select,
+  FormControl,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -41,6 +47,8 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   ArrowBack as ArrowBackIcon,
+  Archive as ArchiveIcon,
+  EventAvailable as ActiveIcon,
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -56,7 +64,7 @@ interface Appointment {
   appointmentTime: string;
   serviceType: string;
   duration: number;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+  status: 'pending' | 'scheduled' | 'completed' | 'cancelled' | 'no-show';
   notes?: string;
 }
 
@@ -91,10 +99,13 @@ type ViewMode = 'list' | 'calendar' | 'day';
 
 export const Appointments: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [listTab, setListTab] = useState<'active' | 'archive'>('active');
   const [calendarDate, setCalendarDate] = useState(dayjs());
   const [selectedDay, setSelectedDay] = useState<dayjs.Dayjs>(dayjs());
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedDate, setSelectedDate] = useState('');
@@ -112,7 +123,7 @@ export const Appointments: React.FC = () => {
     phoneNumber: '',
   });
   const [formData, setFormData] = useState<{
-    status: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+    status: 'pending' | 'scheduled' | 'completed' | 'cancelled' | 'no-show';
     notes: string;
   }>({
     status: 'scheduled',
@@ -278,8 +289,67 @@ export const Appointments: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      setDeleteDialogOpen(false);
+      setAppointmentToDelete(null);
     },
   });
+
+  // Inline status update mutation (doesn't close edit dialog)
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      return await apiClient.put(`/appointments/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+    },
+  });
+
+  // Helper to check if appointment is in the past
+  const isAppointmentPast = (appointment: Appointment) => {
+    const aptDate = typeof appointment.appointmentDate === 'string'
+      ? dayjs(appointment.appointmentDate)
+      : dayjs(appointment.appointmentDate._seconds * 1000);
+    return aptDate.isBefore(dayjs(), 'day');
+  };
+
+  // Filter appointments for active/archive tabs
+  const activeAppointments = appointments?.filter(apt => {
+    const isPast = isAppointmentPast(apt);
+    const isArchiveStatus = apt.status === 'completed' || apt.status === 'cancelled';
+    return !isPast && !isArchiveStatus;
+  }) || [];
+
+  const archivedAppointments = appointments?.filter(apt => {
+    const isPast = isAppointmentPast(apt);
+    const isArchiveStatus = apt.status === 'completed' || apt.status === 'cancelled';
+    return isPast || isArchiveStatus;
+  }) || [];
+
+  const displayedAppointments = listTab === 'active' ? activeAppointments : archivedAppointments;
+
+  // Delete confirmation handlers
+  const handleDeleteClick = (appointment: Appointment) => {
+    setAppointmentToDelete(appointment);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (appointmentToDelete) {
+      deleteMutation.mutate(appointmentToDelete.id);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setAppointmentToDelete(null);
+  };
+
+  // Inline status change handler
+  const handleStatusChange = (appointmentId: string, newStatus: string) => {
+    updateStatusMutation.mutate({ id: appointmentId, status: newStatus });
+  };
 
   const createPatientMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -458,13 +528,36 @@ export const Appointments: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'warning' | 'primary' | 'success' | 'error' | 'default' => {
     switch (status) {
+      case 'pending': return 'warning';
       case 'scheduled': return 'primary';
       case 'completed': return 'success';
       case 'cancelled': return 'error';
-      case 'no-show': return 'warning';
+      case 'no-show': return 'default';
       default: return 'default';
+    }
+  };
+
+  const getStatusBgColor = (status: string) => {
+    switch (status) {
+      case 'pending': return '#fff3e0';
+      case 'scheduled': return '#e3f2fd';
+      case 'completed': return '#e8f5e9';
+      case 'cancelled': return '#ffebee';
+      case 'no-show': return '#f5f5f5';
+      default: return '#f5f5f5';
+    }
+  };
+
+  const getStatusBorderColor = (status: string) => {
+    switch (status) {
+      case 'pending': return '#ff9800';
+      case 'scheduled': return '#1976d2';
+      case 'completed': return '#4caf50';
+      case 'cancelled': return '#f44336';
+      case 'no-show': return '#9e9e9e';
+      default: return '#9e9e9e';
     }
   };
 
@@ -537,58 +630,127 @@ export const Appointments: React.FC = () => {
       </Box>
 
       {viewMode === 'list' ? (
-        <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Patient</TableCell>
-              <TableCell>Doctor</TableCell>
-              <TableCell>Service</TableCell>
-              <TableCell>Date & Time</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  <CircularProgress size={24} />
-                </TableCell>
-              </TableRow>
-            ) : appointments?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">No appointments found</TableCell>
-              </TableRow>
-            ) : (
-              appointments?.map((appointment) => (
-                <TableRow key={appointment.id}>
-                  <TableCell>{appointment.patientName}</TableCell>
-                  <TableCell>{appointment.doctorName}</TableCell>
-                  <TableCell>{appointment.serviceType || '-'}</TableCell>
-                  <TableCell>
-                    {typeof appointment.appointmentDate === 'string'
-                      ? dayjs(appointment.appointmentDate).format('MMM DD, YYYY')
-                      : dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD, YYYY')}
-                    {appointment.appointmentTime && ` at ${appointment.appointmentTime}`}
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={appointment.status} color={getStatusColor(appointment.status)} size="small" />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton size="small" onClick={() => handleOpen(appointment)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => deleteMutation.mutate(appointment.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
+        <Paper>
+          {/* Active/Archive Tabs */}
+          <Tabs
+            value={listTab}
+            onChange={(_, newTab) => setListTab(newTab)}
+            sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
+          >
+            <Tab
+              value="active"
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ActiveIcon fontSize="small" />
+                  Active ({activeAppointments.length})
+                </Box>
+              }
+            />
+            <Tab
+              value="archive"
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ArchiveIcon fontSize="small" />
+                  Archive ({archivedAppointments.length})
+                </Box>
+              }
+            />
+          </Tabs>
+
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Patient</TableCell>
+                  <TableCell>Doctor</TableCell>
+                  <TableCell>Service</TableCell>
+                  <TableCell>Date & Time</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              </TableHead>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      <CircularProgress size={24} />
+                    </TableCell>
+                  </TableRow>
+                ) : displayedAppointments.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      {listTab === 'active' ? 'No active appointments' : 'No archived appointments'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  displayedAppointments.map((appointment) => (
+                    <TableRow key={appointment.id} hover>
+                      <TableCell>{appointment.patientName}</TableCell>
+                      <TableCell>{appointment.doctorName}</TableCell>
+                      <TableCell>{appointment.serviceType || '-'}</TableCell>
+                      <TableCell>
+                        {typeof appointment.appointmentDate === 'string'
+                          ? dayjs(appointment.appointmentDate).format('MMM DD, YYYY')
+                          : dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD, YYYY')}
+                        {appointment.appointmentTime && ` at ${appointment.appointmentTime}`}
+                      </TableCell>
+                      <TableCell>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <Select
+                            value={appointment.status}
+                            onChange={(e: SelectChangeEvent) => handleStatusChange(appointment.id, e.target.value)}
+                            sx={{
+                              '& .MuiSelect-select': { py: 0.5 },
+                              bgcolor: getStatusBgColor(appointment.status),
+                              borderColor: getStatusBorderColor(appointment.status),
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: getStatusBorderColor(appointment.status),
+                              },
+                            }}
+                          >
+                            <MenuItem value="pending">Pending</MenuItem>
+                            <MenuItem value="scheduled">Scheduled</MenuItem>
+                            <MenuItem value="completed">Completed</MenuItem>
+                            <MenuItem value="cancelled">Cancelled</MenuItem>
+                            <MenuItem value="no-show">No-Show</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                          <Tooltip title="Edit Appointment">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                              startIcon={<EditIcon />}
+                              onClick={() => handleOpen(appointment)}
+                              sx={{ minWidth: 'auto', px: 1.5 }}
+                            >
+                              Edit
+                            </Button>
+                          </Tooltip>
+                          <Tooltip title="Delete Appointment">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              startIcon={<DeleteIcon />}
+                              onClick={() => handleDeleteClick(appointment)}
+                              sx={{ minWidth: 'auto', px: 1.5 }}
+                            >
+                              Delete
+                            </Button>
+                          </Tooltip>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
       ) : viewMode === 'calendar' ? (
         /* Calendar View */
         <Paper sx={{ p: 2 }}>
@@ -782,13 +944,9 @@ export const Appointments: React.FC = () => {
                               elevation={0}
                               sx={{
                                 p: 1.5,
-                                bgcolor: apt.status === 'completed' ? 'success.50' :
-                                         apt.status === 'cancelled' ? 'error.50' :
-                                         apt.status === 'no-show' ? 'warning.50' : 'primary.50',
+                                bgcolor: getStatusBgColor(apt.status),
                                 borderLeft: '3px solid',
-                                borderColor: apt.status === 'completed' ? 'success.main' :
-                                             apt.status === 'cancelled' ? 'error.main' :
-                                             apt.status === 'no-show' ? 'warning.main' : 'primary.main',
+                                borderColor: getStatusBorderColor(apt.status),
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
                                 '&:hover': { transform: 'scale(1.02)', boxShadow: 1 },
@@ -797,7 +955,7 @@ export const Appointments: React.FC = () => {
                             >
                               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <Box>
-                                  <Typography variant="caption" fontWeight={700} color="primary.main">
+                                  <Typography variant="caption" fontWeight={700} sx={{ color: getStatusBorderColor(apt.status) }}>
                                     {apt.appointmentTime}
                                   </Typography>
                                   <Typography variant="subtitle2" fontWeight={600}>
@@ -1099,6 +1257,7 @@ export const Appointments: React.FC = () => {
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                   >
+                    <MenuItem value="pending">Pending</MenuItem>
                     <MenuItem value="scheduled">Scheduled</MenuItem>
                     <MenuItem value="completed">Completed</MenuItem>
                     <MenuItem value="cancelled">Cancelled</MenuItem>
@@ -1157,6 +1316,35 @@ export const Appointments: React.FC = () => {
             }
           >
             {createPatientMutation.isPending ? 'Creating...' : editingId ? 'Update' : 'Create Appointment'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
+        <DialogTitle>Delete Appointment</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the appointment for{' '}
+            <strong>{appointmentToDelete?.patientName}</strong> on{' '}
+            <strong>
+              {appointmentToDelete && (typeof appointmentToDelete.appointmentDate === 'string'
+                ? dayjs(appointmentToDelete.appointmentDate).format('MMM DD, YYYY')
+                : dayjs(appointmentToDelete.appointmentDate._seconds * 1000).format('MMM DD, YYYY'))}
+            </strong>
+            {appointmentToDelete?.appointmentTime && ` at ${appointmentToDelete.appointmentTime}`}?
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

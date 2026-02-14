@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as admin from 'firebase-admin';
 import { doctorService } from '../services/doctorService';
+import { lockedSlotService } from '../services/lockedSlotService';
 import { CreateDoctorInput, UpdateDoctorInput } from '../models/Doctor';
 import {
   generateDrYosefSchedule,
@@ -454,10 +455,21 @@ export class DoctorController {
         }
       });
 
-      // Build slots with availability status
+      // Get locked slots for this doctor and date (wrapped in try-catch for graceful handling)
+      let lockedTimes = new Set<string>();
+      try {
+        const lockedSlots = await lockedSlotService.getLockedSlotsByDate(id as string, requestedDate);
+        lockedTimes = new Set(lockedSlots.map(slot => slot.time));
+      } catch (lockedSlotsError) {
+        // If locked slots query fails (e.g., missing index), continue without locked info
+        console.warn('Failed to fetch locked slots:', lockedSlotsError);
+      }
+
+      // Build slots with availability status (including locked status)
       const slotsWithAvailability = uniqueSlots.map(time => ({
         time,
-        available: !bookedSlots.has(time)
+        available: !bookedSlots.has(time) && !lockedTimes.has(time),
+        locked: lockedTimes.has(time)
       }));
 
       res.status(200).json({

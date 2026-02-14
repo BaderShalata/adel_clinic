@@ -10,7 +10,7 @@ export interface Appointment {
   appointmentTime: string; // "HH:MM" format
   serviceType: string; // The specialty/service type
   duration: number; // minutes
-  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+  status: 'pending' | 'scheduled' | 'completed' | 'cancelled' | 'no-show';
   notes?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -30,6 +30,6 @@ export interface CreateAppointmentInput {
 export interface UpdateAppointmentInput {
   appointmentDate?: Date | Timestamp;
   duration?: number;
-  status?: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+  status?: 'pending' | 'scheduled' | 'completed' | 'cancelled' | 'no-show';
   notes?: string;
 }

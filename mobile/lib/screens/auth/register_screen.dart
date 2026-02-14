@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
+import '../shell/main_shell.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -46,8 +47,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (mounted) {
         if (success) {
-          // Pop all auth screens and go back to main
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          // Navigate to main shell and clear all previous routes
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const MainShell()),
+            (route) => false,
+          );
         } else {
           final error = context.read<AuthProvider>().errorMessage;
           ScaffoldMessenger.of(context).showSnackBar(

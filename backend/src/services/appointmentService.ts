@@ -1,5 +1,6 @@
-import * as admin from 'firebase-admin'; 
+import * as admin from 'firebase-admin';
 import { Appointment, CreateAppointmentInput, UpdateAppointmentInput } from '../models/Appointment';
+import { lockedSlotService } from './lockedSlotService';
 
 const db = admin.firestore();
 
@@ -67,11 +68,12 @@ export class AppointmentService {
       }
 
       // Build appointment data - only include fields with values
+      // Patient bookings start as 'pending', admin bookings as 'scheduled'
       const appointmentData: Record<string, any> = {
         patientId: data.patientId,
         doctorId: data.doctorId,
         appointmentDate: admin.firestore.Timestamp.fromDate(appointmentDateObj),
-        status: 'scheduled',
+        status: role === 'admin' ? 'scheduled' : 'pending',
         createdAt: admin.firestore.Timestamp.now(),
         updatedAt: admin.firestore.Timestamp.now(),
         createdBy,
@@ -100,6 +102,12 @@ export class AppointmentService {
     try {
       const dateStr = date.toISOString().split('T')[0];
 
+      // Check if the slot is locked
+      const isLocked = await lockedSlotService.isSlotLocked(doctorId, dateStr, time);
+      if (isLocked) {
+        return false;
+      }
+
       const existingAppointments = await this.appointmentsCollection
         .where('doctorId', '==', doctorId)
         .get();
@@ -120,7 +128,7 @@ export class AppointmentService {
             continue;
           }
           const aptDateStr = aptDate.toISOString().split('T')[0];
-          if (aptDateStr === dateStr && ['scheduled', 'completed'].includes(data.status)) {
+          if (aptDateStr === dateStr && ['pending', 'scheduled', 'completed'].includes(data.status)) {
             return false;
           }
         }

@@ -157,7 +157,7 @@ class BookingProvider extends ChangeNotifier {
         appointmentTime: _selectedTimeSlot!,
         serviceType: _selectedService!,
         duration: 15,
-        status: 'scheduled',
+        status: 'pending',
         notes: notes,
       );
 
@@ -173,6 +173,25 @@ class BookingProvider extends ChangeNotifier {
       notifyListeners();
       return null;
     }
+  }
+
+  // Pre-select a doctor (for booking from doctor page)
+  void preselectDoctor(Doctor doctor, {String? service}) {
+    reset();
+    _selectedDoctor = doctor;
+    if (service != null) {
+      _selectedService = service;
+    }
+    notifyListeners();
+  }
+
+  // Set selected service without loading doctors (used when doctor is preselected)
+  void setService(String service) {
+    _selectedService = service;
+    _selectedDate = null;
+    _selectedTimeSlot = null;
+    _availableSlots = null;
+    notifyListeners();
   }
 
   // Reset all selections

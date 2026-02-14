@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../home/new_home_screen.dart';
 import '../doctors/doctors_screen.dart';
 import '../appointments/appointments_screen.dart';
 import '../profile/profile_screen.dart';
+import '../admin/admin_shell.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -23,6 +26,14 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
+    // If user is admin, show admin interface
+    if (authProvider.isLoggedIn && authProvider.isAdmin) {
+      return const AdminShell();
+    }
+
+    // Regular user interface
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,

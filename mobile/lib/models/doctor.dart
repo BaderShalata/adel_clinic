@@ -35,6 +35,10 @@ class Doctor {
   final List<String> qualifications;
   final List<String>? qualificationsEn;
   final List<String>? qualificationsHe;
+  final String? bio;
+  final String? bioEn;
+  final String? bioHe;
+  final String? imageUrl;
   final List<DoctorSchedule> schedule;
   final bool isActive;
 
@@ -49,6 +53,10 @@ class Doctor {
     required this.qualifications,
     this.qualificationsEn,
     this.qualificationsHe,
+    this.bio,
+    this.bioEn,
+    this.bioHe,
+    this.imageUrl,
     required this.schedule,
     required this.isActive,
   });
@@ -73,6 +81,10 @@ class Doctor {
       qualificationsHe: json['qualificationsHe'] != null
           ? List<String>.from(json['qualificationsHe'] as List)
           : null,
+      bio: json['bio'] as String?,
+      bioEn: json['bioEn'] as String?,
+      bioHe: json['bioHe'] as String?,
+      imageUrl: json['imageUrl'] as String?,
       schedule: (json['schedule'] as List)
           .map((s) => DoctorSchedule.fromJson(s as Map<String, dynamic>))
           .toList(),

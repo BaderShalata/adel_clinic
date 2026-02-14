@@ -32,7 +32,8 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 });
 
 // ----- JSON Middleware -----
-app.use(express.json());
+// Increase limit for base64 image uploads
+app.use(express.json({ limit: '10mb' }));
 
 // ----- Rate Limiting -----
 // General limiter: 500 requests per 15 minutes per IP
@@ -65,6 +66,8 @@ import doctorRoutes from './routes/doctorRoutes';
 import fileRoutes from './routes/fileRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import waitingListRoutes from './routes/waitingListRoutes';
+import lockedSlotRoutes from './routes/lockedSlotRoutes';
+import uploadRoutes from './routes/uploadRoutes';
 
 // ----- Prefix Routes -----
 app.use('/api/appointments', appointmentRoutes);
@@ -76,6 +79,8 @@ app.use('/api/doctors', doctorRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/waiting-list', waitingListRoutes);
+app.use('/api/locked-slots', lockedSlotRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // ----- Health Check -----
 app.get('/', (_req, res) => res.json({ status: 'ok', message: 'Adel Clinic API is running' }));

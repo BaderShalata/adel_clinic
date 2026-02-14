@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/doctor_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../models/doctor.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_view.dart';
+import '../../widgets/common/doctor_avatar.dart';
 import 'doctor_detail_screen.dart';
+import '../admin/doctor_form_screen.dart';
 
 class DoctorsScreen extends StatefulWidget {
   const DoctorsScreen({super.key});
@@ -46,12 +50,39 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
   @override
   Widget build(BuildContext context) {
     final doctorProvider = context.watch<DoctorProvider>();
+    final authProvider = context.watch<AuthProvider>();
     final filteredDoctors = _filterDoctors(doctorProvider.doctors);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Our Doctors'),
+        actions: [
+          if (authProvider.isAdmin)
+            IconButton(
+              icon: const Icon(Icons.person_add),
+              tooltip: 'Add Doctor',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DoctorFormScreen()),
+                );
+              },
+            ),
+        ],
       ),
+      floatingActionButton: authProvider.isAdmin
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DoctorFormScreen()),
+                );
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Add Doctor'),
+              backgroundColor: AppTheme.primaryColor,
+            )
+          : null,
       body: Column(
         children: [
           // Search bar
@@ -87,7 +118,10 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
             child: RefreshIndicator(
               onRefresh: () => doctorProvider.loadDoctors(),
               child: doctorProvider.isLoading
-                  ? const LoadingIndicator(message: 'Loading doctors...')
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
+                      child: ShimmerList(itemCount: 5, itemHeight: 100),
+                    )
                   : doctorProvider.errorMessage != null
                       ? ErrorView(
                           message: doctorProvider.errorMessage!,
@@ -98,10 +132,17 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(
-                                    Icons.search_off,
-                                    size: 64,
-                                    color: AppTheme.textHint,
+                                  Container(
+                                    padding: const EdgeInsets.all(AppTheme.spacingL),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.surfaceMedium,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.search_off,
+                                      size: 48,
+                                      color: AppTheme.textHint,
+                                    ),
                                   ),
                                   const SizedBox(height: AppTheme.spacingM),
                                   Text(
@@ -131,7 +172,13 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                                       ),
                                     );
                                   },
-                                );
+                                )
+                                    .animate()
+                                    .fadeIn(
+                                      delay: Duration(milliseconds: 50 * index),
+                                      duration: AppTheme.animMedium,
+                                    )
+                                    .slideX(begin: 0.1, end: 0);
                               },
                             ),
             ),
@@ -183,31 +230,10 @@ class ModernDoctorCard extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          // Avatar with gradient
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppTheme.primaryLight,
-                  AppTheme.primaryColor,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(AppTheme.radiusM),
-            ),
-            child: Center(
-              child: Text(
-                _getInitials(context),
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+          // Avatar with image or initials fallback
+          DoctorAvatarCard(
+            doctor: doctor,
+            size: 70,
           ),
           const SizedBox(width: AppTheme.spacingM),
 
@@ -218,14 +244,18 @@ class ModernDoctorCard extends StatelessWidget {
               children: [
                 Text(
                   displayName,
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 if (doctor.fullNameEn != null && doctor.fullNameHe != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       doctor.fullNameHe!,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
                       textDirection: TextDirection.rtl,
                     ),
                   ),
@@ -237,18 +267,27 @@ class ModernDoctorCard extends StatelessWidget {
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppTheme.spacingS,
-                        vertical: 2,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.primaryColor.withValues(alpha: 0.15),
+                            AppTheme.primaryColor.withValues(alpha: 0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusRound),
+                        border: Border.all(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         spec,
                         style: const TextStyle(
                           fontSize: 11,
                           color: AppTheme.primaryDark,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     );
@@ -258,16 +297,16 @@ class ModernDoctorCard extends StatelessWidget {
             ),
           ),
 
-          // Arrow icon
+          // Arrow icon with better styling
           Container(
             padding: const EdgeInsets.all(AppTheme.spacingS),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+              color: AppTheme.primarySurface,
+              borderRadius: BorderRadius.circular(AppTheme.radiusS),
             ),
             child: const Icon(
               Icons.arrow_forward_ios,
-              size: 16,
+              size: 14,
               color: AppTheme.primaryColor,
             ),
           ),

@@ -94,6 +94,7 @@ const doctorRoutes_1 = __importDefault(require("./routes/doctorRoutes"));
 const fileRoutes_1 = __importDefault(require("./routes/fileRoutes"));
 const analyticsRoutes_1 = __importDefault(require("./routes/analyticsRoutes"));
 const waitingListRoutes_1 = __importDefault(require("./routes/waitingListRoutes"));
+const lockedSlotRoutes_1 = __importDefault(require("./routes/lockedSlotRoutes"));
 // ----- Prefix Routes -----
 app.use('/api/appointments', appointmentRoutes_1.default);
 app.use('/api/auth', authRoutes_1.default);
@@ -104,6 +105,7 @@ app.use('/api/doctors', doctorRoutes_1.default);
 app.use('/api/files', fileRoutes_1.default);
 app.use('/api/analytics', analyticsRoutes_1.default);
 app.use('/api/waiting-list', waitingListRoutes_1.default);
+app.use('/api/locked-slots', lockedSlotRoutes_1.default);
 // ----- Health Check -----
 app.get('/', (_req, res) => res.json({ status: 'ok', message: 'Adel Clinic API is running' }));
 app.get('/health', (_req, res) => res.json({ status: 'ok', message: 'Adel Clinic API is running' }));

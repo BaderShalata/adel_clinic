@@ -95,6 +95,51 @@ export class AppointmentController {
     }
   }
 
+  /**
+   * Patient cancels their own appointment
+   * PUT /api/appointments/my/:id/cancel
+   */
+  async cancelMyAppointment(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const uid = req.user?.uid;
+      const { id } = req.params;
+
+      if (!uid) {
+        res.status(401).json({ error: 'User not authenticated' });
+        return;
+      }
+
+      // Get the appointment to verify ownership
+      const appointment = await appointmentService.getAppointmentById(id as string);
+      if (!appointment) {
+        res.status(404).json({ error: 'Appointment not found' });
+        return;
+      }
+
+      // Verify the appointment belongs to this patient
+      if (appointment.patientId !== uid) {
+        res.status(403).json({ error: 'You can only cancel your own appointments' });
+        return;
+      }
+
+      // Check if appointment can be cancelled (only scheduled/confirmed/pending)
+      const cancellableStatuses = ['scheduled', 'confirmed', 'pending'];
+      if (!cancellableStatuses.includes(appointment.status)) {
+        res.status(400).json({ error: `Cannot cancel appointment with status: ${appointment.status}` });
+        return;
+      }
+
+      // Update status to cancelled
+      const updatedAppointment = await appointmentService.updateAppointment(id as string, {
+        status: 'cancelled',
+      });
+
+      res.status(200).json(updatedAppointment);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async getAppointmentById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
@@ -114,9 +159,9 @@ export class AppointmentController {
       const { status, doctorId, patientId, startDate, endDate } = req.query;
 
       const filters: any = {};
-      if (status) filters.status = status;
-      if (doctorId) filters.doctorId = doctorId;
-      if (patientId) filters.patientId = patientId;
+      if (status) filters.status = status as string;
+      if (doctorId) filters.doctorId = doctorId as string;
+      if (patientId) filters.patientId = patientId as string;
       if (startDate) filters.startDate = new Date(startDate as string);
       if (endDate) filters.endDate = new Date(endDate as string);
 
@@ -153,6 +198,101 @@ export class AppointmentController {
       const { doctorId } = req.query;
       const appointments = await appointmentService.getTodayAppointments(doctorId as string);
       res.status(200).json(appointments);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Delete a user's own past/cancelled appointment
+   * DELETE /api/appointments/my/:id
+   */
+  async deleteMyAppointment(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const uid = req.user?.uid;
+      const { id } = req.params;
+
+      if (!uid) {
+        res.status(401).json({ error: 'User not authenticated' });
+        return;
+      }
+
+      const appointmentId = id as string;
+
+      // Get the appointment to verify ownership
+      const appointment = await appointmentService.getAppointmentById(appointmentId);
+      if (!appointment) {
+        res.status(404).json({ error: 'Appointment not found' });
+        return;
+      }
+
+      // Verify the appointment belongs to this user
+      if (appointment.patientId !== uid && appointment.createdBy !== uid) {
+        res.status(403).json({ error: 'You can only delete your own appointments' });
+        return;
+      }
+
+      // Only allow deleting past, cancelled, or completed appointments
+      const validStatuses = ['cancelled', 'completed', 'no_show'];
+      const appointmentDate = appointment.appointmentDate instanceof Date
+        ? appointment.appointmentDate
+        : (appointment.appointmentDate as any).toDate();
+      const isPast = appointmentDate < new Date();
+
+      if (!validStatuses.includes(appointment.status) && !isPast) {
+        res.status(400).json({ error: 'You can only delete past, cancelled, or completed appointments' });
+        return;
+      }
+
+      await appointmentService.deleteAppointment(appointmentId);
+      res.status(200).json({ message: 'Appointment deleted successfully' });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Clear all past/cancelled appointments for the current user
+   * DELETE /api/appointments/my/clear-history
+   */
+  async clearMyHistory(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const uid = req.user?.uid;
+
+      if (!uid) {
+        res.status(401).json({ error: 'User not authenticated' });
+        return;
+      }
+
+      // Get all user's appointments
+      const appointments = await appointmentService.getAllAppointments({ patientId: uid });
+
+      // Filter for deletable appointments (past, cancelled, completed)
+      const now = new Date();
+      const toDelete = appointments.filter(apt => {
+        const appointmentDate = apt.appointmentDate instanceof Date
+          ? apt.appointmentDate
+          : (apt.appointmentDate as any).toDate();
+        const isPast = appointmentDate < now;
+        const isDeletableStatus = ['cancelled', 'completed', 'no_show'].includes(apt.status);
+        return isPast || isDeletableStatus;
+      });
+
+      // Delete each appointment
+      let deletedCount = 0;
+      for (const apt of toDelete) {
+        try {
+          await appointmentService.deleteAppointment(apt.id);
+          deletedCount++;
+        } catch (e) {
+          console.error(`Failed to delete appointment ${apt.id}:`, e);
+        }
+      }
+
+      res.status(200).json({
+        message: `Cleared ${deletedCount} appointments from history`,
+        deletedCount
+      });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

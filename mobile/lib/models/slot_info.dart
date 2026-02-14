@@ -1,16 +1,19 @@
 class SlotInfo {
   final String time;
   final bool available;
+  final bool? locked;
 
   SlotInfo({
     required this.time,
     required this.available,
+    this.locked,
   });
 
   factory SlotInfo.fromJson(Map<String, dynamic> json) {
     return SlotInfo(
       time: json['time'] as String,
       available: json['available'] as bool,
+      locked: json['locked'] as bool?,
     );
   }
 }

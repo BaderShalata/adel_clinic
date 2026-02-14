@@ -4,7 +4,12 @@ class News {
   final String content;
   final String? imageURL;
   final String category;
-  final DateTime publishedAt;
+  final String? author;
+  final String? authorName;
+  final bool isPublished;
+  final DateTime? publishedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   News({
     required this.id,
@@ -12,29 +17,42 @@ class News {
     required this.content,
     this.imageURL,
     required this.category,
-    required this.publishedAt,
+    this.author,
+    this.authorName,
+    this.isPublished = false,
+    this.publishedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  factory News.fromJson(Map<String, dynamic> json) {
-    // Handle Firestore Timestamp format
-    DateTime parsedDate;
-    if (json['publishedAt'] is Map && json['publishedAt']['_seconds'] != null) {
-      parsedDate = DateTime.fromMillisecondsSinceEpoch(
-        (json['publishedAt']['_seconds'] as int) * 1000,
-      );
-    } else if (json['publishedAt'] is String) {
-      parsedDate = DateTime.parse(json['publishedAt']);
-    } else {
-      parsedDate = DateTime.now();
+  static DateTime? _parseDate(dynamic date) {
+    if (date == null) return null;
+    if (date is DateTime) return date;
+    if (date is String) return DateTime.tryParse(date);
+    if (date is Map) {
+      // Handle Firestore Timestamp format
+      if (date['_seconds'] != null) {
+        return DateTime.fromMillisecondsSinceEpoch(
+          (date['_seconds'] as int) * 1000,
+        );
+      }
     }
+    return null;
+  }
 
+  factory News.fromJson(Map<String, dynamic> json) {
     return News(
       id: json['id'] as String,
       title: json['title'] as String,
       content: json['content'] as String,
       imageURL: json['imageURL'] as String?,
       category: json['category'] as String? ?? 'general',
-      publishedAt: parsedDate,
+      author: json['author'] as String?,
+      authorName: json['authorName'] as String?,
+      isPublished: json['isPublished'] as bool? ?? false,
+      publishedAt: _parseDate(json['publishedAt']),
+      createdAt: _parseDate(json['createdAt']),
+      updatedAt: _parseDate(json['updatedAt']),
     );
   }
 
@@ -45,7 +63,12 @@ class News {
       'content': content,
       if (imageURL != null) 'imageURL': imageURL,
       'category': category,
-      'publishedAt': publishedAt.toIso8601String(),
+      if (author != null) 'author': author,
+      if (authorName != null) 'authorName': authorName,
+      'isPublished': isPublished,
+      if (publishedAt != null) 'publishedAt': publishedAt!.toIso8601String(),
+      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
   }
 }

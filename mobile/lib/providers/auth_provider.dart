@@ -13,6 +13,9 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isLoggedIn => _authService.isLoggedIn();
+  bool get isAdmin => _user?.role == 'admin';
+  bool get isDoctor => _user?.role == 'doctor';
+  String get userRole => _user?.role ?? 'patient';
 
   Future<bool> signIn(String email, String password) async {
     _isLoading = true;

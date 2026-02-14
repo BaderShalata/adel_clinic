@@ -9,6 +9,7 @@ router.use(auth_1.authenticate);
 // Patient-facing routes (any authenticated user can book)
 router.post('/book', appointmentController_1.appointmentController.bookAppointment.bind(appointmentController_1.appointmentController));
 router.get('/my', appointmentController_1.appointmentController.getMyAppointments.bind(appointmentController_1.appointmentController));
+router.put('/my/:id/cancel', appointmentController_1.appointmentController.cancelMyAppointment.bind(appointmentController_1.appointmentController));
 // Admin/Doctor routes
 router.post('/', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.createAppointment.bind(appointmentController_1.appointmentController));
 router.get('/', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.getAllAppointments.bind(appointmentController_1.appointmentController));

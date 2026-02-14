@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Button, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Typography, Dialog, DialogTitle, DialogContent,
-  DialogActions, TextField, IconButton, Chip, MenuItem,
+  DialogContentText, DialogActions, TextField, Chip, MenuItem, Tooltip, Stack,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Block, CheckCircle } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
@@ -21,6 +21,8 @@ interface User {
 export const Users: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -74,6 +76,8 @@ export const Users: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
     },
   });
 
@@ -119,6 +123,22 @@ export const Users: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (userToDelete) {
+      deleteMutation.mutate(userToDelete.uid);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -137,12 +157,12 @@ export const Users: React.FC = () => {
               <TableCell>Phone</TableCell>
               <TableCell>Role</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {users?.map((user) => (
-              <TableRow key={user.uid}>
+              <TableRow key={user.uid} hover>
                 <TableCell>{user.fullName}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.phoneNumber || '-'}</TableCell>
@@ -156,19 +176,45 @@ export const Users: React.FC = () => {
                     size="small"
                   />
                 </TableCell>
-                <TableCell>
-                  <IconButton size="small" onClick={() => handleOpen(user)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => toggleActiveMutation.mutate({ id: user.uid, isActive: user.isActive })}
-                  >
-                    {user.isActive ? <Block /> : <CheckCircle />}
-                  </IconButton>
-                  <IconButton size="small" onClick={() => deleteMutation.mutate(user.uid)}>
-                    <DeleteIcon />
-                  </IconButton>
+                <TableCell align="right">
+                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                    <Tooltip title="Edit User">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        startIcon={<EditIcon />}
+                        onClick={() => handleOpen(user)}
+                        sx={{ minWidth: 'auto', px: 1.5 }}
+                      >
+                        Edit
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title={user.isActive ? 'Deactivate User' : 'Activate User'}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color={user.isActive ? 'warning' : 'success'}
+                        startIcon={user.isActive ? <Block /> : <CheckCircle />}
+                        onClick={() => toggleActiveMutation.mutate({ id: user.uid, isActive: user.isActive })}
+                        sx={{ minWidth: 'auto', px: 1.5 }}
+                      >
+                        {user.isActive ? 'Deactivate' : 'Activate'}
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Delete User">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => handleDeleteClick(user)}
+                        sx={{ minWidth: 'auto', px: 1.5 }}
+                      >
+                        Delete
+                      </Button>
+                    </Tooltip>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}
@@ -176,6 +222,7 @@ export const Users: React.FC = () => {
         </Table>
       </TableContainer>
 
+      {/* Edit/Create Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>{editingId ? 'Edit User' : 'Add User'}</DialogTitle>
         <DialogContent>
@@ -229,6 +276,28 @@ export const Users: React.FC = () => {
           <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained">
             {editingId ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
+        <DialogTitle>Delete User</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete <strong>{userToDelete?.fullName}</strong> ({userToDelete?.email})?
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

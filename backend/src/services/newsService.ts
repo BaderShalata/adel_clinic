@@ -8,18 +8,26 @@ export class NewsService {
 
   async createNews(data: CreateNewsInput, authorUid: string, authorName: string): Promise<News> {
     try {
-      const newsData: Omit<News, 'id'> = {
+      const newsData: any = {
         title: data.title,
         content: data.content,
         author: authorUid,
         authorName,
-        imageURL: data.imageURL,
         category: data.category,
         isPublished: data.isPublished || false,
-        publishedAt: data.isPublished ? admin.firestore.Timestamp.now() : undefined,
         createdAt: admin.firestore.Timestamp.now(),
         updatedAt: admin.firestore.Timestamp.now(),
       };
+
+      // Only add imageURL if it has a value (Firestore doesn't accept undefined)
+      if (data.imageURL) {
+        newsData.imageURL = data.imageURL;
+      }
+
+      // Only add publishedAt if publishing
+      if (data.isPublished) {
+        newsData.publishedAt = admin.firestore.Timestamp.now();
+      }
 
       const docRef = await this.newsCollection.add(newsData);
 
@@ -70,10 +78,16 @@ export class NewsService {
 
   async updateNews(id: string, data: UpdateNewsInput): Promise<News> {
     try {
+      // Build update data, excluding undefined values
       const updateData: any = {
-        ...data,
         updatedAt: admin.firestore.Timestamp.now(),
       };
+
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.content !== undefined) updateData.content = data.content;
+      if (data.category !== undefined) updateData.category = data.category;
+      if (data.imageURL !== undefined) updateData.imageURL = data.imageURL;
+      if (data.isPublished !== undefined) updateData.isPublished = data.isPublished;
 
       // Set publishedAt if changing from unpublished to published
       if (data.isPublished === true) {

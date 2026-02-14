@@ -119,6 +119,45 @@ class AppointmentController {
             res.status(400).json({ error: error.message });
         }
     }
+    /**
+     * Patient cancels their own appointment
+     * PUT /api/appointments/my/:id/cancel
+     */
+    async cancelMyAppointment(req, res) {
+        try {
+            const uid = req.user?.uid;
+            const { id } = req.params;
+            if (!uid) {
+                res.status(401).json({ error: 'User not authenticated' });
+                return;
+            }
+            // Get the appointment to verify ownership
+            const appointment = await appointmentService_1.appointmentService.getAppointmentById(id);
+            if (!appointment) {
+                res.status(404).json({ error: 'Appointment not found' });
+                return;
+            }
+            // Verify the appointment belongs to this patient
+            if (appointment.patientId !== uid) {
+                res.status(403).json({ error: 'You can only cancel your own appointments' });
+                return;
+            }
+            // Check if appointment can be cancelled (only scheduled/confirmed/pending)
+            const cancellableStatuses = ['scheduled', 'confirmed', 'pending'];
+            if (!cancellableStatuses.includes(appointment.status)) {
+                res.status(400).json({ error: `Cannot cancel appointment with status: ${appointment.status}` });
+                return;
+            }
+            // Update status to cancelled
+            const updatedAppointment = await appointmentService_1.appointmentService.updateAppointment(id, {
+                status: 'cancelled',
+            });
+            res.status(200).json(updatedAppointment);
+        }
+        catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
     async getAppointmentById(req, res) {
         try {
             const { id } = req.params;

@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.doctorController = exports.DoctorController = void 0;
 const admin = __importStar(require("firebase-admin"));
 const doctorService_1 = require("../services/doctorService");
+const lockedSlotService_1 = require("../services/lockedSlotService");
 const scheduleHelpers_1 = require("../utils/scheduleHelpers");
 class DoctorController {
     /**
@@ -436,10 +437,21 @@ class DoctorController {
                     }
                 }
             });
-            // Build slots with availability status
+            // Get locked slots for this doctor and date (wrapped in try-catch for graceful handling)
+            let lockedTimes = new Set();
+            try {
+                const lockedSlots = await lockedSlotService_1.lockedSlotService.getLockedSlotsByDate(id, requestedDate);
+                lockedTimes = new Set(lockedSlots.map(slot => slot.time));
+            }
+            catch (lockedSlotsError) {
+                // If locked slots query fails (e.g., missing index), continue without locked info
+                console.warn('Failed to fetch locked slots:', lockedSlotsError);
+            }
+            // Build slots with availability status (including locked status)
             const slotsWithAvailability = uniqueSlots.map(time => ({
                 time,
-                available: !bookedSlots.has(time)
+                available: !bookedSlots.has(time) && !lockedTimes.has(time),
+                locked: lockedTimes.has(time)
             }));
             res.status(200).json({
                 doctorId: doctor.id,

@@ -25,6 +25,11 @@ export interface Doctor {
   qualificationsEn?: string[]; // English
   qualificationsHe?: string[]; // Hebrew
 
+  bio?: string;               // Doctor bio/snippet (Arabic)
+  bioEn?: string;             // English
+  bioHe?: string;             // Hebrew
+
+  imageUrl?: string;          // Doctor profile photo URL
   schedule: DoctorSchedule[];
   isActive: boolean;
   createdAt: Timestamp;
@@ -41,6 +46,10 @@ export interface CreateDoctorInput {
   qualifications: string[];
   qualificationsEn?: string[];
   qualificationsHe?: string[];
+  bio?: string;
+  bioEn?: string;
+  bioHe?: string;
+  imageUrl?: string;
   schedule: DoctorSchedule[];
 }
 
@@ -54,6 +63,10 @@ export interface UpdateDoctorInput {
   qualifications?: string[];
   qualificationsEn?: string[];
   qualificationsHe?: string[];
+  bio?: string;
+  bioEn?: string;
+  bioHe?: string;
+  imageUrl?: string;
   schedule?: DoctorSchedule[];
   isActive?: boolean;
 }

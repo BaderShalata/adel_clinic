@@ -7,11 +7,23 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Avatar,
+  Chip,
+  Divider,
 } from '@mui/material';
 import {
   People as PeopleIcon,
   EventNote as AppointmentIcon,
   LocalHospital as DoctorIcon,
+  PendingActions as PendingIcon,
+  CheckCircle as CheckCircleIcon,
+  HourglassEmpty as WaitingIcon,
+  CalendarToday as CalendarIcon,
+  Event as EventIcon,
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -26,12 +38,16 @@ interface AnalyticsData {
   upcomingAppointments: number;
   completedAppointments: number;
   cancelledAppointments: number;
+  pendingAppointments: number;
+  completedToday: number;
+  waitingListCount: number;
   recentPatients: number;
   appointmentsByStatus: {
     scheduled: number;
     completed: number;
     cancelled: number;
     noShow: number;
+    pending: number;
   };
   appointmentsByDoctor: Array<{
     doctorId: string;
@@ -40,20 +56,35 @@ interface AnalyticsData {
   }>;
 }
 
+interface Appointment {
+  id: string;
+  patientName?: string;
+  appointmentTime?: string;
+  serviceType?: string;
+  status: string;
+  doctorName?: string;
+}
+
 const StatCard: React.FC<{
   title: string;
   value: number;
   icon: React.ReactNode;
   color: string;
-}> = ({ title, value, icon, color }) => (
-  <Card>
+  highlight?: boolean;
+}> = ({ title, value, icon, color, highlight }) => (
+  <Card sx={{
+    border: highlight ? `2px solid ${color}` : 'none',
+    boxShadow: highlight ? `0 0 10px ${color}40` : undefined,
+  }}>
     <CardContent>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography color="text.secondary" gutterBottom>
             {title}
           </Typography>
-          <Typography variant="h4">{value}</Typography>
+          <Typography variant="h4" sx={{ color: highlight ? color : 'inherit' }}>
+            {value}
+          </Typography>
         </Box>
         <Box
           sx={{

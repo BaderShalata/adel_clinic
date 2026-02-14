@@ -186,6 +186,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
   Future<void> _confirmBooking() async {
     final bookingProvider = context.read<BookingProvider>();
     final authProvider = context.read<AuthProvider>();
+    final appointmentProvider = context.read<AppointmentProvider>();
 
     if (bookingProvider.selectedTimeSlot == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,6 +204,21 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
         const SnackBar(
           content: Text('Please log in to book an appointment'),
           backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
+
+    // Check if user already has an active appointment (limit to 1)
+    if (appointmentProvider.hasActiveAppointment) {
+      final existingAppointment = appointmentProvider.activeAppointment;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'You already have an appointment on ${existingAppointment?.appointmentDate.day}/${existingAppointment?.appointmentDate.month}. Please cancel it first to book a new one.',
+          ),
+          backgroundColor: AppTheme.warningColor,
+          duration: const Duration(seconds: 4),
         ),
       );
       return;
@@ -256,8 +272,9 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Appointment booked successfully!'),
+          content: Text('Appointment request submitted! Awaiting clinic confirmation.'),
           backgroundColor: AppTheme.successColor,
+          duration: Duration(seconds: 4),
         ),
       );
       // Pop all booking screens and go back to main
@@ -270,6 +287,188 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
         ),
       );
     }
+  }
+
+  Widget _buildSlotsContent(BuildContext context, BookingProvider bookingProvider) {
+    final slots = bookingProvider.availableSlots;
+
+    // Check if doctor is working on this day (has total slots)
+    final isDoctorWorking = slots != null && slots.totalSlots > 0;
+    // Check if all slots are full (doctor working but no available slots)
+    final allSlotsFull = isDoctorWorking && slots.availableSlots == 0;
+    // Check if there are available slots to show
+    final hasAvailableSlots = slots != null && slots.slots.isNotEmpty && slots.availableSlots > 0;
+
+    // Doctor is not working on this day
+    if (!isDoctorWorking) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_busy,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            Text(
+              'Doctor is not available on this day',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Doctor is working but all slots are full - show waiting list option
+    if (allSlotsFull) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_busy,
+              size: 64,
+              color: Colors.orange[400],
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            Text(
+              'All slots are booked for this day',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: AppTheme.spacingL),
+            OutlinedButton.icon(
+              onPressed: () => _showJoinWaitingListDialog(bookingProvider),
+              icon: const Icon(Icons.schedule),
+              label: const Text('Join Waiting List'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor,
+                side: const BorderSide(color: AppTheme.primaryColor),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingL,
+                  vertical: AppTheme.spacingM,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingS),
+            Text(
+              'Get notified when a slot opens up',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[500],
+                  ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show available slots
+    if (hasAvailableSlots) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spacingM,
+            ),
+            child: Text(
+              '${slots.availableSlots} slots available',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.grey[600]),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingS),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingM,
+              ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                childAspectRatio: 2.2,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemCount: slots.slots.length,
+              itemBuilder: (context, index) {
+                final slot = slots.slots[index];
+                final isSelected = bookingProvider.selectedTimeSlot == slot.time;
+                final isAvailable = slot.available;
+
+                return GestureDetector(
+                  onTap: isAvailable
+                      ? () => bookingProvider.selectTimeSlot(slot.time)
+                      : null,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppTheme.primaryColor
+                          : isAvailable
+                              ? Colors.white
+                              : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppTheme.primaryColor
+                            : isAvailable
+                                ? AppTheme.primaryColor.withValues(alpha: 0.3)
+                                : Colors.grey[300]!,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        slot.time,
+                        style: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : isAvailable
+                                  ? Colors.black87
+                                  : Colors.grey[500],
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Fallback - no slots data
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.event_busy,
+            size: 64,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: AppTheme.spacingM),
+          Text(
+            'No slot information available',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(color: Colors.grey[600]),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -365,134 +564,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
               Expanded(
                 child: bookingProvider.isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : bookingProvider.availableSlots == null ||
-                            bookingProvider.availableSlots!.slots.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.event_busy,
-                                  size: 64,
-                                  color: Colors.grey[400],
-                                ),
-                                const SizedBox(height: AppTheme.spacingM),
-                                Text(
-                                  bookingProvider.availableSlots?.slots.isEmpty == true
-                                      ? 'No available slots on this day'
-                                      : 'Doctor is not available on this day',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(color: Colors.grey[600]),
-                                ),
-                                const SizedBox(height: AppTheme.spacingL),
-                                OutlinedButton.icon(
-                                  onPressed: () => _showJoinWaitingListDialog(bookingProvider),
-                                  icon: const Icon(Icons.schedule),
-                                  label: const Text('Join Waiting List'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppTheme.primaryColor,
-                                    side: const BorderSide(color: AppTheme.primaryColor),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppTheme.spacingL,
-                                      vertical: AppTheme.spacingM,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: AppTheme.spacingS),
-                                Text(
-                                  'Get notified when a slot opens up',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Colors.grey[500],
-                                      ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppTheme.spacingM,
-                                ),
-                                child: Text(
-                                  '${bookingProvider.availableSlots!.availableSlots} slots available',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(color: Colors.grey[600]),
-                                ),
-                              ),
-                              const SizedBox(height: AppTheme.spacingS),
-                              Expanded(
-                                child: GridView.builder(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: AppTheme.spacingM,
-                                  ),
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 4,
-                                    childAspectRatio: 2.2,
-                                    crossAxisSpacing: 8,
-                                    mainAxisSpacing: 8,
-                                  ),
-                                  itemCount:
-                                      bookingProvider.availableSlots!.slots.length,
-                                  itemBuilder: (context, index) {
-                                    final slot =
-                                        bookingProvider.availableSlots!.slots[index];
-                                    final isSelected =
-                                        bookingProvider.selectedTimeSlot == slot.time;
-                                    final isAvailable = slot.available;
-
-                                    return GestureDetector(
-                                      onTap: isAvailable
-                                          ? () =>
-                                              bookingProvider.selectTimeSlot(slot.time)
-                                          : null,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: isSelected
-                                              ? AppTheme.primaryColor
-                                              : isAvailable
-                                                  ? Colors.white
-                                                  : Colors.grey[200],
-                                          borderRadius:
-                                              BorderRadius.circular(AppTheme.radiusS),
-                                          border: Border.all(
-                                            color: isSelected
-                                                ? AppTheme.primaryColor
-                                                : isAvailable
-                                                    ? AppTheme.primaryColor
-                                                        .withValues(alpha: 0.3)
-                                                    : Colors.grey[300]!,
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            slot.time,
-                                            style: TextStyle(
-                                              color: isSelected
-                                                  ? Colors.white
-                                                  : isAvailable
-                                                      ? Colors.black87
-                                                      : Colors.grey[500],
-                                              fontWeight: isSelected
-                                                  ? FontWeight.w600
-                                                  : FontWeight.normal,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
+                    : _buildSlotsContent(context, bookingProvider),
               ),
 
               // Notes and Book button

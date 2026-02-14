@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/news_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/news.dart';
@@ -9,6 +12,9 @@ import '../../widgets/common/modern_card.dart';
 import '../../widgets/common/section_header.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_view.dart';
+import '../doctors/doctors_screen.dart';
+import '../booking/service_selection_screen.dart';
+import '../auth/login_screen.dart';
 
 class NewHomeScreen extends StatefulWidget {
   const NewHomeScreen({super.key});
@@ -47,6 +53,15 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                 child: _buildQuickActions(context),
               ),
 
+              // Location and Social Media Grid
+              SliverToBoxAdapter(
+                child: _buildLocationAndSocialGrid(context),
+              ),
+
+              const SliverToBoxAdapter(
+                child: SizedBox(height: AppTheme.spacingM),
+              ),
+
               // News Section Header
               const SliverToBoxAdapter(
                 child: SectionHeader(title: 'Latest News'),
@@ -54,8 +69,14 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
 
               // News Feed
               if (newsProvider.isLoading)
-                const SliverFillRemaining(
-                  child: LoadingIndicator(message: 'Loading news...'),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => const ShimmerCard(height: 200),
+                      childCount: 3,
+                    ),
+                  ),
                 )
               else if (newsProvider.errorMessage != null)
                 SliverFillRemaining(
@@ -110,23 +131,23 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
   Widget _buildHeader(BuildContext context, AuthProvider authProvider) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingL),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.primaryColor,
-            AppTheme.primaryDark,
-          ],
-        ),
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        gradient: AppTheme.headerGradient,
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(AppTheme.radiusXL),
           bottomRight: Radius.circular(AppTheme.radiusXL),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          // Clinic Logo - Large
+          // Clinic Logo - Large with animation
           Container(
             width: 160,
             height: 160,
@@ -150,7 +171,10 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                 ),
               ),
             ),
-          ),
+          )
+              .animate()
+              .fadeIn(duration: AppTheme.animMedium)
+              .scale(delay: 100.ms, duration: AppTheme.animMedium),
           const SizedBox(height: AppTheme.spacingM),
           Text(
             authProvider.isLoggedIn
@@ -158,15 +182,21 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                 : 'Your Health, Our Priority',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
-          ),
+          )
+              .animate()
+              .fadeIn(delay: 200.ms, duration: AppTheme.animMedium)
+              .slideY(begin: 0.3, end: 0),
         ],
       ),
     );
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
     return Padding(
       padding: const EdgeInsets.all(AppTheme.spacingM),
       child: Row(
@@ -175,36 +205,366 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
             child: _QuickActionButton(
               icon: Icons.medical_services,
               label: 'Find Doctor',
+              color: AppTheme.accentColor,
               onTap: () {
-                // Navigate handled by parent MainShell
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DoctorsScreen()),
+                );
               },
             ),
-          ),
+          )
+              .animate()
+              .fadeIn(delay: 300.ms, duration: AppTheme.animMedium)
+              .slideX(begin: -0.2, end: 0),
           const SizedBox(width: AppTheme.spacingM),
           Expanded(
             child: _QuickActionButton(
               icon: Icons.calendar_month,
               label: 'Book Appointment',
+              color: AppTheme.primaryColor,
               onTap: () {
-                // Navigate handled by parent MainShell
+                // Check if user is logged in before allowing booking
+                if (!authProvider.isLoggedIn) {
+                  _showLoginRequiredDialog(context);
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ServiceSelectionScreen()),
+                  );
+                }
               },
             ),
+          )
+              .animate()
+              .fadeIn(delay: 400.ms, duration: AppTheme.animMedium)
+              .slideX(begin: 0.2, end: 0),
+        ],
+      ),
+    );
+  }
+
+  void _showLoginRequiredDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(AppTheme.spacingL),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppTheme.radiusXL),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
+              decoration: BoxDecoration(
+                color: AppTheme.dividerColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Icon
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.login_rounded,
+                size: 36,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            Text(
+              'Sign In Required',
+              style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: AppTheme.spacingS),
+            Text(
+              'Please sign in to book an appointment. Your booking will be saved to your account.',
+              textAlign: TextAlign.center,
+              style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.textSecondary,
+                  ),
+            ),
+            const SizedBox(height: AppTheme.spacingL),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: AppTheme.spacingM),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text('Sign In'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spacingS),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationAndSocialGrid(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Location Card
+          Expanded(
+            child: ModernCard(
+              onTap: _openMap,
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppTheme.spacingM),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppTheme.successColor.withValues(alpha: 0.2),
+                          AppTheme.successColor.withValues(alpha: 0.05),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.location_on,
+                      color: AppTheme.successColor,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+                  Text(
+                    'Location',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Saba Reihana\nMedical Center',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+                  Text(
+                    'Tap to open',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ],
+              ),
+            )
+                .animate()
+                .fadeIn(delay: 500.ms, duration: AppTheme.animMedium)
+                .slideY(begin: 0.2, end: 0),
+          ),
+          const SizedBox(width: AppTheme.spacingM),
+          // Social Media Card
+          Expanded(
+            child: ModernCard(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              child: Column(
+                children: [
+                  Text(
+                    'Follow Us',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _SocialMediaButton(
+                        icon: Icons.facebook,
+                        color: const Color(0xFF1877F2),
+                        onTap: () => _openSocialMedia('facebook'),
+                      ),
+                      _SocialMediaButton(
+                        icon: Icons.camera_alt,
+                        color: const Color(0xFFE4405F),
+                        onTap: () => _openSocialMedia('instagram'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _SocialMediaButton(
+                        icon: Icons.phone,
+                        color: const Color(0xFF25D366),
+                        onTap: () => _openSocialMedia('whatsapp'),
+                      ),
+                      _SocialMediaButton(
+                        icon: Icons.phone_in_talk,
+                        color: AppTheme.primaryColor,
+                        onTap: () => _openSocialMedia('phone'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            )
+                .animate()
+                .fadeIn(delay: 600.ms, duration: AppTheme.animMedium)
+                .slideY(begin: 0.2, end: 0),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _openSocialMedia(String platform) async {
+    Uri? uri;
+    switch (platform) {
+      case 'facebook':
+        // Placeholder - replace with actual Facebook page
+        uri = Uri.parse('https://facebook.com/adelclinic');
+        break;
+      case 'instagram':
+        // Placeholder - replace with actual Instagram page
+        uri = Uri.parse('https://instagram.com/adelclinic');
+        break;
+      case 'whatsapp':
+        // Placeholder - replace with actual phone number
+        uri = Uri.parse('https://wa.me/972XXXXXXXXX');
+        break;
+      case 'phone':
+        // Placeholder - replace with actual phone number
+        uri = Uri.parse('tel:+972XXXXXXXXX');
+        break;
+    }
+
+    if (uri != null) {
+      try {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not open $platform')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _openMap() async {
+    // Clinic coordinates: Saba Reihana Medical Center, Sakhnin
+    const lat = 32.8625292;
+    const lng = 35.2958923;
+
+    // Show dialog to choose between Google Maps and Waze
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Open with',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.map, color: Colors.red),
+                title: const Text('Google Maps'),
+                onTap: () => Navigator.pop(ctx, 'google'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.navigation, color: Colors.blue),
+                title: const Text('Waze'),
+                onTap: () => Navigator.pop(ctx, 'waze'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (choice == null) return;
+
+    Uri uri;
+    if (choice == 'waze') {
+      // Waze URL format (works on both Android and iOS)
+      uri = Uri.parse('https://waze.com/ul?ll=$lat,$lng&navigate=yes');
+    } else {
+      // Google Maps URL format (works on both Android and iOS)
+      uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+    }
+
+    // Launch directly without checking canLaunchUrl (which can fail on Android 11+)
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      // Fallback: try with platform default mode
+      try {
+        await launchUrl(uri);
+      } catch (e2) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open maps')),
+          );
+        }
+      }
+    }
   }
 }
 
 class _QuickActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onTap;
 
   const _QuickActionButton({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.color = AppTheme.primaryColor,
   });
 
   @override
@@ -218,22 +578,63 @@ class _QuickActionButton extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppTheme.spacingM),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withValues(alpha: 0.15),
+                  color.withValues(alpha: 0.05),
+                ],
+              ),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: AppTheme.primaryColor,
+              color: color,
               size: 28,
             ),
           ),
           const SizedBox(height: AppTheme.spacingS),
           Text(
             label,
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SocialMediaButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _SocialMediaButton({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+      child: Container(
+        padding: const EdgeInsets.all(AppTheme.spacingS),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+        ),
+        child: Icon(
+          icon,
+          color: color,
+          size: 24,
+        ),
       ),
     );
   }
@@ -260,24 +661,41 @@ class NewsCard extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppTheme.radiusM),
               ),
-              child: Image.network(
-                news.imageURL!,
+              child: CachedNetworkImage(
+                imageUrl: news.imageURL!,
                 height: 150,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 80,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                    child: const Center(
-                      child: Icon(
-                        Icons.article,
-                        size: 40,
-                        color: AppTheme.primaryColor,
-                      ),
+                placeholder: (context, url) => Container(
+                  height: 150,
+                  color: AppTheme.surfaceMedium,
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.primaryColor,
                     ),
-                  );
-                },
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  height: 80,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.primaryColor.withValues(alpha: 0.15),
+                        AppTheme.primaryColor.withValues(alpha: 0.05),
+                      ],
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.article,
+                      size: 40,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
               ),
             )
           else
@@ -344,10 +762,12 @@ class NewsCard extends StatelessWidget {
                       color: AppTheme.textHint,
                     ),
                     const SizedBox(width: AppTheme.spacingXS),
-                    Text(
-                      dateFormat.format(news.publishedAt),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                  Text(
+                    news.publishedAt != null
+                        ? dateFormat.format(news.publishedAt!)
+                        : 'No date',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                   ],
                 ),
               ],
@@ -415,7 +835,9 @@ class NewsCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppTheme.spacingM),
                     Text(
-                      DateFormat('MMMM d, yyyy').format(news.publishedAt),
+                      news.publishedAt != null
+                          ? DateFormat('MMMM d, yyyy').format(news.publishedAt!)
+                          : 'No date',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: AppTheme.spacingL),

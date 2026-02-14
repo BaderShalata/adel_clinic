@@ -4,7 +4,10 @@ const express_1 = require("express");
 const waitingListController_1 = require("../controllers/waitingListController");
 const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
-// All waiting list routes require authentication and admin role
+// Patient endpoints (authenticated but not admin)
+router.post('/join', auth_1.authenticate, waitingListController_1.waitingListController.patientJoinWaitingList.bind(waitingListController_1.waitingListController));
+router.get('/my', auth_1.authenticate, waitingListController_1.waitingListController.getMyWaitingListEntries.bind(waitingListController_1.waitingListController));
+// Admin routes require authentication and admin role
 router.use(auth_1.authenticate);
 router.use(auth_1.authorizeAdmin);
 // CRUD operations

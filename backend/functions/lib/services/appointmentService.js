@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.appointmentService = exports.AppointmentService = void 0;
 const admin = __importStar(require("firebase-admin"));
+const lockedSlotService_1 = require("./lockedSlotService");
 const db = admin.firestore();
 class AppointmentService {
     constructor() {
@@ -90,11 +91,12 @@ class AppointmentService {
                 }
             }
             // Build appointment data - only include fields with values
+            // Patient bookings start as 'pending', admin bookings as 'scheduled'
             const appointmentData = {
                 patientId: data.patientId,
                 doctorId: data.doctorId,
                 appointmentDate: admin.firestore.Timestamp.fromDate(appointmentDateObj),
-                status: 'scheduled',
+                status: role === 'admin' ? 'scheduled' : 'pending',
                 createdAt: admin.firestore.Timestamp.now(),
                 updatedAt: admin.firestore.Timestamp.now(),
                 createdBy,
@@ -125,6 +127,11 @@ class AppointmentService {
     async checkSlotAvailability(doctorId, date, time) {
         try {
             const dateStr = date.toISOString().split('T')[0];
+            // Check if the slot is locked
+            const isLocked = await lockedSlotService_1.lockedSlotService.isSlotLocked(doctorId, dateStr, time);
+            if (isLocked) {
+                return false;
+            }
             const existingAppointments = await this.appointmentsCollection
                 .where('doctorId', '==', doctorId)
                 .get();
@@ -147,7 +154,7 @@ class AppointmentService {
                         continue;
                     }
                     const aptDateStr = aptDate.toISOString().split('T')[0];
-                    if (aptDateStr === dateStr && ['scheduled', 'completed'].includes(data.status)) {
+                    if (aptDateStr === dateStr && ['pending', 'scheduled', 'completed'].includes(data.status)) {
                         return false;
                     }
                 }
