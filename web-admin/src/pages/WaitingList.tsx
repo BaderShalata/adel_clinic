@@ -1,18 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Button,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
@@ -29,12 +22,30 @@ import {
   Switch,
   Divider,
   Stack,
+  Card,
+  CardContent,
+  Tooltip,
+  InputAdornment,
+  Grow,
+  alpha,
+  Avatar,
 } from '@mui/material';
+import { healthcareColors, gradients, glassStyles, shadows, animations } from '../theme/healthcareTheme';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   EventAvailable as BookIcon,
   PersonAdd as PersonAddIcon,
+  Search as SearchIcon,
+  Close as CloseIcon,
+  HourglassEmpty as WaitingIcon,
+  CheckCircle as BookedIcon,
+  Cancel as CancelledIcon,
+  FilterList as FilterIcon,
+  Person as PersonIcon,
+  LocalHospital as DoctorIcon,
+  Event as EventIcon,
+  Notes as NotesIcon,
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,7 +59,7 @@ interface WaitingListEntry {
   doctorName: string;
   serviceType: string;
   preferredDate: { _seconds: number };
-  status: 'waiting' | 'notified' | 'booked' | 'cancelled';
+  status: 'waiting' | 'booked' | 'cancelled';
   priority: number;
   notes?: string;
   createdAt: { _seconds: number };
@@ -72,7 +83,6 @@ interface SlotInfo {
 }
 
 export const WaitingList: React.FC = () => {
-  // Add to waiting list dialog state
   const [open, setOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -85,16 +95,17 @@ export const WaitingList: React.FC = () => {
     phoneNumber: '',
   });
   const [notes, setNotes] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Book from waiting list dialog state
   const [bookDialogOpen, setBookDialogOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<WaitingListEntry | null>(null);
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('');
+  const [bookingDoctor, setBookingDoctor] = useState<Doctor | null>(null);
+  const [bookingService, setBookingService] = useState('');
   const [availableSlots, setAvailableSlots] = useState<SlotInfo[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Filters
   const [filterDoctor, setFilterDoctor] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
@@ -113,6 +124,16 @@ export const WaitingList: React.FC = () => {
       return response.data;
     },
   });
+
+  const filteredWaitingList = useMemo(() => {
+    if (!waitingList) return [];
+    if (!searchQuery) return waitingList;
+    return waitingList.filter(entry =>
+      entry.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.doctorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.serviceType.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [waitingList, searchQuery]);
 
   const { data: doctors } = useQuery<Doctor[]>({
     queryKey: ['doctors'],
@@ -134,10 +155,9 @@ export const WaitingList: React.FC = () => {
     },
   });
 
-  // Load available slots when booking
   useEffect(() => {
     const loadSlots = async () => {
-      if (!selectedEntry || !bookingDate) {
+      if (!bookingDoctor || !bookingDate) {
         setAvailableSlots([]);
         return;
       }
@@ -148,12 +168,12 @@ export const WaitingList: React.FC = () => {
         if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         const params = new URLSearchParams({ date: bookingDate });
-        if (selectedEntry.serviceType) {
-          params.append('serviceType', selectedEntry.serviceType);
+        if (bookingService) {
+          params.append('serviceType', bookingService);
         }
 
         const response = await apiClient.get(
-          `/doctors/${selectedEntry.doctorId}/available-slots?${params.toString()}`
+          `/doctors/${bookingDoctor.id}/available-slots?${params.toString()}`
         );
 
         setAvailableSlots(response.data.slots || []);
@@ -166,7 +186,7 @@ export const WaitingList: React.FC = () => {
     };
 
     loadSlots();
-  }, [selectedEntry, bookingDate, getToken]);
+  }, [bookingDoctor, bookingDate, bookingService, getToken]);
 
   const createPatientMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -201,10 +221,10 @@ export const WaitingList: React.FC = () => {
   });
 
   const bookMutation = useMutation({
-    mutationFn: async ({ id, appointmentDate, appointmentTime }: { id: string; appointmentDate: string; appointmentTime: string }) => {
+    mutationFn: async ({ id, appointmentDate, appointmentTime, doctorId, serviceType }: { id: string; appointmentDate: string; appointmentTime: string; doctorId?: string; serviceType?: string }) => {
       const token = await getToken();
       if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      return await apiClient.post(`/waiting-list/${id}/book`, { appointmentDate, appointmentTime });
+      return await apiClient.post(`/waiting-list/${id}/book`, { appointmentDate, appointmentTime, doctorId, serviceType });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['waitingList'] });
@@ -270,6 +290,9 @@ export const WaitingList: React.FC = () => {
     setSelectedEntry(entry);
     setBookingDate(dayjs(entry.preferredDate._seconds * 1000).format('YYYY-MM-DD'));
     setBookingTime('');
+    const doctor = doctors?.find(d => d.id === entry.doctorId);
+    setBookingDoctor(doctor || null);
+    setBookingService(entry.serviceType);
     setAvailableSlots([]);
     setBookDialogOpen(true);
   };
@@ -279,147 +302,447 @@ export const WaitingList: React.FC = () => {
     setSelectedEntry(null);
     setBookingDate('');
     setBookingTime('');
+    setBookingDoctor(null);
+    setBookingService('');
     setAvailableSlots([]);
   };
 
   const handleBookSubmit = () => {
-    if (selectedEntry && bookingDate && bookingTime) {
+    if (selectedEntry && bookingDate && bookingTime && bookingDoctor && bookingService) {
       bookMutation.mutate({
         id: selectedEntry.id,
         appointmentDate: bookingDate,
         appointmentTime: bookingTime,
+        doctorId: bookingDoctor.id,
+        serviceType: bookingService,
       });
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'waiting': return 'warning';
-      case 'notified': return 'info';
-      case 'booked': return 'success';
-      case 'cancelled': return 'error';
-      default: return 'default';
+      case 'waiting':
+        return { color: healthcareColors.warning, icon: <WaitingIcon />, label: 'Waiting' };
+      case 'booked':
+        return { color: healthcareColors.success, icon: <BookedIcon />, label: 'Booked' };
+      case 'cancelled':
+        return { color: healthcareColors.error, icon: <CancelledIcon />, label: 'Cancelled' };
+      default:
+        return { color: healthcareColors.neutral[400], icon: <WaitingIcon />, label: status };
     }
   };
 
   const availableTimeSlots = availableSlots.filter(s => s.available);
 
+  const statusCounts = useMemo(() => {
+    if (!waitingList) return { waiting: 0, booked: 0, cancelled: 0 };
+    return {
+      waiting: waitingList.filter(e => e.status === 'waiting').length,
+      booked: waitingList.filter(e => e.status === 'booked').length,
+      cancelled: waitingList.filter(e => e.status === 'cancelled').length,
+    };
+  }, [waitingList]);
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Waiting List</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen}>
-          Add to Waiting List
-        </Button>
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.5 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 2,
+                  background: gradients.warning,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(healthcareColors.warning, 0.4)}`,
+                }}
+              >
+                <WaitingIcon sx={{ color: 'white', fontSize: 24 }} />
+              </Box>
+              <Box>
+                <Typography variant="h5" fontWeight={700} color="text.primary">
+                  Waiting List
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Manage patient waiting queue and appointments
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpen}
+            sx={{
+              background: gradients.warning,
+              boxShadow: `0 4px 14px ${alpha(healthcareColors.warning, 0.4)}`,
+              '&:hover': {
+                background: gradients.warning,
+                filter: 'brightness(0.95)',
+                boxShadow: `0 6px 20px ${alpha(healthcareColors.warning, 0.5)}`,
+              },
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+            }}
+          >
+            Add to Waiting List
+          </Button>
+        </Box>
+
+        {/* Stats Row */}
+        <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
+          <Chip
+            icon={<WaitingIcon />}
+            label={`${statusCounts.waiting} Waiting`}
+            sx={{
+              bgcolor: alpha(healthcareColors.warning, 0.1),
+              color: healthcareColors.warning,
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              py: 2,
+              '& .MuiChip-icon': { color: 'inherit' },
+            }}
+          />
+          <Chip
+            icon={<BookedIcon />}
+            label={`${statusCounts.booked} Booked`}
+            sx={{
+              bgcolor: alpha(healthcareColors.success, 0.1),
+              color: healthcareColors.success,
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              py: 2,
+              '& .MuiChip-icon': { color: 'inherit' },
+            }}
+          />
+        </Stack>
       </Box>
 
-      {/* Filters */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Filter by Doctor</InputLabel>
-          <Select
-            value={filterDoctor}
-            label="Filter by Doctor"
-            onChange={(e) => setFilterDoctor(e.target.value)}
-          >
-            <MenuItem value="">All Doctors</MenuItem>
-            {doctors?.map((doctor) => (
-              <MenuItem key={doctor.id} value={doctor.id}>
-                {doctor.fullName}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Filter by Status</InputLabel>
-          <Select
-            value={filterStatus}
-            label="Filter by Status"
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <MenuItem value="">All Statuses</MenuItem>
-            <MenuItem value="waiting">Waiting</MenuItem>
-            <MenuItem value="notified">Notified</MenuItem>
-            <MenuItem value="booked">Booked</MenuItem>
-            <MenuItem value="cancelled">Cancelled</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Patient</TableCell>
-              <TableCell>Doctor</TableCell>
-              <TableCell>Service</TableCell>
-              <TableCell>Preferred Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Notes</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <CircularProgress size={24} />
-                </TableCell>
-              </TableRow>
-            ) : waitingList?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center">No entries in waiting list</TableCell>
-              </TableRow>
-            ) : (
-              waitingList?.map((entry) => (
-                <TableRow key={entry.id}>
-                  <TableCell>{entry.patientName}</TableCell>
-                  <TableCell>{entry.doctorName}</TableCell>
-                  <TableCell>{entry.serviceType}</TableCell>
-                  <TableCell>
-                    {dayjs(entry.preferredDate._seconds * 1000).format('MMM DD, YYYY')}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={entry.status}
-                      color={getStatusColor(entry.status)}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>{entry.notes || '-'}</TableCell>
-                  <TableCell>
-                    {entry.status === 'waiting' && (
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => handleBookClick(entry)}
-                        title="Convert to Appointment"
-                      >
-                        <BookIcon />
-                      </IconButton>
-                    )}
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => deleteMutation.mutate(entry.id)}
-                      title="Remove"
-                    >
-                      <DeleteIcon />
+      {/* Search and Filters */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 3,
+          ...glassStyles.card,
+          boxShadow: shadows.md,
+        }}
+      >
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
+          <TextField
+            placeholder="Search by patient, doctor, or service..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            size="small"
+            sx={{ flex: 1, minWidth: 250 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: healthcareColors.neutral[400] }} />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setSearchQuery('')}>
+                      <CloseIcon fontSize="small" />
                     </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  </InputAdornment>
+                ),
+                sx: {
+                  borderRadius: 2,
+                  bgcolor: healthcareColors.neutral[50],
+                  '& fieldset': { border: 'none' },
+                },
+              },
+            }}
+          />
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Doctor</InputLabel>
+            <Select
+              value={filterDoctor}
+              label="Doctor"
+              onChange={(e) => setFilterDoctor(e.target.value)}
+            >
+              <MenuItem value="">All Doctors</MenuItem>
+              {doctors?.map((doctor) => (
+                <MenuItem key={doctor.id} value={doctor.id}>
+                  {doctor.fullName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Stack direction="row" spacing={1}>
+            <Chip
+              icon={<FilterIcon />}
+              label="All"
+              onClick={() => setFilterStatus('')}
+              variant={!filterStatus ? 'filled' : 'outlined'}
+              sx={{
+                bgcolor: !filterStatus ? healthcareColors.primary.main : 'transparent',
+                color: !filterStatus ? 'white' : healthcareColors.neutral[600],
+                borderColor: healthcareColors.neutral[300],
+              }}
+            />
+            <Chip
+              icon={<WaitingIcon />}
+              label="Waiting"
+              onClick={() => setFilterStatus('waiting')}
+              variant={filterStatus === 'waiting' ? 'filled' : 'outlined'}
+              sx={{
+                bgcolor: filterStatus === 'waiting' ? healthcareColors.warning : 'transparent',
+                color: filterStatus === 'waiting' ? 'white' : healthcareColors.neutral[600],
+                borderColor: healthcareColors.neutral[300],
+              }}
+            />
+            <Chip
+              icon={<BookedIcon />}
+              label="Booked"
+              onClick={() => setFilterStatus('booked')}
+              variant={filterStatus === 'booked' ? 'filled' : 'outlined'}
+              sx={{
+                bgcolor: filterStatus === 'booked' ? healthcareColors.success : 'transparent',
+                color: filterStatus === 'booked' ? 'white' : healthcareColors.neutral[600],
+                borderColor: healthcareColors.neutral[300],
+              }}
+            />
+          </Stack>
+        </Stack>
+      </Paper>
+
+      {/* Waiting List Cards */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            lg: 'repeat(3, 1fr)',
+          },
+          gap: 2.5,
+        }}
+      >
+        {isLoading ? (
+          [...Array(6)].map((_, i) => (
+            <Card
+              key={i}
+              sx={{
+                borderRadius: 2,
+                background: healthcareColors.neutral[100],
+                animation: 'pulse 1.5s infinite',
+                '@keyframes pulse': {
+                  '0%, 100%': { opacity: 1 },
+                  '50%': { opacity: 0.5 },
+                },
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Box sx={{ height: 150 }} />
+              </CardContent>
+            </Card>
+          ))
+        ) : filteredWaitingList.length === 0 ? (
+          <Box sx={{ gridColumn: '1 / -1' }}>
+            <Paper sx={{ p: 6, textAlign: 'center', ...glassStyles.card }}>
+              <WaitingIcon sx={{ fontSize: 64, color: healthcareColors.neutral[300], mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">
+                {searchQuery || filterDoctor || filterStatus ? 'No entries match your filters' : 'No entries in waiting list'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {searchQuery || filterDoctor || filterStatus ? 'Try adjusting your filters' : 'Add patients to the waiting list to get started'}
+              </Typography>
+              {!searchQuery && !filterDoctor && !filterStatus && (
+                <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen}>
+                  Add to Waiting List
+                </Button>
+              )}
+            </Paper>
+          </Box>
+        ) : (
+          filteredWaitingList.map((entry, index) => {
+            const statusConfig = getStatusConfig(entry.status);
+            return (
+              <Grow in timeout={300 + index * 50} key={entry.id}>
+                <Card
+                  sx={{
+                    background: '#fff',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: healthcareColors.neutral[200],
+                    boxShadow: shadows.sm,
+                    transition: animations.transition.normal,
+                    borderLeft: `4px solid ${statusConfig.color}`,
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: shadows.md,
+                    },
+                  }}
+                >
+                  <CardContent sx={{ p: 2.5 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Avatar
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: alpha(statusConfig.color, 0.15),
+                          color: statusConfig.color,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {entry.patientName.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Chip
+                        size="small"
+                        icon={statusConfig.icon}
+                        label={statusConfig.label}
+                        sx={{
+                          bgcolor: alpha(statusConfig.color, 0.1),
+                          color: statusConfig.color,
+                          fontWeight: 500,
+                          '& .MuiChip-icon': { color: 'inherit' },
+                        }}
+                      />
+                    </Box>
+
+                    <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
+                      {entry.patientName}
+                    </Typography>
+
+                    <Stack spacing={1} sx={{ mt: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <DoctorIcon sx={{ fontSize: 16, color: healthcareColors.neutral[400] }} />
+                        <Typography variant="body2" color="text.secondary">
+                          {entry.doctorName}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Chip
+                          label={entry.serviceType}
+                          size="small"
+                          sx={{
+                            bgcolor: alpha(healthcareColors.accent.main, 0.1),
+                            color: healthcareColors.accent.main,
+                            fontSize: '0.7rem',
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <EventIcon sx={{ fontSize: 16, color: healthcareColors.neutral[400] }} />
+                        <Typography variant="body2" color="text.secondary">
+                          {dayjs(entry.preferredDate._seconds * 1000).format('MMM DD, YYYY')}
+                        </Typography>
+                      </Box>
+                      {entry.notes && (
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                          <NotesIcon sx={{ fontSize: 16, color: healthcareColors.neutral[400], mt: 0.25 }} />
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              fontSize: '0.8rem',
+                            }}
+                          >
+                            {entry.notes}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
+
+                    <Divider sx={{ my: 2 }} />
+
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      {entry.status === 'waiting' && (
+                        <Tooltip title="Convert to Appointment">
+                          <Button
+                            size="small"
+                            variant="contained"
+                            startIcon={<BookIcon />}
+                            onClick={() => handleBookClick(entry)}
+                            sx={{
+                              background: gradients.success,
+                              '&:hover': { filter: 'brightness(0.95)' },
+                            }}
+                          >
+                            Book
+                          </Button>
+                        </Tooltip>
+                      )}
+                      <Tooltip title="Remove">
+                        <IconButton
+                          size="small"
+                          onClick={() => deleteMutation.mutate(entry.id)}
+                          sx={{
+                            color: healthcareColors.error,
+                            bgcolor: alpha(healthcareColors.error, 0.1),
+                            '&:hover': { bgcolor: alpha(healthcareColors.error, 0.2) },
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grow>
+            );
+          })
+        )}
+      </Box>
 
       {/* Add to Waiting List Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>Add to Waiting List</DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            {/* Patient Section */}
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{ paper: { sx: { ...glassStyles.dialog, overflow: 'hidden' } } }}
+      >
+        {/* Modern Dialog Header */}
+        <Box
+          sx={{
+            background: gradients.warning,
+            px: 3,
+            py: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <AddIcon sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+            <Typography variant="h6" fontWeight={600} color="white">
+              Add to Waiting List
+            </Typography>
+          </Box>
+          <IconButton onClick={handleClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ pt: 3 }}>
+          <Stack spacing={3}>
             <Box>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
                 Patient Information
@@ -489,7 +812,6 @@ export const WaitingList: React.FC = () => {
 
             <Divider />
 
-            {/* Appointment Details Section */}
             <Box>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
                 Waiting List Details
@@ -531,14 +853,13 @@ export const WaitingList: React.FC = () => {
                     type="date"
                     value={preferredDate}
                     onChange={(e) => setPreferredDate(e.target.value)}
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     required
                   />
                 </Stack>
               </Stack>
             </Box>
 
-            {/* Notes */}
             <TextField
               fullWidth
               size="small"
@@ -550,8 +871,19 @@ export const WaitingList: React.FC = () => {
             />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleClose} size="small">Cancel</Button>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
+          <Button
+            onClick={handleClose}
+            size="small"
+            sx={{
+              color: healthcareColors.neutral[600],
+              borderRadius: 1.5,
+              px: 2.5,
+              '&:hover': { bgcolor: healthcareColors.neutral[100] },
+            }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
@@ -565,6 +897,13 @@ export const WaitingList: React.FC = () => {
               createMutation.isPending ||
               createPatientMutation.isPending
             }
+            sx={{
+              background: gradients.warning,
+              borderRadius: 1.5,
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': { filter: 'brightness(0.95)', boxShadow: 'none' },
+            }}
           >
             {createPatientMutation.isPending ? 'Creating...' : 'Add to Waiting List'}
           </Button>
@@ -572,48 +911,112 @@ export const WaitingList: React.FC = () => {
       </Dialog>
 
       {/* Book from Waiting List Dialog */}
-      <Dialog open={bookDialogOpen} onClose={handleBookDialogClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>Convert to Appointment</DialogTitle>
-        <DialogContent>
-          <Stack spacing={3} sx={{ mt: 1 }}>
+      <Dialog
+        open={bookDialogOpen}
+        onClose={handleBookDialogClose}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{ paper: { sx: { ...glassStyles.dialog, overflow: 'hidden' } } }}
+      >
+        {/* Modern Dialog Header */}
+        <Box
+          sx={{
+            background: gradients.success,
+            px: 3,
+            py: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <BookIcon sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+            <Typography variant="h6" fontWeight={600} color="white">
+              Convert to Appointment
+            </Typography>
+          </Box>
+          <IconButton onClick={handleBookDialogClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ pt: 3 }}>
+          <Stack spacing={3}>
             {selectedEntry && (
               <>
-                {/* Patient & Doctor Info */}
-                <Alert severity="info" icon={false}>
-                  <Typography variant="body2">
-                    <strong>Patient:</strong> {selectedEntry.patientName}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Doctor:</strong> {selectedEntry.doctorName}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Service:</strong> {selectedEntry.serviceType}
-                  </Typography>
+                <Alert severity="info" icon={false} sx={{ borderRadius: 2, bgcolor: alpha(healthcareColors.info, 0.08) }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PersonIcon sx={{ fontSize: 16 }} />
+                    <Typography variant="body2"><strong>Patient:</strong> {selectedEntry.patientName}</Typography>
+                  </Box>
                 </Alert>
 
-                <Divider />
-
-                {/* Date Selection */}
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Select Date
+                    Appointment Details
                   </Typography>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Appointment Date"
-                    type="date"
-                    value={bookingDate}
-                    onChange={(e) => {
-                      setBookingDate(e.target.value);
-                      setBookingTime('');
-                    }}
-                    InputLabelProps={{ shrink: true }}
-                    required
-                  />
+                  <Stack spacing={2}>
+                    <Autocomplete
+                      options={doctors || []}
+                      getOptionLabel={(option) => option.fullName}
+                      value={bookingDoctor}
+                      onChange={(_, newValue) => {
+                        setBookingDoctor(newValue);
+                        setBookingService('');
+                        setBookingTime('');
+                      }}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Doctor" size="small" required fullWidth />
+                      )}
+                    />
+                    <Stack direction="row" spacing={1.5}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        select
+                        label="Service"
+                        value={bookingService}
+                        onChange={(e) => {
+                          setBookingService(e.target.value);
+                          setBookingTime('');
+                        }}
+                        required
+                        disabled={!bookingDoctor}
+                      >
+                        {bookingDoctor?.specialties.map((specialty) => (
+                          <MenuItem key={specialty} value={specialty}>
+                            {specialty}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Date"
+                        type="date"
+                        value={bookingDate}
+                        onChange={(e) => {
+                          setBookingDate(e.target.value);
+                          setBookingTime('');
+                        }}
+                        slotProps={{ inputLabel: { shrink: true } }}
+                        required
+                      />
+                    </Stack>
+                  </Stack>
                 </Box>
 
-                {/* Time Slots Section */}
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
                     Select Time Slot
@@ -623,14 +1026,14 @@ export const WaitingList: React.FC = () => {
                       <CircularProgress size={18} />
                       <Typography variant="body2" color="text.secondary">Loading available slots...</Typography>
                     </Box>
-                  ) : bookingDate ? (
+                  ) : bookingDoctor && bookingService && bookingDate ? (
                     <>
                       {availableSlots.length === 0 ? (
-                        <Alert severity="info">
+                        <Alert severity="info" sx={{ borderRadius: 2 }}>
                           Doctor is not available for this service on the selected date.
                         </Alert>
                       ) : availableTimeSlots.length === 0 ? (
-                        <Alert severity="warning">
+                        <Alert severity="warning" sx={{ borderRadius: 2 }}>
                           All slots are booked for this date. Please select another date.
                         </Alert>
                       ) : (
@@ -660,7 +1063,7 @@ export const WaitingList: React.FC = () => {
                     </>
                   ) : (
                     <Typography variant="body2" color="text.secondary">
-                      Select a date to see available time slots
+                      Select doctor, service, and date to see available time slots
                     </Typography>
                   )}
                 </Box>
@@ -668,14 +1071,31 @@ export const WaitingList: React.FC = () => {
             )}
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleBookDialogClose} size="small">Cancel</Button>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
+          <Button
+            onClick={handleBookDialogClose}
+            size="small"
+            sx={{
+              color: healthcareColors.neutral[600],
+              borderRadius: 1.5,
+              px: 2.5,
+              '&:hover': { bgcolor: healthcareColors.neutral[100] },
+            }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleBookSubmit}
             variant="contained"
-            color="success"
             size="small"
-            disabled={!bookingDate || !bookingTime || bookMutation.isPending}
+            disabled={!bookingDoctor || !bookingService || !bookingDate || !bookingTime || bookMutation.isPending}
+            sx={{
+              background: gradients.success,
+              borderRadius: 1.5,
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': { filter: 'brightness(0.95)', boxShadow: 'none' },
+            }}
           >
             {bookMutation.isPending ? 'Converting...' : 'Convert to Appointment'}
           </Button>

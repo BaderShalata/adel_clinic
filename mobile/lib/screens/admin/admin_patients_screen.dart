@@ -368,73 +368,99 @@ class _PatientTile extends StatelessWidget {
 
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingL),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusL)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Modern Gradient Header
+            Container(
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusL)),
               ),
-              const SizedBox(height: AppTheme.spacingL),
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                    child: Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: const TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 24,
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      child: Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : '?',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: AppTheme.spacingM),
-                  Expanded(
-                    child: Text(
-                      name,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                    const SizedBox(width: AppTheme.spacingM),
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppTheme.spacingL),
-              _DetailRow(icon: Icons.badge, label: 'ID Number', value: idNumber),
-              _DetailRow(icon: Icons.phone, label: 'Phone', value: phone),
-              _DetailRow(icon: Icons.email, label: 'Email', value: email),
-              _DetailRow(icon: Icons.person, label: 'Gender', value: gender),
-              const SizedBox(height: AppTheme.spacingM),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Use web admin for full patient management')),
-                    );
-                  },
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Edit Patient'),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              child: Column(
+                children: [
+                  _DetailRow(icon: Icons.badge, label: 'ID Number', value: idNumber),
+                  _DetailRow(icon: Icons.phone, label: 'Phone', value: phone),
+                  _DetailRow(icon: Icons.email, label: 'Email', value: email),
+                  _DetailRow(icon: Icons.person, label: 'Gender', value: gender),
+                ],
+              ),
+            ),
+            // Footer
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceMedium,
+                border: Border(
+                  top: BorderSide(color: AppTheme.dividerColor, width: 1),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Use web admin for full patient management')),
+                      );
+                    },
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Edit Patient'),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -577,56 +603,59 @@ class _CreatePatientSheetState extends State<_CreatePatientSheet> {
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXL)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusL)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppTheme.dividerColor,
-                borderRadius: BorderRadius.circular(2),
+          // Modern Gradient Header
+          Container(
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusL)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingM),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                    ),
+                    child: const Icon(Icons.person_add, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: AppTheme.spacingM),
+                  Expanded(
+                    child: Text(
+                      'Add New Patient',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
 
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                  ),
-                  child: const Icon(Icons.person_add, color: AppTheme.primaryColor),
-                ),
-                const SizedBox(width: AppTheme.spacingM),
-                Text(
-                  'Add New Patient',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppTheme.spacingL),
-
           // Form
           Flexible(
             child: SingleChildScrollView(
-              padding: EdgeInsets.only(
-                left: AppTheme.spacingL,
-                right: AppTheme.spacingL,
-                bottom: MediaQuery.of(context).viewInsets.bottom + AppTheme.spacingL,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.spacingL,
+                vertical: AppTheme.spacingM,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,15 +790,48 @@ class _CreatePatientSheetState extends State<_CreatePatientSheet> {
                     ),
                     maxLines: 2,
                   ),
-                  const SizedBox(height: AppTheme.spacingL),
+                  const SizedBox(height: AppTheme.spacingM),
+                ],
+              ),
+            ),
+          ),
 
-                  // Submit button
-                  SizedBox(
-                    width: double.infinity,
+          // Footer with styled background
+          Container(
+            padding: EdgeInsets.only(
+              left: AppTheme.spacingL,
+              right: AppTheme.spacingL,
+              top: AppTheme.spacingM,
+              bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                  ? AppTheme.spacingM
+                  : AppTheme.spacingL,
+            ),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceMedium,
+              border: Border(
+                top: BorderSide(color: AppTheme.dividerColor, width: 1),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.spacingM),
+                  Expanded(
+                    flex: 2,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _createPatient,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: _isLoading
                           ? const SizedBox(
@@ -780,7 +842,6 @@ class _CreatePatientSheetState extends State<_CreatePatientSheet> {
                           : const Text('Create Patient'),
                     ),
                   ),
-                  const SizedBox(height: AppTheme.spacingM),
                 ],
               ),
             ),

@@ -391,16 +391,17 @@ class AppTheme {
         space: 1,
       ),
 
-      // Dialog theme
+      // Dialog theme - modern with smaller radius
       dialogTheme: DialogThemeData(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusXL),
+          borderRadius: BorderRadius.circular(radiusXS),
         ),
         backgroundColor: cardBackground,
         surfaceTintColor: Colors.transparent,
-        elevation: 8,
+        elevation: 0,
+        shadowColor: Colors.black.withOpacity(0.15),
         titleTextStyle: GoogleFonts.inter(
-          fontSize: 20,
+          fontSize: 18,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
@@ -424,13 +425,13 @@ class AppTheme {
         ),
       ),
 
-      // Bottom sheet theme
+      // Bottom sheet theme - modern with smaller radius
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: cardBackground,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(radiusXL),
+            top: Radius.circular(radiusL),
           ),
         ),
       ),

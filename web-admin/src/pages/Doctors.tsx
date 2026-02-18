@@ -1,11 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Box, Button, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Typography, Dialog, DialogTitle, DialogContent,
+  Box, Button, Paper, Typography, Dialog, DialogContent,
   DialogActions, TextField, IconButton, Chip, FormControlLabel, Checkbox,
   FormGroup, Divider, Stack, Autocomplete, Select, MenuItem, FormControl, InputLabel,
-  Avatar, Alert, CircularProgress,
+  Avatar, Alert, CircularProgress, Card, CardContent, Tooltip, InputAdornment,
+  Grow, alpha,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -15,9 +15,16 @@ import {
   CloudUpload as UploadIcon,
   Close as CloseIcon,
   Person as PersonIcon,
+  Search as SearchIcon,
+  Schedule as ScheduleIcon,
+  LocalHospital as HospitalIcon,
+  CheckCircle as ActiveIcon,
+  Cancel as InactiveIcon,
+  FilterList as FilterIcon,
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { healthcareColors, gradients, glassStyles, shadows, animations } from '../theme/healthcareTheme';
 
 interface DoctorSchedule {
   dayOfWeek: number;
@@ -51,7 +58,7 @@ interface ScheduleEntry {
   startTime: string;
   endTime: string;
   slotDuration: number;
-  type: string; // Role/specialty for this schedule block
+  type: string;
 }
 
 const DAYS = [
@@ -67,7 +74,6 @@ const DAYS = [
 const formatSchedule = (schedule: DoctorSchedule[]) => {
   if (!schedule || schedule.length === 0) return 'No schedule';
 
-  // Group by day
   const dayMap = new Map<number, DoctorSchedule[]>();
   schedule.forEach(s => {
     if (!dayMap.has(s.dayOfWeek)) {
@@ -76,7 +82,6 @@ const formatSchedule = (schedule: DoctorSchedule[]) => {
     dayMap.get(s.dayOfWeek)?.push(s);
   });
 
-  // Format each day
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const formatted: string[] = [];
 
@@ -88,9 +93,18 @@ const formatSchedule = (schedule: DoctorSchedule[]) => {
   return formatted.join(' | ');
 };
 
+const formatScheduleCompact = (schedule: DoctorSchedule[]) => {
+  if (!schedule || schedule.length === 0) return [];
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const workDays = [...new Set(schedule.map(s => s.dayOfWeek))].sort();
+  return workDays.map(d => dayNames[d]);
+};
+
 export const Doctors: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [formData, setFormData] = useState({
     userId: '',
     fullName: '',
@@ -119,7 +133,7 @@ export const Doctors: React.FC = () => {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: doctors } = useQuery<Doctor[]>({
+  const { data: doctors, isLoading } = useQuery<Doctor[]>({
     queryKey: ['doctors'],
     queryFn: async () => {
       const token = await getToken();
@@ -129,12 +143,26 @@ export const Doctors: React.FC = () => {
     },
   });
 
+  const filteredDoctors = useMemo(() => {
+    if (!doctors) return [];
+    return doctors.filter(doctor => {
+      const matchesSearch = !searchQuery ||
+        doctor.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doctor.fullNameEn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doctor.specialties.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        doctor.specialtiesEn?.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesStatus = statusFilter === 'all' ||
+        (statusFilter === 'active' && doctor.isActive) ||
+        (statusFilter === 'inactive' && !doctor.isActive);
+      return matchesSearch && matchesStatus;
+    });
+  }, [doctors, searchQuery, statusFilter]);
+
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       const token = await getToken();
       if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      // Auto-set type for schedule entries if only one specialty
       const processedScheduleEntries = scheduleEntries.map(entry => ({
         ...entry,
         type: entry.type || (data.specialties.length === 1 ? data.specialties[0] : '')
@@ -163,7 +191,6 @@ export const Doctors: React.FC = () => {
       const token = await getToken();
       if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      // Auto-set type for schedule entries if only one specialty
       const processedScheduleEntries = scheduleEntries.map(entry => ({
         ...entry,
         type: entry.type || (data.specialties.length === 1 ? data.specialties[0] : '')
@@ -222,9 +249,7 @@ export const Doctors: React.FC = () => {
       if (doctor.imageUrl) {
         setImagePreview(doctor.imageUrl);
       }
-      // Convert doctor's schedule to schedule entries format
       if (doctor.schedule && doctor.schedule.length > 0) {
-        // Group schedule by time block (same start/end time and slot duration)
         const scheduleMap = new Map<string, ScheduleEntry>();
         doctor.schedule.forEach(s => {
           const key = `${s.startTime}-${s.endTime}-${s.slotDuration}-${s.type || ''}`;
@@ -390,9 +415,9 @@ export const Doctors: React.FC = () => {
         const uploadResult = await uploadImage();
         if (uploadResult) {
           imageUrl = uploadResult.url;
-          uploadedImagePath = uploadResult.path ?? null; // Store path for potential rollback
+          uploadedImagePath = uploadResult.path ?? null;
         } else {
-          return; // Upload failed, error already shown
+          return;
         }
       }
 
@@ -405,7 +430,6 @@ export const Doctors: React.FC = () => {
       }
     } catch (error) {
       console.error('Error submitting doctor:', error);
-      // Rollback: delete uploaded image if doctor creation/update failed
       if (uploadedImagePath) {
         console.log('Rolling back uploaded image:', uploadedImagePath);
         await deleteImage(uploadedImagePath);
@@ -416,94 +440,461 @@ export const Doctors: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Doctors</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
-          Add Doctor
-        </Button>
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.5 }}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 2,
+                  background: gradients.secondary,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: `0 4px 14px ${alpha(healthcareColors.secondary.main, 0.4)}`,
+                }}
+              >
+                <HospitalIcon sx={{ color: 'white', fontSize: 24 }} />
+              </Box>
+              <Box>
+                <Typography variant="h5" fontWeight={700} color="text.primary">
+                  Doctors
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Manage medical staff and schedules
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpen()}
+            sx={{
+              background: gradients.secondary,
+              boxShadow: `0 4px 14px ${alpha(healthcareColors.secondary.main, 0.4)}`,
+              '&:hover': {
+                background: gradients.secondary,
+                filter: 'brightness(0.95)',
+                boxShadow: `0 6px 20px ${alpha(healthcareColors.secondary.main, 0.5)}`,
+              },
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+            }}
+          >
+            Add Doctor
+          </Button>
+        </Box>
+
+        {/* Stats Row */}
+        <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
+          <Chip
+            icon={<HospitalIcon />}
+            label={`${doctors?.length || 0} Total`}
+            sx={{
+              bgcolor: alpha(healthcareColors.secondary.main, 0.1),
+              color: healthcareColors.secondary.main,
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              py: 2,
+              '& .MuiChip-icon': { color: 'inherit' },
+            }}
+          />
+          <Chip
+            icon={<ActiveIcon />}
+            label={`${doctors?.filter(d => d.isActive).length || 0} Active`}
+            sx={{
+              bgcolor: alpha(healthcareColors.success, 0.1),
+              color: healthcareColors.success,
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              py: 2,
+              '& .MuiChip-icon': { color: 'inherit' },
+            }}
+          />
+          <Chip
+            icon={<InactiveIcon />}
+            label={`${doctors?.filter(d => !d.isActive).length || 0} Inactive`}
+            sx={{
+              bgcolor: alpha(healthcareColors.neutral[500], 0.1),
+              color: healthcareColors.neutral[500],
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              py: 2,
+              '& .MuiChip-icon': { color: 'inherit' },
+            }}
+          />
+        </Stack>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell width={70}>Photo</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Specialties</TableCell>
-              <TableCell>Bio</TableCell>
-              <TableCell>Schedule</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {doctors?.map((doctor) => (
-              <TableRow key={doctor.id} hover>
-                <TableCell>
-                  <Avatar
-                    src={doctor.imageUrl}
-                    alt={doctor.fullName}
-                    sx={{ width: 48, height: 48 }}
-                  >
-                    {doctor.fullName.charAt(0)}
-                  </Avatar>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight="bold">{doctor.fullName}</Typography>
-                  {doctor.fullNameEn && <Typography variant="caption" color="text.secondary">{doctor.fullNameEn}</Typography>}
-                </TableCell>
-                <TableCell>
-                  <Stack spacing={0.5}>
-                    {doctor.specialties.map((spec, idx) => (
-                      <Chip key={idx} label={spec} size="small" />
-                    ))}
-                  </Stack>
-                </TableCell>
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: '0.85rem',
-                      maxWidth: 200,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {doctor.bio || doctor.bioEn || '-'}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="caption" sx={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
-                    {formatSchedule(doctor.schedule)}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={doctor.isActive ? 'Active' : 'Inactive'}
-                    color={doctor.isActive ? 'success' : 'default'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <IconButton size="small" onClick={() => handleOpen(doctor)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => deleteMutation.mutate(doctor.id)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {/* Search and Filters */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 3,
+          ...glassStyles.card,
+          boxShadow: shadows.md,
+        }}
+      >
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+          <TextField
+            placeholder="Search doctors by name or specialty..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            size="small"
+            sx={{ flex: 1, minWidth: 250 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: healthcareColors.neutral[400] }} />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setSearchQuery('')}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+                sx: {
+                  borderRadius: 2,
+                  bgcolor: healthcareColors.neutral[50],
+                  '& fieldset': { border: 'none' },
+                },
+              },
+            }}
+          />
+          <Stack direction="row" spacing={1}>
+            <Chip
+              icon={<FilterIcon />}
+              label="All"
+              onClick={() => setStatusFilter('all')}
+              variant={statusFilter === 'all' ? 'filled' : 'outlined'}
+              sx={{
+                bgcolor: statusFilter === 'all' ? healthcareColors.primary.main : 'transparent',
+                color: statusFilter === 'all' ? 'white' : healthcareColors.neutral[600],
+                borderColor: healthcareColors.neutral[300],
+                '&:hover': { bgcolor: statusFilter === 'all' ? healthcareColors.primary.dark : healthcareColors.neutral[100] },
+              }}
+            />
+            <Chip
+              icon={<ActiveIcon />}
+              label="Active"
+              onClick={() => setStatusFilter('active')}
+              variant={statusFilter === 'active' ? 'filled' : 'outlined'}
+              sx={{
+                bgcolor: statusFilter === 'active' ? healthcareColors.success : 'transparent',
+                color: statusFilter === 'active' ? 'white' : healthcareColors.neutral[600],
+                borderColor: healthcareColors.neutral[300],
+                '&:hover': { bgcolor: statusFilter === 'active' ? '#059669' : healthcareColors.neutral[100] },
+              }}
+            />
+            <Chip
+              icon={<InactiveIcon />}
+              label="Inactive"
+              onClick={() => setStatusFilter('inactive')}
+              variant={statusFilter === 'inactive' ? 'filled' : 'outlined'}
+              sx={{
+                bgcolor: statusFilter === 'inactive' ? healthcareColors.neutral[500] : 'transparent',
+                color: statusFilter === 'inactive' ? 'white' : healthcareColors.neutral[600],
+                borderColor: healthcareColors.neutral[300],
+                '&:hover': { bgcolor: statusFilter === 'inactive' ? healthcareColors.neutral[600] : healthcareColors.neutral[100] },
+              }}
+            />
+          </Stack>
+        </Stack>
+        {searchQuery && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+            Found {filteredDoctors.length} doctor{filteredDoctors.length !== 1 ? 's' : ''} matching "{searchQuery}"
+          </Typography>
+        )}
+      </Paper>
 
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Doctor' : 'Add Doctor'}</DialogTitle>
-        <DialogContent>
+      {/* Doctors Grid */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+            lg: 'repeat(4, 1fr)',
+          },
+          gap: 2.5,
+        }}
+      >
+        {isLoading ? (
+          [...Array(4)].map((_, i) => (
+            <Card
+              key={i}
+              sx={{
+                borderRadius: 2,
+                height: '100%',
+                background: healthcareColors.neutral[100],
+                animation: 'pulse 1.5s infinite',
+                '@keyframes pulse': {
+                  '0%, 100%': { opacity: 1 },
+                  '50%': { opacity: 0.5 },
+                },
+              }}
+            >
+              <CardContent sx={{ p: 2.5 }}>
+                <Box sx={{ height: 200 }} />
+              </CardContent>
+            </Card>
+          ))
+        ) : filteredDoctors.length === 0 ? (
+          <Box sx={{ gridColumn: '1 / -1' }}>
+            <Paper
+              sx={{
+                p: 6,
+                textAlign: 'center',
+                ...glassStyles.card,
+              }}
+            >
+              <HospitalIcon sx={{ fontSize: 64, color: healthcareColors.neutral[300], mb: 2 }} />
+              <Typography variant="h6" color="text.secondary">
+                {searchQuery || statusFilter !== 'all' ? 'No doctors match your filters' : 'No doctors yet'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {searchQuery || statusFilter !== 'all' ? 'Try adjusting your search criteria' : 'Add your first doctor to get started'}
+              </Typography>
+              {!searchQuery && statusFilter === 'all' && (
+                <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
+                  Add Doctor
+                </Button>
+              )}
+            </Paper>
+          </Box>
+        ) : (
+          filteredDoctors.map((doctor, index) => (
+            <Grow in timeout={300 + index * 50} key={doctor.id}>
+              <Card
+                sx={{
+                  height: '100%',
+                  background: '#fff',
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: healthcareColors.neutral[200],
+                  boxShadow: shadows.sm,
+                  transition: animations.transition.normal,
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: shadows.md,
+                    borderColor: healthcareColors.neutral[300],
+                  },
+                }}
+              >
+                <CardContent sx={{ p: 2.5 }}>
+                  {/* Header with Avatar and Actions */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Avatar
+                      src={doctor.imageUrl}
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        bgcolor: alpha(healthcareColors.secondary.main, 0.15),
+                        color: healthcareColors.secondary.main,
+                        fontWeight: 600,
+                        fontSize: '1.5rem',
+                        border: `3px solid ${doctor.isActive ? healthcareColors.success : healthcareColors.neutral[300]}`,
+                      }}
+                    >
+                      {doctor.fullName.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <Stack direction="row" spacing={0.5}>
+                      <Tooltip title="Edit">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => { e.stopPropagation(); handleOpen(doctor); }}
+                          sx={{
+                            color: healthcareColors.primary.main,
+                            bgcolor: alpha(healthcareColors.primary.main, 0.1),
+                            '&:hover': { bgcolor: alpha(healthcareColors.primary.main, 0.2) },
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(doctor.id); }}
+                          sx={{
+                            color: healthcareColors.error,
+                            bgcolor: alpha(healthcareColors.error, 0.1),
+                            '&:hover': { bgcolor: alpha(healthcareColors.error, 0.2) },
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  </Box>
+
+                  {/* Name and Status */}
+                  <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
+                    {doctor.fullName}
+                  </Typography>
+                  {doctor.fullNameEn && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      {doctor.fullNameEn}
+                    </Typography>
+                  )}
+
+                  {/* Status Badge */}
+                  <Chip
+                    size="small"
+                    icon={doctor.isActive ? <ActiveIcon /> : <InactiveIcon />}
+                    label={doctor.isActive ? 'Active' : 'Inactive'}
+                    sx={{
+                      mb: 2,
+                      bgcolor: doctor.isActive ? alpha(healthcareColors.success, 0.1) : alpha(healthcareColors.neutral[400], 0.1),
+                      color: doctor.isActive ? healthcareColors.success : healthcareColors.neutral[500],
+                      fontWeight: 500,
+                      '& .MuiChip-icon': { color: 'inherit' },
+                    }}
+                  />
+
+                  {/* Specialties */}
+                  <Box sx={{ mb: 2 }}>
+                    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                      {doctor.specialties.slice(0, 2).map((spec, idx) => (
+                        <Chip
+                          key={idx}
+                          label={spec}
+                          size="small"
+                          sx={{
+                            bgcolor: alpha(healthcareColors.accent.main, 0.1),
+                            color: healthcareColors.accent.main,
+                            fontWeight: 500,
+                            fontSize: '0.7rem',
+                          }}
+                        />
+                      ))}
+                      {doctor.specialties.length > 2 && (
+                        <Chip
+                          label={`+${doctor.specialties.length - 2}`}
+                          size="small"
+                          sx={{
+                            bgcolor: healthcareColors.neutral[100],
+                            color: healthcareColors.neutral[500],
+                            fontSize: '0.7rem',
+                          }}
+                        />
+                      )}
+                    </Stack>
+                  </Box>
+
+                  {/* Bio Preview */}
+                  {(doctor.bio || doctor.bioEn) && (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{
+                        mb: 2,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        fontSize: '0.8rem',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {doctor.bio || doctor.bioEn}
+                    </Typography>
+                  )}
+
+                  {/* Schedule Preview */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ScheduleIcon sx={{ fontSize: 16, color: healthcareColors.neutral[400] }} />
+                    <Stack direction="row" spacing={0.5}>
+                      {formatScheduleCompact(doctor.schedule).map((day, idx) => (
+                        <Chip
+                          key={idx}
+                          label={day}
+                          size="small"
+                          sx={{
+                            height: 20,
+                            fontSize: '0.65rem',
+                            bgcolor: healthcareColors.neutral[100],
+                            color: healthcareColors.neutral[600],
+                          }}
+                        />
+                      ))}
+                      {doctor.schedule?.length === 0 && (
+                        <Typography variant="caption" color="text.secondary">
+                          No schedule
+                        </Typography>
+                      )}
+                    </Stack>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grow>
+          ))
+        )}
+      </Box>
+
+      {/* Edit/Create Dialog */}
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="md"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              ...glassStyles.dialog,
+              overflow: 'hidden',
+            },
+          },
+        }}
+      >
+        {/* Modern Dialog Header */}
+        <Box
+          sx={{
+            background: gradients.secondary,
+            px: 3,
+            py: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {editingId ? <EditIcon sx={{ color: 'white', fontSize: 20 }} /> : <AddIcon sx={{ color: 'white', fontSize: 20 }} />}
+            </Box>
+            <Typography variant="h6" fontWeight={600} color="white">
+              {editingId ? 'Edit Doctor' : 'Add New Doctor'}
+            </Typography>
+          </Box>
+          <IconButton onClick={handleClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ pt: 3 }}>
           {/* Doctor Image */}
-          <Box sx={{ mb: 3, mt: 1 }}>
+          <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
               Doctor Photo
             </Typography>
@@ -618,7 +1009,7 @@ export const Doctors: React.FC = () => {
 
           {/* English Inputs */}
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-            English 
+            English
           </Typography>
           <TextField
             fullWidth
@@ -739,91 +1130,100 @@ export const Doctors: React.FC = () => {
 
           <Divider sx={{ my: 3 }} />
           <Typography variant="h6" gutterBottom>Schedule</Typography>
-              {scheduleEntries.map((entry, index) => (
-                <Paper key={index} sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography variant="subtitle2">Schedule Block {index + 1}</Typography>
-                    {scheduleEntries.length > 1 && (
-                      <IconButton size="small" onClick={() => removeScheduleEntry(index)} color="error">
-                        <RemoveIcon />
-                      </IconButton>
-                    )}
-                  </Box>
+          {scheduleEntries.map((entry, index) => (
+            <Paper key={index} sx={{ p: 2, mb: 2, bgcolor: healthcareColors.neutral[50], borderRadius: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="subtitle2">Schedule Block {index + 1}</Typography>
+                {scheduleEntries.length > 1 && (
+                  <IconButton size="small" onClick={() => removeScheduleEntry(index)} color="error">
+                    <RemoveIcon />
+                  </IconButton>
+                )}
+              </Box>
 
-                  {formData.specialties.length > 1 ? (
-                    <FormControl fullWidth margin="dense" size="small">
-                      <InputLabel>Role/Type</InputLabel>
-                      <Select
-                        value={entry.type}
-                        onChange={(e) => updateScheduleEntry(index, 'type', e.target.value)}
-                        label="Role/Type"
-                      >
-                        {formData.specialties.map((specialty, idx) => (
-                          <MenuItem key={idx} value={specialty}>
-                            {specialty}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  ) : null}
-
-                  <Typography variant="body2" sx={{ mb: 1, mt: 2 }}>Select Days:</Typography>
-                  <FormGroup row>
-                    {DAYS.map((day) => (
-                      <FormControlLabel
-                        key={day.value}
-                        control={
-                          <Checkbox
-                            checked={entry.days.includes(day.value)}
-                            onChange={() => toggleDay(index, day.value)}
-                            size="small"
-                          />
-                        }
-                        label={day.label.substring(0, 3)}
-                      />
+              {formData.specialties.length > 1 ? (
+                <FormControl fullWidth margin="dense" size="small">
+                  <InputLabel>Role/Type</InputLabel>
+                  <Select
+                    value={entry.type}
+                    onChange={(e) => updateScheduleEntry(index, 'type', e.target.value)}
+                    label="Role/Type"
+                  >
+                    {formData.specialties.map((specialty, idx) => (
+                      <MenuItem key={idx} value={specialty}>
+                        {specialty}
+                      </MenuItem>
                     ))}
-                  </FormGroup>
+                  </Select>
+                </FormControl>
+              ) : null}
 
-                  <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                    <TextField
-                      label="Start Time"
-                      type="time"
-                      value={entry.startTime}
-                      onChange={(e) => updateScheduleEntry(index, 'startTime', e.target.value)}
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      size="small"
-                      sx={{ flex: 1 }}
-                    />
-                    <TextField
-                      label="End Time"
-                      type="time"
-                      value={entry.endTime}
-                      onChange={(e) => updateScheduleEntry(index, 'endTime', e.target.value)}
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      size="small"
-                      sx={{ flex: 1 }}
-                    />
-                    <TextField
-                      label="Slot (mins)"
-                      type="number"
-                      value={entry.slotDuration}
-                      onChange={(e) => updateScheduleEntry(index, 'slotDuration', parseInt(e.target.value) || 15)}
-                      slotProps={{
-                        inputLabel: { shrink: true },
-                        htmlInput: { min: 5, max: 60, step: 5 }
-                      }}
-                      size="small"
-                      sx={{ flex: 1 }}
-                    />
-                  </Box>
-                </Paper>
-              ))}
-              <Button startIcon={<AddIcon />} onClick={addScheduleEntry} variant="outlined" fullWidth>
-                Add Another Time Block
-              </Button>
+              <Typography variant="body2" sx={{ mb: 1, mt: 2 }}>Select Days:</Typography>
+              <FormGroup row>
+                {DAYS.map((day) => (
+                  <FormControlLabel
+                    key={day.value}
+                    control={
+                      <Checkbox
+                        checked={entry.days.includes(day.value)}
+                        onChange={() => toggleDay(index, day.value)}
+                        size="small"
+                      />
+                    }
+                    label={day.label.substring(0, 3)}
+                  />
+                ))}
+              </FormGroup>
+
+              <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+                <TextField
+                  label="Start Time"
+                  type="time"
+                  value={entry.startTime}
+                  onChange={(e) => updateScheduleEntry(index, 'startTime', e.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  size="small"
+                  sx={{ flex: 1 }}
+                />
+                <TextField
+                  label="End Time"
+                  type="time"
+                  value={entry.endTime}
+                  onChange={(e) => updateScheduleEntry(index, 'endTime', e.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  size="small"
+                  sx={{ flex: 1 }}
+                />
+                <TextField
+                  label="Slot (mins)"
+                  type="number"
+                  value={entry.slotDuration}
+                  onChange={(e) => updateScheduleEntry(index, 'slotDuration', parseInt(e.target.value) || 15)}
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    htmlInput: { min: 5, max: 60, step: 5 }
+                  }}
+                  size="small"
+                  sx={{ flex: 1 }}
+                />
+              </Box>
+            </Paper>
+          ))}
+          <Button startIcon={<AddIcon />} onClick={addScheduleEntry} variant="outlined" fullWidth>
+            Add Another Time Block
+          </Button>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleClose} disabled={uploadingImage}>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
+          <Button
+            onClick={handleClose}
+            disabled={uploadingImage}
+            sx={{
+              color: healthcareColors.neutral[600],
+              borderRadius: 1.5,
+              px: 2.5,
+              '&:hover': { bgcolor: healthcareColors.neutral[100] },
+            }}
+          >
             Cancel
           </Button>
           <Button
@@ -831,8 +1231,19 @@ export const Doctors: React.FC = () => {
             variant="contained"
             disabled={!formData.fullName || uploadingImage || createMutation.isPending || updateMutation.isPending}
             startIcon={uploadingImage ? <CircularProgress size={16} /> : undefined}
+            sx={{
+              background: gradients.secondary,
+              borderRadius: 1.5,
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': {
+                background: gradients.secondary,
+                filter: 'brightness(0.95)',
+                boxShadow: 'none',
+              },
+            }}
           >
-            {uploadingImage ? 'Uploading...' : editingId ? 'Update' : 'Create'}
+            {uploadingImage ? 'Uploading...' : editingId ? 'Update Doctor' : 'Add Doctor'}
           </Button>
         </DialogActions>
       </Dialog>

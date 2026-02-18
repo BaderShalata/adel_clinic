@@ -130,65 +130,96 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppTheme.spacingL),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppTheme.radiusXL),
+            top: Radius.circular(AppTheme.radiusL),
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Modern Gradient Header
             Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
               decoration: BoxDecoration(
-                color: AppTheme.dividerColor,
-                borderRadius: BorderRadius.circular(2),
+                gradient: AppTheme.primaryGradient,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusL)),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingM),
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                      ),
+                      child: const Icon(Icons.add_a_photo, color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: AppTheme.spacingM),
+                    Expanded(
+                      child: Text(
+                        'Choose Image Source',
+                        style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            Text(
-              'Choose Image Source',
-              style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.camera_alt, color: AppTheme.primaryColor),
+                    ),
+                    title: const Text('Take Photo'),
+                    subtitle: const Text('Use camera to capture'),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _pickImage(ImageSource.camera);
+                    },
                   ),
-            ),
-            const SizedBox(height: AppTheme.spacingL),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.camera_alt, color: AppTheme.primaryColor),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.photo_library, color: AppTheme.accentColor),
+                    ),
+                    title: const Text('Choose from Gallery'),
+                    subtitle: const Text('Select existing photo'),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _pickImage(ImageSource.gallery);
+                    },
+                  ),
+                ],
               ),
-              title: const Text('Take Photo'),
-              subtitle: const Text('Use camera to capture'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickImage(ImageSource.camera);
-              },
             ),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.accentColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.photo_library, color: AppTheme.accentColor),
-              ),
-              title: const Text('Choose from Gallery'),
-              subtitle: const Text('Select existing photo'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-            const SizedBox(height: AppTheme.spacingS),
           ],
         ),
       ),
@@ -879,158 +910,221 @@ class _ScheduleFormSheetState extends State<_ScheduleFormSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(
-        left: AppTheme.spacingL,
-        right: AppTheme.spacingL,
-        top: AppTheme.spacingL,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppTheme.spacingL,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXL)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusL)),
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.dividerColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Modern Gradient Header
+          Container(
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusL)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingM),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                    ),
+                    child: const Icon(Icons.calendar_month, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: AppTheme.spacingM),
+                  Expanded(
+                    child: Text(
+                      'Add Schedule',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: AppTheme.spacingL),
-            Text(
-              'Add Schedule',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+          ),
+          // Form Content
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Day selection
+                  Text('Day of Week', style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppTheme.spacingS),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(7, (index) {
+                      final isSelected = _selectedDay == index;
+                      return ChoiceChip(
+                        label: Text(dayNames[index].substring(0, 3)),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() => _selectedDay = index);
+                        },
+                      );
+                    }),
                   ),
-            ),
-            const SizedBox(height: AppTheme.spacingL),
+                  const SizedBox(height: AppTheme.spacingL),
 
-            // Day selection
-            Text('Day of Week', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: AppTheme.spacingS),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: List.generate(7, (index) {
-                final isSelected = _selectedDay == index;
-                return ChoiceChip(
-                  label: Text(dayNames[index].substring(0, 3)),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() => _selectedDay = index);
-                  },
-                );
-              }),
-            ),
-            const SizedBox(height: AppTheme.spacingL),
-
-            // Time selection
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // Time selection
+                  Row(
                     children: [
-                      Text('Start Time', style: Theme.of(context).textTheme.labelLarge),
-                      const SizedBox(height: AppTheme.spacingS),
-                      InkWell(
-                        onTap: _selectStartTime,
-                        child: Container(
-                          padding: const EdgeInsets.all(AppTheme.spacingM),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.dividerColor),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.access_time, size: 18),
-                              const SizedBox(width: 8),
-                              Text(_formatTime(_startTime)),
-                            ],
-                          ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Start Time', style: Theme.of(context).textTheme.labelLarge),
+                            const SizedBox(height: AppTheme.spacingS),
+                            InkWell(
+                              onTap: _selectStartTime,
+                              child: Container(
+                                padding: const EdgeInsets.all(AppTheme.spacingM),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: AppTheme.dividerColor),
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.access_time, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text(_formatTime(_startTime)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppTheme.spacingM),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('End Time', style: Theme.of(context).textTheme.labelLarge),
+                            const SizedBox(height: AppTheme.spacingS),
+                            InkWell(
+                              onTap: _selectEndTime,
+                              child: Container(
+                                padding: const EdgeInsets.all(AppTheme.spacingM),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: AppTheme.dividerColor),
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.access_time, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text(_formatTime(_endTime)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: AppTheme.spacingM),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('End Time', style: Theme.of(context).textTheme.labelLarge),
-                      const SizedBox(height: AppTheme.spacingS),
-                      InkWell(
-                        onTap: _selectEndTime,
-                        child: Container(
-                          padding: const EdgeInsets.all(AppTheme.spacingM),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.dividerColor),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.access_time, size: 18),
-                              const SizedBox(width: 8),
-                              Text(_formatTime(_endTime)),
-                            ],
-                          ),
-                        ),
-                      ),
+                  const SizedBox(height: AppTheme.spacingL),
+
+                  // Slot duration
+                  Text('Slot Duration (minutes)', style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: AppTheme.spacingS),
+                  SegmentedButton<int>(
+                    segments: const [
+                      ButtonSegment(value: 10, label: Text('10')),
+                      ButtonSegment(value: 15, label: Text('15')),
+                      ButtonSegment(value: 20, label: Text('20')),
+                      ButtonSegment(value: 30, label: Text('30')),
                     ],
+                    selected: {_slotDuration},
+                    onSelectionChanged: (Set<int> selection) {
+                      setState(() => _slotDuration = selection.first);
+                    },
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacingL),
+                  const SizedBox(height: AppTheme.spacingL),
 
-            // Slot duration
-            Text('Slot Duration (minutes)', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: AppTheme.spacingS),
-            SegmentedButton<int>(
-              segments: const [
-                ButtonSegment(value: 10, label: Text('10')),
-                ButtonSegment(value: 15, label: Text('15')),
-                ButtonSegment(value: 20, label: Text('20')),
-                ButtonSegment(value: 30, label: Text('30')),
-              ],
-              selected: {_slotDuration},
-              onSelectionChanged: (Set<int> selection) {
-                setState(() => _slotDuration = selection.first);
-              },
-            ),
-            const SizedBox(height: AppTheme.spacingL),
-
-            // Service type
-            TextField(
-              controller: _typeController,
-              decoration: const InputDecoration(
-                labelText: 'Service Type (optional)',
-                hintText: 'e.g., Pediatrics, Consultation',
+                  // Service type
+                  TextField(
+                    controller: _typeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Service Type (optional)',
+                      hintText: 'e.g., Pediatrics, Consultation',
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                ],
               ),
             ),
-            const SizedBox(height: AppTheme.spacingL),
-
-            // Save button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _save,
-                child: const Text('Add Schedule'),
+          ),
+          // Footer
+          Container(
+            padding: EdgeInsets.only(
+              left: AppTheme.spacingL,
+              right: AppTheme.spacingL,
+              top: AppTheme.spacingM,
+              bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                  ? AppTheme.spacingM
+                  : AppTheme.spacingL,
+            ),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceMedium,
+              border: Border(
+                top: BorderSide(color: AppTheme.dividerColor, width: 1),
               ),
             ),
-          ],
-        ),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.spacingM),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: _save,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text('Add Schedule'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

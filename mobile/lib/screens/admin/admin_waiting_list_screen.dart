@@ -162,97 +162,148 @@ class _AdminWaitingListScreenState extends State<AdminWaitingListScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppTheme.spacingL),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppTheme.radiusXL),
+            top: Radius.circular(AppTheme.radiusL),
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Modern Gradient Header
             Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
               decoration: BoxDecoration(
-                color: AppTheme.dividerColor,
-                borderRadius: BorderRadius.circular(2),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.orange.shade400, Colors.orange.shade700],
+                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusL)),
               ),
-            ),
-            Text(
-              'Update Status',
-              style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            const SizedBox(height: AppTheme.spacingS),
-            Text(
-              entry.patientName ?? 'Patient',
-              style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
-            ),
-            const SizedBox(height: AppTheme.spacingL),
-            _StatusOption(
-              icon: Icons.hourglass_empty,
-              label: 'Waiting',
-              color: Colors.orange,
-              isSelected: entry.status == 'waiting',
-              onTap: () {
-                Navigator.pop(ctx);
-                _updateStatus(entry, 'waiting');
-              },
-            ),
-            _StatusOption(
-              icon: Icons.phone_callback,
-              label: 'Contacted',
-              color: Colors.blue,
-              isSelected: entry.status == 'contacted',
-              onTap: () {
-                Navigator.pop(ctx);
-                _updateStatus(entry, 'contacted');
-              },
-            ),
-            _StatusOption(
-              icon: Icons.event_available,
-              label: 'Scheduled',
-              color: AppTheme.successColor,
-              isSelected: entry.status == 'scheduled',
-              onTap: () {
-                Navigator.pop(ctx);
-                _updateStatus(entry, 'scheduled');
-              },
-            ),
-            _StatusOption(
-              icon: Icons.event_busy,
-              label: 'Cancelled',
-              color: AppTheme.errorColor,
-              isSelected: entry.status == 'cancelled',
-              onTap: () {
-                Navigator.pop(ctx);
-                _updateStatus(entry, 'cancelled');
-              },
-            ),
-            const SizedBox(height: AppTheme.spacingM),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _deleteEntry(entry);
-                },
-                icon: const Icon(Icons.delete_outline, color: AppTheme.errorColor),
-                label: const Text('Remove from List'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.errorColor,
-                  side: const BorderSide(color: AppTheme.errorColor),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingM),
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                      ),
+                      child: const Icon(Icons.swap_horiz, color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: AppTheme.spacingM),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Update Status',
+                            style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                          ),
+                          Text(
+                            entry.patientName ?? 'Patient',
+                            style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white70,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: AppTheme.spacingS),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              child: Column(
+                children: [
+                  _StatusOption(
+                    icon: Icons.hourglass_empty,
+                    label: 'Waiting',
+                    color: Colors.orange,
+                    isSelected: entry.status == 'waiting',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _updateStatus(entry, 'waiting');
+                    },
+                  ),
+                  _StatusOption(
+                    icon: Icons.phone_callback,
+                    label: 'Contacted',
+                    color: Colors.blue,
+                    isSelected: entry.status == 'contacted',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _updateStatus(entry, 'contacted');
+                    },
+                  ),
+                  _StatusOption(
+                    icon: Icons.event_available,
+                    label: 'Scheduled',
+                    color: AppTheme.successColor,
+                    isSelected: entry.status == 'scheduled',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _updateStatus(entry, 'scheduled');
+                    },
+                  ),
+                  _StatusOption(
+                    icon: Icons.event_busy,
+                    label: 'Cancelled',
+                    color: AppTheme.errorColor,
+                    isSelected: entry.status == 'cancelled',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _updateStatus(entry, 'cancelled');
+                    },
+                  ),
+                ],
+              ),
+            ),
+            // Footer
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceMedium,
+                border: Border(
+                  top: BorderSide(color: AppTheme.dividerColor, width: 1),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _deleteEntry(entry);
+                    },
+                    icon: const Icon(Icons.delete_outline, color: AppTheme.errorColor),
+                    label: const Text('Remove from List'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.errorColor,
+                      side: const BorderSide(color: AppTheme.errorColor),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -681,222 +732,266 @@ class _ScheduleAppointmentSheetState extends State<_ScheduleAppointmentSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
-      padding: const EdgeInsets.all(AppTheme.spacingL),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXL)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusL)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
-              decoration: BoxDecoration(
-                color: AppTheme.dividerColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          // Header
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.successColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                ),
-                child: const Icon(Icons.event_available, color: AppTheme.successColor),
-              ),
-              const SizedBox(width: AppTheme.spacingM),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Schedule Appointment',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    Text(
-                      widget.entry.patientName ?? 'Patient',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.textSecondary,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppTheme.spacingL),
-
-          // Service info
+          // Modern Gradient Header
           Container(
-            padding: const EdgeInsets.all(AppTheme.spacingM),
             decoration: BoxDecoration(
-              color: AppTheme.surfaceLight,
-              borderRadius: BorderRadius.circular(AppTheme.radiusM),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.medical_services, size: 18, color: AppTheme.primaryColor),
-                const SizedBox(width: 8),
-                Text(
-                  widget.entry.serviceType,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-                const Spacer(),
-                Text(
-                  widget.entry.doctorName ?? 'Doctor',
-                  style: TextStyle(color: AppTheme.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppTheme.spacingL),
-
-          // Date selection
-          Text(
-            'Select Date',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: AppTheme.spacingS),
-          InkWell(
-            onTap: _selectDate,
-            borderRadius: BorderRadius.circular(AppTheme.radiusM),
-            child: Container(
-              padding: const EdgeInsets.all(AppTheme.spacingM),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppTheme.dividerColor),
-                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppTheme.successColor, AppTheme.successColor.withValues(alpha: 0.8)],
               ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusL)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingM),
+            child: SafeArea(
+              bottom: false,
               child: Row(
                 children: [
-                  const Icon(Icons.calendar_today, color: AppTheme.primaryColor),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                    ),
+                    child: const Icon(Icons.event_available, color: Colors.white, size: 22),
+                  ),
                   const SizedBox(width: AppTheme.spacingM),
                   Expanded(
-                    child: Text(
-                      dateFormat.format(_selectedDate),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Schedule Appointment',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                        ),
+                        Text(
+                          widget.entry.patientName ?? 'Patient',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.white70,
+                              ),
+                        ),
+                      ],
                     ),
                   ),
-                  const Icon(Icons.arrow_drop_down, color: AppTheme.textHint),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: AppTheme.spacingL),
+          // Form Content
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Service info
+                  Container(
+                    padding: const EdgeInsets.all(AppTheme.spacingM),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceLight,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.medical_services, size: 18, color: AppTheme.primaryColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.entry.serviceType,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        const Spacer(),
+                        Text(
+                          widget.entry.doctorName ?? 'Doctor',
+                          style: TextStyle(color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingL),
 
-          // Time slots
-          Text(
-            'Select Time',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: AppTheme.spacingS),
+                  // Date selection
+                  Text(
+                    'Select Date',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+                  InkWell(
+                    onTap: _selectDate,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                    child: Container(
+                      padding: const EdgeInsets.all(AppTheme.spacingM),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.dividerColor),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, color: AppTheme.primaryColor),
+                          const SizedBox(width: AppTheme.spacingM),
+                          Expanded(
+                            child: Text(
+                              dateFormat.format(_selectedDate),
+                              style: const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                          const Icon(Icons.arrow_drop_down, color: AppTheme.textHint),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingL),
 
-          if (_isLoadingSlots)
-            const Padding(
-              padding: EdgeInsets.all(AppTheme.spacingL),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_errorMessage != null)
-            Container(
-              padding: const EdgeInsets.all(AppTheme.spacingM),
-              decoration: BoxDecoration(
-                color: AppTheme.errorColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                  // Time slots
+                  Text(
+                    'Select Time',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+
+                  if (_isLoadingSlots)
+                    const Padding(
+                      padding: EdgeInsets.all(AppTheme.spacingL),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_errorMessage != null)
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spacingM),
+                      decoration: BoxDecoration(
+                        color: AppTheme.errorColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: AppTheme.errorColor),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.errorColor))),
+                        ],
+                      ),
+                    )
+                  else if (_availableSlots.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spacingL),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceMedium,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.event_busy, size: 40, color: AppTheme.textHint),
+                          const SizedBox(height: AppTheme.spacingS),
+                          Text(
+                            'No available slots on this date',
+                            style: TextStyle(color: AppTheme.textSecondary),
+                          ),
+                          const SizedBox(height: AppTheme.spacingS),
+                          TextButton(
+                            onPressed: _selectDate,
+                            child: const Text('Try another date'),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _availableSlots.map((slot) {
+                        final isSelected = slot == _selectedSlot;
+                        return ChoiceChip(
+                          label: Text(slot),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() => _selectedSlot = selected ? slot : null);
+                          },
+                          selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                          labelStyle: TextStyle(
+                            color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                ],
               ),
+            ),
+          ),
+          // Footer
+          Container(
+            padding: EdgeInsets.only(
+              left: AppTheme.spacingL,
+              right: AppTheme.spacingL,
+              top: AppTheme.spacingM,
+              bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                  ? AppTheme.spacingM
+                  : AppTheme.spacingL,
+            ),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceMedium,
+              border: Border(
+                top: BorderSide(color: AppTheme.dividerColor, width: 1),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: AppTheme.errorColor),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.errorColor))),
-                ],
-              ),
-            )
-          else if (_availableSlots.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(AppTheme.spacingL),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceMedium,
-                borderRadius: BorderRadius.circular(AppTheme.radiusM),
-              ),
-              child: Column(
-                children: [
-                  const Icon(Icons.event_busy, size: 40, color: AppTheme.textHint),
-                  const SizedBox(height: AppTheme.spacingS),
-                  Text(
-                    'No available slots on this date',
-                    style: TextStyle(color: AppTheme.textSecondary),
-                  ),
-                  const SizedBox(height: AppTheme.spacingS),
-                  TextButton(
-                    onPressed: _selectDate,
-                    child: const Text('Try another date'),
-                  ),
-                ],
-              ),
-            )
-          else
-            Flexible(
-              child: SingleChildScrollView(
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _availableSlots.map((slot) {
-                    final isSelected = slot == _selectedSlot;
-                    return ChoiceChip(
-                      label: Text(slot),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() => _selectedSlot = selected ? slot : null);
-                      },
-                      selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
-                      labelStyle: TextStyle(
-                        color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                    );
-                  }).toList(),
-                ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.spacingM),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: _selectedSlot != null && !_isBooking ? _bookAppointment : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.successColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: _isBooking
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : Text(_selectedSlot != null
+                              ? 'Book for ${DateFormat('MMM d').format(_selectedDate)}'
+                              : 'Select a time slot'),
+                    ),
+                  ),
+                ],
               ),
-            ),
-
-          const SizedBox(height: AppTheme.spacingL),
-
-          // Book button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _selectedSlot != null && !_isBooking ? _bookAppointment : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.successColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: _isBooking
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : Text(_selectedSlot != null
-                      ? 'Book for ${DateFormat('MMM d').format(_selectedDate)} at $_selectedSlot'
-                      : 'Select a time slot'),
             ),
           ),
-          const SizedBox(height: AppTheme.spacingS),
         ],
       ),
     );

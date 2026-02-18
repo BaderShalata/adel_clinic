@@ -17,7 +17,7 @@ import {
   MenuItem,
   Divider,
   Tooltip,
-  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage, type Language } from '../contexts/LanguageContext';
+import { healthcareColors, gradients, shadows } from '../theme/healthcareTheme';
 
 const drawerWidth = 260;
 
@@ -45,16 +46,15 @@ export const Layout: React.FC = () => {
   const { language, setLanguage, t, direction } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
 
   const menuItems = [
-    { text: t('dashboard'), icon: <DashboardIcon />, path: '/' },
-    { text: t('appointments'), icon: <AppointmentIcon />, path: '/appointments' },
-    { text: t('waitingList'), icon: <WaitingIcon />, path: '/waiting-list' },
-    { text: t('patients'), icon: <PatientsIcon />, path: '/patients' },
-    { text: t('doctors'), icon: <DoctorsIcon />, path: '/doctors' },
-    { text: t('news'), icon: <NewsIcon />, path: '/news' },
-    { text: t('users'), icon: <UsersIcon />, path: '/users' },
+    { text: t('dashboard'), icon: <DashboardIcon />, path: '/', color: healthcareColors.primary.main },
+    { text: t('appointments'), icon: <AppointmentIcon />, path: '/appointments', color: healthcareColors.info },
+    { text: t('waitingList'), icon: <WaitingIcon />, path: '/waiting-list', color: healthcareColors.warning },
+    { text: t('patients'), icon: <PatientsIcon />, path: '/patients', color: healthcareColors.primary.main },
+    { text: t('doctors'), icon: <DoctorsIcon />, path: '/doctors', color: healthcareColors.secondary.main },
+    { text: t('news'), icon: <NewsIcon />, path: '/news', color: healthcareColors.accent.main },
+    { text: t('users'), icon: <UsersIcon />, path: '/users', color: healthcareColors.neutral[600] },
   ];
 
   const handleDrawerToggle = () => {
@@ -100,7 +100,14 @@ export const Layout: React.FC = () => {
   };
 
   const drawer = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        background: `linear-gradient(180deg, ${healthcareColors.neutral[50]} 0%, #ffffff 100%)`,
+      }}
+    >
       {/* Logo Section */}
       <Box
         sx={{
@@ -109,27 +116,45 @@ export const Layout: React.FC = () => {
           alignItems: 'center',
           gap: 1.5,
           borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderColor: healthcareColors.neutral[200],
         }}
       >
         <Box
           sx={{
-            width: 42,
-            height: 42,
-            borderRadius: 2,
-            bgcolor: theme.palette.primary.main,
+            width: 46,
+            height: 46,
+            borderRadius: 2.5,
+            background: gradients.primary,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            boxShadow: shadows.colored(healthcareColors.primary.main),
           }}
         >
-          <ClinicIcon sx={{ color: 'white', fontSize: 24 }} />
+          <ClinicIcon sx={{ color: 'white', fontSize: 26 }} />
         </Box>
         <Box>
-          <Typography variant="h6" fontWeight={700} color="primary.main">
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              background: gradients.primary,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.02em',
+            }}
+          >
             Adel Clinic
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant="caption"
+            sx={{
+              color: healthcareColors.neutral[500],
+              fontWeight: 500,
+              letterSpacing: '0.02em',
+            }}
+          >
             {t('adminPanel')}
           </Typography>
         </Box>
@@ -148,17 +173,31 @@ export const Layout: React.FC = () => {
                 }}
                 sx={{
                   borderRadius: 2,
-                  bgcolor: active ? 'primary.main' : 'transparent',
-                  color: active ? 'white' : 'text.primary',
+                  py: 1.25,
+                  bgcolor: active ? alpha(item.color, 0.12) : 'transparent',
+                  color: active ? item.color : healthcareColors.neutral[700],
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': active ? {
+                    content: '""',
+                    position: 'absolute',
+                    left: 0,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 4,
+                    height: '60%',
+                    borderRadius: '0 4px 4px 0',
+                    background: item.color,
+                  } : {},
                   '&:hover': {
-                    bgcolor: active ? 'primary.dark' : 'action.hover',
+                    bgcolor: active ? alpha(item.color, 0.16) : healthcareColors.neutral[100],
                   },
                   transition: 'all 0.2s ease-in-out',
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    color: active ? 'white' : 'text.secondary',
+                    color: active ? item.color : healthcareColors.neutral[500],
                     minWidth: 40,
                   }}
                 >
@@ -178,8 +217,23 @@ export const Layout: React.FC = () => {
       </List>
 
       {/* Footer */}
-      <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="caption" color="text.secondary" display="block" textAlign="center">
+      <Box
+        sx={{
+          p: 2,
+          borderTop: '1px solid',
+          borderColor: healthcareColors.neutral[200],
+          background: healthcareColors.neutral[50],
+        }}
+      >
+        <Typography
+          variant="caption"
+          sx={{
+            color: healthcareColors.neutral[400],
+            display: 'block',
+            textAlign: 'center',
+            fontWeight: 500,
+          }}
+        >
           © 2024 Adel Clinic
         </Typography>
       </Box>
@@ -197,9 +251,10 @@ export const Layout: React.FC = () => {
             ? { mr: { sm: `${drawerWidth}px` } }
             : { ml: { sm: `${drawerWidth}px` } }
           ),
-          bgcolor: 'background.paper',
+          bgcolor: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(20px)',
           borderBottom: '1px solid',
-          borderColor: 'divider',
+          borderColor: healthcareColors.neutral[200],
         }}
       >
         <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -210,13 +265,21 @@ export const Layout: React.FC = () => {
               onClick={handleDrawerToggle}
               sx={{
                 display: { sm: 'none' },
-                color: 'text.primary',
+                color: healthcareColors.neutral[700],
                 ...(direction === 'rtl' ? { ml: 2 } : { mr: 2 })
               }}
             >
               <MenuIcon />
             </IconButton>
-            <Typography variant="h6" noWrap color="text.primary" fontWeight={600}>
+            <Typography
+              variant="h6"
+              noWrap
+              sx={{
+                color: healthcareColors.neutral[800],
+                fontWeight: 600,
+                letterSpacing: '-0.01em',
+              }}
+            >
               {menuItems.find(item => isActive(item.path))?.text || t('dashboard')}
             </Typography>
           </Box>
@@ -224,7 +287,16 @@ export const Layout: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {/* Language Switcher */}
             <Tooltip title={t('language')}>
-              <IconButton onClick={handleLangMenuOpen} sx={{ color: 'text.secondary' }}>
+              <IconButton
+                onClick={handleLangMenuOpen}
+                sx={{
+                  color: healthcareColors.neutral[600],
+                  '&:hover': {
+                    bgcolor: alpha(healthcareColors.primary.main, 0.1),
+                    color: healthcareColors.primary.main,
+                  },
+                }}
+              >
                 <LanguageIcon />
               </IconButton>
             </Tooltip>
@@ -234,6 +306,15 @@ export const Layout: React.FC = () => {
               onClose={handleLangMenuClose}
               transformOrigin={{ horizontal: 'right', vertical: 'top' }}
               anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    borderRadius: 2,
+                    boxShadow: shadows.lg,
+                    border: `1px solid ${healthcareColors.neutral[200]}`,
+                  },
+                },
+              }}
             >
               {(['en', 'ar', 'he'] as Language[]).map((lang) => (
                 <MenuItem
@@ -241,8 +322,13 @@ export const Layout: React.FC = () => {
                   onClick={() => handleLanguageChange(lang)}
                   selected={language === lang}
                   sx={{
-                    minWidth: 120,
+                    minWidth: 140,
                     fontWeight: language === lang ? 600 : 400,
+                    color: language === lang ? healthcareColors.primary.main : 'inherit',
+                    bgcolor: language === lang ? alpha(healthcareColors.primary.main, 0.08) : 'transparent',
+                    '&:hover': {
+                      bgcolor: alpha(healthcareColors.primary.main, 0.12),
+                    },
                   }}
                 >
                   {languageLabels[lang]}
@@ -250,7 +336,7 @@ export const Layout: React.FC = () => {
               ))}
             </Menu>
 
-            <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: healthcareColors.neutral[200] }} />
 
             {/* User Menu */}
             <IconButton onClick={handleMenuOpen} sx={{ p: 0.5 }}>
@@ -258,10 +344,12 @@ export const Layout: React.FC = () => {
                 alt={user?.email || 'User'}
                 src={user?.photoURL || undefined}
                 sx={{
-                  width: 36,
-                  height: 36,
-                  bgcolor: 'primary.main',
+                  width: 38,
+                  height: 38,
+                  background: gradients.primary,
                   fontSize: '0.9rem',
+                  fontWeight: 600,
+                  boxShadow: shadows.sm,
                 }}
               >
                 {user?.email?.charAt(0).toUpperCase()}
@@ -273,23 +361,44 @@ export const Layout: React.FC = () => {
               onClose={handleMenuClose}
               transformOrigin={{ horizontal: 'right', vertical: 'top' }}
               anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    borderRadius: 2,
+                    boxShadow: shadows.lg,
+                    border: `1px solid ${healthcareColors.neutral[200]}`,
+                    minWidth: 200,
+                  },
+                },
+              }}
             >
-              <Box sx={{ px: 2, py: 1 }}>
-                <Typography variant="subtitle2" fontWeight={600}>
+              <Box sx={{ px: 2, py: 1.5 }}>
+                <Typography variant="subtitle2" fontWeight={600} sx={{ color: healthcareColors.neutral[800] }}>
                   {user?.displayName || 'Admin'}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: healthcareColors.neutral[500] }}>
                   {user?.email}
                 </Typography>
               </Box>
-              <Divider />
-              <MenuItem onClick={handleSignOut}>
+              <Divider sx={{ borderColor: healthcareColors.neutral[200] }} />
+              <MenuItem
+                onClick={handleSignOut}
+                sx={{
+                  py: 1.25,
+                  '&:hover': {
+                    bgcolor: alpha(healthcareColors.error, 0.08),
+                  },
+                }}
+              >
                 <ListItemIcon>
-                  <LogoutIcon fontSize="small" color="error" />
+                  <LogoutIcon fontSize="small" sx={{ color: healthcareColors.error }} />
                 </ListItemIcon>
                 <ListItemText
                   primary={t('logout')}
-                  primaryTypographyProps={{ color: 'error' }}
+                  primaryTypographyProps={{
+                    color: healthcareColors.error,
+                    fontWeight: 500,
+                  }}
                 />
               </MenuItem>
             </Menu>
@@ -330,7 +439,7 @@ export const Layout: React.FC = () => {
                 ? { borderLeft: '1px solid', borderRight: 'none' }
                 : { borderRight: '1px solid', borderLeft: 'none' }
               ),
-              borderColor: 'divider',
+              borderColor: healthcareColors.neutral[200],
             },
           }}
           open
@@ -345,7 +454,7 @@ export const Layout: React.FC = () => {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          bgcolor: 'background.default',
+          bgcolor: healthcareColors.neutral[50],
           minHeight: '100vh',
         }}
       >
