@@ -80,7 +80,7 @@ class DoctorController {
      */
     async createDoctorWithSchedule(req, res) {
         try {
-            const { userId, fullName, fullNameEn, fullNameHe, specialties, specialtiesEn, specialtiesHe, qualifications, qualificationsEn, qualificationsHe, scheduleEntries } = req.body;
+            const { userId, fullName, fullNameEn, fullNameHe, specialties, specialtiesEn, specialtiesHe, qualifications, qualificationsEn, qualificationsHe, bio, bioEn, bioHe, imageUrl, scheduleEntries } = req.body;
             if (!scheduleEntries || !Array.isArray(scheduleEntries)) {
                 res.status(400).json({ error: 'scheduleEntries array is required' });
                 return;
@@ -93,13 +93,18 @@ class DoctorController {
                     return;
                 }
                 for (const day of entry.days) {
-                    schedule.push({
+                    const scheduleEntry = {
                         dayOfWeek: day,
                         startTime: entry.startTime,
                         endTime: entry.endTime,
                         slotDuration: entry.slotDuration,
-                        type: entry.type || (specialties.length === 1 ? specialties[0] : undefined)
-                    });
+                    };
+                    // Only add type if it has a value
+                    const typeValue = entry.type || (specialties && specialties.length === 1 ? specialties[0] : null);
+                    if (typeValue) {
+                        scheduleEntry.type = typeValue;
+                    }
+                    schedule.push(scheduleEntry);
                 }
             }
             const doctorData = {
@@ -113,6 +118,10 @@ class DoctorController {
                 qualifications: qualifications || [],
                 qualificationsEn: qualificationsEn || [],
                 qualificationsHe: qualificationsHe || [],
+                bio,
+                bioEn,
+                bioHe,
+                imageUrl,
                 schedule
             };
             const doctor = await doctorService_1.doctorService.createDoctor(doctorData);
@@ -157,13 +166,18 @@ class DoctorController {
                 for (const entry of scheduleEntries) {
                     if (entry.days && Array.isArray(entry.days)) {
                         for (const day of entry.days) {
-                            schedule.push({
+                            const scheduleEntry = {
                                 dayOfWeek: day,
                                 startTime: entry.startTime,
                                 endTime: entry.endTime,
                                 slotDuration: entry.slotDuration,
-                                type: entry.type || (specialties && specialties.length === 1 ? specialties[0] : undefined)
-                            });
+                            };
+                            // Only add type if it has a value
+                            const typeValue = entry.type || (specialties && specialties.length === 1 ? specialties[0] : null);
+                            if (typeValue) {
+                                scheduleEntry.type = typeValue;
+                            }
+                            schedule.push(scheduleEntry);
                         }
                     }
                 }

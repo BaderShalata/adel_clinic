@@ -342,111 +342,117 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
         children: [
           // Location Card
           Expanded(
-            child: ModernCard(
-              onTap: _openMap,
-              padding: const EdgeInsets.all(AppTheme.spacingM),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppTheme.spacingM),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppTheme.successColor.withValues(alpha: 0.2),
-                          AppTheme.successColor.withValues(alpha: 0.05),
-                        ],
+            child: Animate(
+              effects: [
+                FadeEffect(delay: 500.ms, duration: AppTheme.animMedium),
+                SlideEffect(begin: const Offset(0, 0.2), end: Offset.zero),
+              ],
+              child: ModernCard(
+                onTap: _openMap,
+                padding: const EdgeInsets.all(AppTheme.spacingM),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spacingM),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppTheme.successColor.withValues(alpha: 0.2),
+                            AppTheme.successColor.withValues(alpha: 0.05),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
                       ),
-                      shape: BoxShape.circle,
+                      child: const Icon(
+                        Icons.location_on,
+                        color: AppTheme.successColor,
+                        size: 28,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.location_on,
-                      color: AppTheme.successColor,
-                      size: 28,
+                    const SizedBox(height: AppTheme.spacingS),
+                    Text(
+                      'Location',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
-                  ),
-                  const SizedBox(height: AppTheme.spacingS),
-                  Text(
-                    'Location',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Saba Reihana\nMedical Center',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textSecondary,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: AppTheme.spacingS),
-                  Text(
-                    'Tap to open',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Saba Reihana\nMedical Center',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppTheme.spacingS),
+                    Text(
+                      'Tap to open',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ],
+                ),
               ),
-            )
-                .animate()
-                .fadeIn(delay: 500.ms, duration: AppTheme.animMedium)
-                .slideY(begin: 0.2, end: 0),
+            ),
           ),
           const SizedBox(width: AppTheme.spacingM),
           // Social Media Card
           Expanded(
-            child: ModernCard(
-              padding: const EdgeInsets.all(AppTheme.spacingM),
-              child: Column(
-                children: [
-                  Text(
-                    'Follow Us',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
+            child: Animate(
+              effects: [
+                FadeEffect(delay: 600.ms, duration: AppTheme.animMedium),
+                SlideEffect(begin: const Offset(0, 0.2), end: Offset.zero),
+              ],
+              child: ModernCard(
+                padding: const EdgeInsets.all(AppTheme.spacingM),
+                child: Column(
+                  children: [
+                    Text(
+                      'Follow Us',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: AppTheme.spacingM),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _SocialMediaButton(
+                          icon: Icons.facebook,
+                          color: const Color(0xFF1877F2),
+                          onTap: () => _openSocialMedia('facebook'),
                         ),
-                  ),
-                  const SizedBox(height: AppTheme.spacingM),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _SocialMediaButton(
-                        icon: Icons.facebook,
-                        color: const Color(0xFF1877F2),
-                        onTap: () => _openSocialMedia('facebook'),
-                      ),
-                      _SocialMediaButton(
-                        icon: Icons.camera_alt,
-                        color: const Color(0xFFE4405F),
-                        onTap: () => _openSocialMedia('instagram'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppTheme.spacingS),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _SocialMediaButton(
-                        icon: Icons.phone,
-                        color: const Color(0xFF25D366),
-                        onTap: () => _openSocialMedia('whatsapp'),
-                      ),
-                      _SocialMediaButton(
-                        icon: Icons.phone_in_talk,
-                        color: AppTheme.primaryColor,
-                        onTap: () => _openSocialMedia('phone'),
-                      ),
-                    ],
-                  ),
-                ],
+                        _SocialMediaButton(
+                          icon: Icons.camera_alt,
+                          color: const Color(0xFFE4405F),
+                          onTap: () => _openSocialMedia('instagram'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppTheme.spacingS),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _SocialMediaButton(
+                          icon: Icons.phone,
+                          color: const Color(0xFF25D366),
+                          onTap: () => _openSocialMedia('whatsapp'),
+                        ),
+                        _SocialMediaButton(
+                          icon: Icons.phone_in_talk,
+                          color: AppTheme.primaryColor,
+                          onTap: () => _openSocialMedia('phone'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            )
-                .animate()
-                .fadeIn(delay: 600.ms, duration: AppTheme.animMedium)
-                .slideY(begin: 0.2, end: 0),
+            ),
           ),
         ],
       ),
@@ -792,12 +798,14 @@ class NewsCard extends StatelessWidget {
   }
 
   void _showNewsDetail(BuildContext context) {
+    final dateFormat = DateFormat('MMMM d, yyyy');
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
+        initialChildSize: 0.85,
         maxChildSize: 0.95,
         minChildSize: 0.5,
         builder: (context, scrollController) {
@@ -808,47 +816,149 @@ class NewsCard extends StatelessWidget {
                 top: Radius.circular(AppTheme.radiusXL),
               ),
             ),
-            child: SingleChildScrollView(
-              controller: scrollController,
-              child: Padding(
-                padding: const EdgeInsets.all(AppTheme.spacingL),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Handle
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: AppTheme.dividerColor,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
+            child: Column(
+              children: [
+                // Handle bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.dividerColor,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    const SizedBox(height: AppTheme.spacingL),
-
-                    // Full content
-                    Text(
-                      news.title,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: AppTheme.spacingM),
-                    Text(
-                      news.publishedAt != null
-                          ? DateFormat('MMMM d, yyyy').format(news.publishedAt!)
-                          : 'No date',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: AppTheme.spacingL),
-                    Text(
-                      news.content,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: AppTheme.spacingXL),
-                  ],
+                  ),
                 ),
-              ),
+
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Hero image
+                        if (news.imageURL != null)
+                          CachedNetworkImage(
+                            imageUrl: news.imageURL!,
+                            height: 220,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              height: 220,
+                              color: AppTheme.surfaceMedium,
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              height: 120,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    _getCategoryColor(news.category).withValues(alpha: 0.2),
+                                    _getCategoryColor(news.category).withValues(alpha: 0.05),
+                                  ],
+                                ),
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  Icons.article,
+                                  size: 48,
+                                  color: _getCategoryColor(news.category),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                        Padding(
+                          padding: const EdgeInsets.all(AppTheme.spacingL),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Category and date row
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppTheme.spacingS,
+                                      vertical: AppTheme.spacingXS,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _getCategoryColor(news.category).withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                                    ),
+                                    child: Text(
+                                      news.category.toUpperCase(),
+                                      style: TextStyle(
+                                        color: _getCategoryColor(news.category),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 14,
+                                    color: AppTheme.textHint,
+                                  ),
+                                  const SizedBox(width: AppTheme.spacingXS),
+                                  Text(
+                                    news.publishedAt != null
+                                        ? dateFormat.format(news.publishedAt!)
+                                        : 'No date',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: AppTheme.textSecondary,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppTheme.spacingL),
+
+                              // Title
+                              Text(
+                                news.title,
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              const SizedBox(height: AppTheme.spacingL),
+
+                              // Divider
+                              Container(
+                                height: 2,
+                                width: 60,
+                                decoration: BoxDecoration(
+                                  color: _getCategoryColor(news.category),
+                                  borderRadius: BorderRadius.circular(1),
+                                ),
+                              ),
+                              const SizedBox(height: AppTheme.spacingL),
+
+                              // Full content
+                              Text(
+                                news.content,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      height: 1.6,
+                                      color: AppTheme.textPrimary,
+                                    ),
+                              ),
+                              const SizedBox(height: AppTheme.spacingXL),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },

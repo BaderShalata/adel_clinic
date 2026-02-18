@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Button, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Typography, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, IconButton, Chip, FormControlLabel, Checkbox,
   FormGroup, Divider, Stack, Autocomplete, Select, MenuItem, FormControl, InputLabel,
+  Avatar, Alert, CircularProgress,
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Remove as RemoveIcon,
+  CloudUpload as UploadIcon,
+  Close as CloseIcon,
+  Person as PersonIcon,
+} from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -31,6 +40,10 @@ interface Doctor {
   qualificationsHe?: string[];
   schedule: DoctorSchedule[];
   isActive: boolean;
+  imageUrl?: string;
+  bio?: string;
+  bioEn?: string;
+  bioHe?: string;
 }
 
 interface ScheduleEntry {
@@ -89,10 +102,19 @@ export const Doctors: React.FC = () => {
     qualifications: '',
     qualificationsEn: '',
     qualificationsHe: '',
+    bio: '',
+    bioEn: '',
+    bioHe: '',
+    imageUrl: '',
   });
   const [scheduleEntries, setScheduleEntries] = useState<ScheduleEntry[]>([
     { days: [], startTime: '08:00', endTime: '17:00', slotDuration: 15, type: '' }
   ]);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
@@ -192,8 +214,40 @@ export const Doctors: React.FC = () => {
         qualifications: doctor.qualifications.join(', '),
         qualificationsEn: doctor.qualificationsEn?.join(', ') || '',
         qualificationsHe: doctor.qualificationsHe?.join(', ') || '',
+        bio: doctor.bio || '',
+        bioEn: doctor.bioEn || '',
+        bioHe: doctor.bioHe || '',
+        imageUrl: doctor.imageUrl || '',
       });
-      setScheduleEntries([{ days: [], startTime: '08:00', endTime: '17:00', slotDuration: 15, type: defaultType }]);
+      if (doctor.imageUrl) {
+        setImagePreview(doctor.imageUrl);
+      }
+      // Convert doctor's schedule to schedule entries format
+      if (doctor.schedule && doctor.schedule.length > 0) {
+        // Group schedule by time block (same start/end time and slot duration)
+        const scheduleMap = new Map<string, ScheduleEntry>();
+        doctor.schedule.forEach(s => {
+          const key = `${s.startTime}-${s.endTime}-${s.slotDuration}-${s.type || ''}`;
+          if (scheduleMap.has(key)) {
+            const entry = scheduleMap.get(key)!;
+            if (!entry.days.includes(s.dayOfWeek)) {
+              entry.days.push(s.dayOfWeek);
+              entry.days.sort((a, b) => a - b);
+            }
+          } else {
+            scheduleMap.set(key, {
+              days: [s.dayOfWeek],
+              startTime: s.startTime,
+              endTime: s.endTime,
+              slotDuration: s.slotDuration,
+              type: s.type || defaultType,
+            });
+          }
+        });
+        setScheduleEntries(Array.from(scheduleMap.values()));
+      } else {
+        setScheduleEntries([{ days: [], startTime: '08:00', endTime: '17:00', slotDuration: 15, type: defaultType }]);
+      }
     } else {
       setEditingId(null);
       setFormData({
@@ -207,9 +261,16 @@ export const Doctors: React.FC = () => {
         qualifications: '',
         qualificationsEn: '',
         qualificationsHe: '',
+        bio: '',
+        bioEn: '',
+        bioHe: '',
+        imageUrl: '',
       });
       setScheduleEntries([{ days: [], startTime: '08:00', endTime: '17:00', slotDuration: 15, type: '' }]);
     }
+    setSelectedImage(null);
+    setImagePreview(null);
+    setUploadError(null);
     setOpen(true);
   };
 
@@ -239,13 +300,117 @@ export const Doctors: React.FC = () => {
   const handleClose = () => {
     setOpen(false);
     setEditingId(null);
+    setSelectedImage(null);
+    setImagePreview(null);
+    setUploadError(null);
   };
 
-  const handleSubmit = () => {
-    if (editingId) {
-      updateMutation.mutate({ id: editingId, data: formData });
-    } else {
-      createMutation.mutate(formData);
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setUploadError('Please select an image file');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError('Image size must be less than 5MB');
+        return;
+      }
+      setSelectedImage(file);
+      setUploadError(null);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setFormData({ ...formData, imageUrl: '' });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadImage = async (): Promise<{ url: string; path: string | null } | null> => {
+    if (!selectedImage) return formData.imageUrl ? { url: formData.imageUrl, path: null } : null;
+
+    setUploadingImage(true);
+    try {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = (reader.result as string).split(',')[1];
+          resolve(base64String);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(selectedImage);
+      });
+
+      const response = await apiClient.post('/upload/image', {
+        image: base64,
+        fileName: `doctor_${Date.now()}.${selectedImage.name.split('.').pop()}`,
+        folder: 'doctors',
+        mimeType: selectedImage.type,
+      });
+
+      return { url: response.data.url, path: response.data.path };
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      setUploadError('Failed to upload image. Please try again.');
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const deleteImage = async (path: string): Promise<void> => {
+    try {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      await apiClient.delete('/upload/image', { data: { path } });
+    } catch (error) {
+      console.error('Failed to delete uploaded image:', error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    let uploadedImagePath: string | null = null;
+
+    try {
+      let imageUrl = formData.imageUrl;
+
+      if (selectedImage) {
+        const uploadResult = await uploadImage();
+        if (uploadResult) {
+          imageUrl = uploadResult.url;
+          uploadedImagePath = uploadResult.path ?? null; // Store path for potential rollback
+        } else {
+          return; // Upload failed, error already shown
+        }
+      }
+
+      const dataWithImage = { ...formData, imageUrl };
+
+      if (editingId) {
+        await updateMutation.mutateAsync({ id: editingId, data: dataWithImage });
+      } else {
+        await createMutation.mutateAsync(dataWithImage);
+      }
+    } catch (error) {
+      console.error('Error submitting doctor:', error);
+      // Rollback: delete uploaded image if doctor creation/update failed
+      if (uploadedImagePath) {
+        console.log('Rolling back uploaded image:', uploadedImagePath);
+        await deleteImage(uploadedImagePath);
+        setUploadError('Doctor creation failed. Uploaded image was removed.');
+      }
     }
   };
 
@@ -262,9 +427,10 @@ export const Doctors: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell width={70}>Photo</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Specialties</TableCell>
-              <TableCell>Qualifications</TableCell>
+              <TableCell>Bio</TableCell>
               <TableCell>Schedule</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Actions</TableCell>
@@ -272,7 +438,16 @@ export const Doctors: React.FC = () => {
           </TableHead>
           <TableBody>
             {doctors?.map((doctor) => (
-              <TableRow key={doctor.id}>
+              <TableRow key={doctor.id} hover>
+                <TableCell>
+                  <Avatar
+                    src={doctor.imageUrl}
+                    alt={doctor.fullName}
+                    sx={{ width: 48, height: 48 }}
+                  >
+                    {doctor.fullName.charAt(0)}
+                  </Avatar>
+                </TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight="bold">{doctor.fullName}</Typography>
                   {doctor.fullNameEn && <Typography variant="caption" color="text.secondary">{doctor.fullNameEn}</Typography>}
@@ -285,9 +460,17 @@ export const Doctors: React.FC = () => {
                   </Stack>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-                    {doctor.qualifications.slice(0, 2).join(', ')}
-                    {doctor.qualifications.length > 2 && ` +${doctor.qualifications.length - 2} more`}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: '0.85rem',
+                      maxWidth: 200,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {doctor.bio || doctor.bioEn || '-'}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -319,6 +502,65 @@ export const Doctors: React.FC = () => {
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>{editingId ? 'Edit Doctor' : 'Add Doctor'}</DialogTitle>
         <DialogContent>
+          {/* Doctor Image */}
+          <Box sx={{ mb: 3, mt: 1 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+              Doctor Photo
+            </Typography>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              id="doctor-image-upload"
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {imagePreview ? (
+                <Box sx={{ position: 'relative' }}>
+                  <Avatar
+                    src={imagePreview}
+                    alt="Doctor"
+                    sx={{ width: 100, height: 100 }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={handleRemoveImage}
+                    sx={{
+                      position: 'absolute',
+                      top: -8,
+                      right: -8,
+                      bgcolor: 'error.main',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'error.dark' },
+                    }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              ) : (
+                <Avatar sx={{ width: 100, height: 100, bgcolor: 'grey.200' }}>
+                  <PersonIcon sx={{ fontSize: 48, color: 'grey.400' }} />
+                </Avatar>
+              )}
+              <Button
+                variant="outlined"
+                component="label"
+                htmlFor="doctor-image-upload"
+                startIcon={<UploadIcon />}
+              >
+                {imagePreview ? 'Change Photo' : 'Upload Photo'}
+              </Button>
+            </Box>
+            {uploadError && (
+              <Alert severity="error" sx={{ mt: 1 }}>
+                {uploadError}
+              </Alert>
+            )}
+          </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
           {/* Arabic Inputs */}
           <Typography variant="subtitle2" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
             Arabic (العربية)
@@ -360,6 +602,16 @@ export const Doctors: React.FC = () => {
             margin="dense"
             placeholder="دكتوراه في طب الأطفال, استشاري"
             helperText="Separate with commas"
+          />
+          <TextField
+            fullWidth
+            label="Bio (Arabic)"
+            value={formData.bio}
+            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+            margin="dense"
+            multiline
+            rows={2}
+            placeholder="نبذة قصيرة عن الطبيب..."
           />
 
           <Divider sx={{ my: 2 }} />
@@ -406,6 +658,16 @@ export const Doctors: React.FC = () => {
             placeholder="PhD in Pediatrics, Consultant"
             helperText="Separate with commas"
           />
+          <TextField
+            fullWidth
+            label="Bio (English)"
+            value={formData.bioEn}
+            onChange={(e) => setFormData({ ...formData, bioEn: e.target.value })}
+            margin="dense"
+            multiline
+            rows={2}
+            placeholder="A brief description about the doctor..."
+          />
           <Divider sx={{ my: 2 }} />
 
           {/* Hebrew Inputs */}
@@ -449,6 +711,16 @@ export const Doctors: React.FC = () => {
             margin="dense"
             placeholder="דוקטורט ברפואת ילדים, יועץ"
             helperText="Separate with commas"
+          />
+          <TextField
+            fullWidth
+            label="Bio (Hebrew)"
+            value={formData.bioHe}
+            onChange={(e) => setFormData({ ...formData, bioHe: e.target.value })}
+            margin="dense"
+            multiline
+            rows={2}
+            placeholder="תיאור קצר על הרופא..."
           />
 
           {!editingId && (
@@ -550,10 +822,17 @@ export const Doctors: React.FC = () => {
                 Add Another Time Block
               </Button>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {editingId ? 'Update' : 'Create'}
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleClose} disabled={uploadingImage}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={!formData.fullName || uploadingImage || createMutation.isPending || updateMutation.isPending}
+            startIcon={uploadingImage ? <CircularProgress size={16} /> : undefined}
+          >
+            {uploadingImage ? 'Uploading...' : editingId ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>

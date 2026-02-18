@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
 import '../../models/waiting_list.dart';
+import '../../models/appointment.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
 import '../../widgets/common/loading_indicator.dart';
@@ -467,7 +468,7 @@ class _AdminWaitingListScreenState extends State<AdminWaitingListScreen> {
                     const SizedBox(width: AppTheme.spacingS),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => _updateStatus(entry, 'scheduled'),
+                        onPressed: () => _showScheduleSheet(entry),
                         icon: const Icon(Icons.event_available, size: 18),
                         label: const Text('Schedule'),
                         style: ElevatedButton.styleFrom(
@@ -481,6 +482,22 @@ class _AdminWaitingListScreenState extends State<AdminWaitingListScreen> {
               ],
             ),
           );
+        },
+      ),
+    );
+  }
+
+  void _showScheduleSheet(WaitingListEntry entry) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _ScheduleAppointmentSheet(
+        entry: entry,
+        apiService: _apiService,
+        onScheduled: () {
+          Navigator.pop(ctx);
+          _loadEntries();
         },
       ),
     );
@@ -527,6 +544,361 @@ class _StatusOption extends StatelessWidget {
         ),
       ),
       tileColor: isSelected ? color.withValues(alpha: 0.05) : null,
+    );
+  }
+}
+
+class _ScheduleAppointmentSheet extends StatefulWidget {
+  final WaitingListEntry entry;
+  final ApiService apiService;
+  final VoidCallback onScheduled;
+
+  const _ScheduleAppointmentSheet({
+    required this.entry,
+    required this.apiService,
+    required this.onScheduled,
+  });
+
+  @override
+  State<_ScheduleAppointmentSheet> createState() => _ScheduleAppointmentSheetState();
+}
+
+class _ScheduleAppointmentSheetState extends State<_ScheduleAppointmentSheet> {
+  late DateTime _selectedDate;
+  List<String> _availableSlots = [];
+  String? _selectedSlot;
+  bool _isLoadingSlots = false;
+  bool _isBooking = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.entry.preferredDate;
+    _loadSlots();
+  }
+
+  Future<void> _loadSlots() async {
+    setState(() {
+      _isLoadingSlots = true;
+      _errorMessage = null;
+      _selectedSlot = null;
+    });
+
+    try {
+      final response = await widget.apiService.getAvailableSlots(
+        widget.entry.doctorId,
+        _selectedDate,
+        serviceType: widget.entry.serviceType,
+      );
+      setState(() {
+        // Filter for available slots and extract time strings
+        _availableSlots = response.slots
+            .where((slot) => slot.available && slot.locked != true)
+            .map((slot) => slot.time)
+            .toList();
+        _isLoadingSlots = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+        _isLoadingSlots = false;
+      });
+    }
+  }
+
+  Future<void> _selectDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+    );
+    if (date != null) {
+      setState(() => _selectedDate = date);
+      _loadSlots();
+    }
+  }
+
+  Future<void> _bookAppointment() async {
+    if (_selectedSlot == null) return;
+
+    setState(() => _isBooking = true);
+
+    try {
+      // Create the appointment
+      final appointment = Appointment(
+        patientId: widget.entry.patientId,
+        doctorId: widget.entry.doctorId,
+        appointmentDate: _selectedDate,
+        appointmentTime: _selectedSlot!,
+        serviceType: widget.entry.serviceType,
+        status: 'scheduled',
+        notes: 'Scheduled from waiting list${widget.entry.notes != null ? ': ${widget.entry.notes}' : ''}',
+      );
+
+      await widget.apiService.createAppointment(appointment);
+
+      // Update waiting list entry status
+      await widget.apiService.updateWaitingListEntry(
+        entryId: widget.entry.id,
+        status: 'scheduled',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Text('Appointment scheduled for ${DateFormat('MMM d').format(_selectedDate)} at $_selectedSlot'),
+            ],
+          ),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+
+      widget.onScheduled();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      setState(() => _isBooking = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      padding: const EdgeInsets.all(AppTheme.spacingL),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXL)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle bar
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
+              decoration: BoxDecoration(
+                color: AppTheme.dividerColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.successColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                ),
+                child: const Icon(Icons.event_available, color: AppTheme.successColor),
+              ),
+              const SizedBox(width: AppTheme.spacingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Schedule Appointment',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    Text(
+                      widget.entry.patientName ?? 'Patient',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingL),
+
+          // Service info
+          Container(
+            padding: const EdgeInsets.all(AppTheme.spacingM),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceLight,
+              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.medical_services, size: 18, color: AppTheme.primaryColor),
+                const SizedBox(width: 8),
+                Text(
+                  widget.entry.serviceType,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                const Spacer(),
+                Text(
+                  widget.entry.doctorName ?? 'Doctor',
+                  style: TextStyle(color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingL),
+
+          // Date selection
+          Text(
+            'Select Date',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: AppTheme.spacingS),
+          InkWell(
+            onTap: _selectDate,
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            child: Container(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppTheme.dividerColor),
+                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today, color: AppTheme.primaryColor),
+                  const SizedBox(width: AppTheme.spacingM),
+                  Expanded(
+                    child: Text(
+                      dateFormat.format(_selectedDate),
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                  const Icon(Icons.arrow_drop_down, color: AppTheme.textHint),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingL),
+
+          // Time slots
+          Text(
+            'Select Time',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: AppTheme.spacingS),
+
+          if (_isLoadingSlots)
+            const Padding(
+              padding: EdgeInsets.all(AppTheme.spacingL),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_errorMessage != null)
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              decoration: BoxDecoration(
+                color: AppTheme.errorColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: AppTheme.errorColor),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.errorColor))),
+                ],
+              ),
+            )
+          else if (_availableSlots.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceMedium,
+                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.event_busy, size: 40, color: AppTheme.textHint),
+                  const SizedBox(height: AppTheme.spacingS),
+                  Text(
+                    'No available slots on this date',
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+                  TextButton(
+                    onPressed: _selectDate,
+                    child: const Text('Try another date'),
+                  ),
+                ],
+              ),
+            )
+          else
+            Flexible(
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _availableSlots.map((slot) {
+                    final isSelected = slot == _selectedSlot;
+                    return ChoiceChip(
+                      label: Text(slot),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() => _selectedSlot = selected ? slot : null);
+                      },
+                      selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                      labelStyle: TextStyle(
+                        color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+
+          const SizedBox(height: AppTheme.spacingL),
+
+          // Book button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _selectedSlot != null && !_isBooking ? _bookAppointment : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.successColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: _isBooking
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(_selectedSlot != null
+                      ? 'Book for ${DateFormat('MMM d').format(_selectedDate)} at $_selectedSlot'
+                      : 'Select a time slot'),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingS),
+        ],
+      ),
     );
   }
 }

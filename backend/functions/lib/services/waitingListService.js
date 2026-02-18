@@ -114,6 +114,40 @@ class WaitingListService {
                 id: doc.id,
                 ...doc.data()
             }));
+            // Auto-move past waiting entries to today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayTimestamp = admin.firestore.Timestamp.fromDate(today);
+            for (const entry of entries) {
+                if (entry.status === 'waiting' && entry.preferredDate) {
+                    let entryDate;
+                    const dateVal = entry.preferredDate;
+                    if (typeof dateVal.toDate === 'function') {
+                        entryDate = dateVal.toDate();
+                    }
+                    else if (typeof dateVal._seconds === 'number') {
+                        entryDate = new Date(dateVal._seconds * 1000);
+                    }
+                    else {
+                        continue;
+                    }
+                    entryDate.setHours(0, 0, 0, 0);
+                    // If the preferred date is in the past, update it to today
+                    if (entryDate < today) {
+                        try {
+                            await this.waitingListCollection.doc(entry.id).update({
+                                preferredDate: todayTimestamp,
+                                updatedAt: admin.firestore.Timestamp.now(),
+                            });
+                            // Update the local entry too
+                            entry.preferredDate = todayTimestamp;
+                        }
+                        catch (e) {
+                            console.error(`Failed to auto-move waiting list entry ${entry.id} to today:`, e);
+                        }
+                    }
+                }
+            }
             // Apply filters in memory
             if (filters?.doctorId) {
                 entries = entries.filter(e => e.doctorId === filters.doctorId);

@@ -47,13 +47,19 @@ class NewsService {
                 content: data.content,
                 author: authorUid,
                 authorName,
-                imageURL: data.imageURL,
                 category: data.category,
                 isPublished: data.isPublished || false,
-                publishedAt: data.isPublished ? admin.firestore.Timestamp.now() : undefined,
                 createdAt: admin.firestore.Timestamp.now(),
                 updatedAt: admin.firestore.Timestamp.now(),
             };
+            // Only add imageURL if it has a value (Firestore doesn't accept undefined)
+            if (data.imageURL) {
+                newsData.imageURL = data.imageURL;
+            }
+            // Only add publishedAt if publishing
+            if (data.isPublished) {
+                newsData.publishedAt = admin.firestore.Timestamp.now();
+            }
             const docRef = await this.newsCollection.add(newsData);
             return {
                 id: docRef.id,
@@ -97,10 +103,20 @@ class NewsService {
     }
     async updateNews(id, data) {
         try {
+            // Build update data, excluding undefined values
             const updateData = {
-                ...data,
                 updatedAt: admin.firestore.Timestamp.now(),
             };
+            if (data.title !== undefined)
+                updateData.title = data.title;
+            if (data.content !== undefined)
+                updateData.content = data.content;
+            if (data.category !== undefined)
+                updateData.category = data.category;
+            if (data.imageURL !== undefined)
+                updateData.imageURL = data.imageURL;
+            if (data.isPublished !== undefined)
+                updateData.isPublished = data.isPublished;
             // Set publishedAt if changing from unpublished to published
             if (data.isPublished === true) {
                 const existingNews = await this.getNewsById(id);

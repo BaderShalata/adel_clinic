@@ -42,21 +42,51 @@ class DoctorService {
     }
     async createDoctor(data) {
         try {
+            // Clean schedule entries - remove undefined values that Firestore doesn't accept
+            const cleanSchedule = (data.schedule || []).map(entry => {
+                const clean = {
+                    dayOfWeek: entry.dayOfWeek,
+                    startTime: entry.startTime,
+                    endTime: entry.endTime,
+                    slotDuration: entry.slotDuration,
+                };
+                // Only include type if it's defined and not empty
+                if (entry.type !== undefined && entry.type !== null && entry.type !== '') {
+                    clean.type = entry.type;
+                }
+                return clean;
+            });
+            // Build doctor data, excluding undefined optional fields
             const doctorData = {
                 userId: data.userId,
                 fullName: data.fullName,
-                fullNameEn: data.fullNameEn,
-                fullNameHe: data.fullNameHe,
-                specialties: data.specialties,
-                specialtiesEn: data.specialtiesEn,
-                specialtiesHe: data.specialtiesHe,
-                qualifications: data.qualifications,
-                qualificationsEn: data.qualificationsEn,
-                qualificationsHe: data.qualificationsHe,
-                schedule: data.schedule,
+                specialties: data.specialties || [],
+                qualifications: data.qualifications || [],
+                schedule: cleanSchedule,
                 isActive: true,
                 createdAt: admin.firestore.Timestamp.now(),
             };
+            // Only add optional fields if they have values
+            if (data.fullNameEn)
+                doctorData.fullNameEn = data.fullNameEn;
+            if (data.fullNameHe)
+                doctorData.fullNameHe = data.fullNameHe;
+            if (data.specialtiesEn?.length)
+                doctorData.specialtiesEn = data.specialtiesEn;
+            if (data.specialtiesHe?.length)
+                doctorData.specialtiesHe = data.specialtiesHe;
+            if (data.qualificationsEn?.length)
+                doctorData.qualificationsEn = data.qualificationsEn;
+            if (data.qualificationsHe?.length)
+                doctorData.qualificationsHe = data.qualificationsHe;
+            if (data.bio)
+                doctorData.bio = data.bio;
+            if (data.bioEn)
+                doctorData.bioEn = data.bioEn;
+            if (data.bioHe)
+                doctorData.bioHe = data.bioHe;
+            if (data.imageUrl)
+                doctorData.imageUrl = data.imageUrl;
             const docRef = await this.doctorsCollection.add(doctorData);
             return {
                 id: docRef.id,
@@ -110,7 +140,53 @@ class DoctorService {
     }
     async updateDoctor(id, data) {
         try {
-            await this.doctorsCollection.doc(id).update(data);
+            // Clean the update data - remove undefined values
+            const cleanData = {};
+            // Copy defined values only
+            if (data.fullName !== undefined)
+                cleanData.fullName = data.fullName;
+            if (data.fullNameEn !== undefined)
+                cleanData.fullNameEn = data.fullNameEn;
+            if (data.fullNameHe !== undefined)
+                cleanData.fullNameHe = data.fullNameHe;
+            if (data.specialties !== undefined)
+                cleanData.specialties = data.specialties;
+            if (data.specialtiesEn !== undefined)
+                cleanData.specialtiesEn = data.specialtiesEn;
+            if (data.specialtiesHe !== undefined)
+                cleanData.specialtiesHe = data.specialtiesHe;
+            if (data.qualifications !== undefined)
+                cleanData.qualifications = data.qualifications;
+            if (data.qualificationsEn !== undefined)
+                cleanData.qualificationsEn = data.qualificationsEn;
+            if (data.qualificationsHe !== undefined)
+                cleanData.qualificationsHe = data.qualificationsHe;
+            if (data.bio !== undefined)
+                cleanData.bio = data.bio;
+            if (data.bioEn !== undefined)
+                cleanData.bioEn = data.bioEn;
+            if (data.bioHe !== undefined)
+                cleanData.bioHe = data.bioHe;
+            if (data.imageUrl !== undefined)
+                cleanData.imageUrl = data.imageUrl;
+            if (data.isActive !== undefined)
+                cleanData.isActive = data.isActive;
+            // Clean schedule entries if present
+            if (data.schedule !== undefined) {
+                cleanData.schedule = data.schedule.map(entry => {
+                    const clean = {
+                        dayOfWeek: entry.dayOfWeek,
+                        startTime: entry.startTime,
+                        endTime: entry.endTime,
+                        slotDuration: entry.slotDuration,
+                    };
+                    if (entry.type !== undefined && entry.type !== null && entry.type !== '') {
+                        clean.type = entry.type;
+                    }
+                    return clean;
+                });
+            }
+            await this.doctorsCollection.doc(id).update(cleanData);
             const updatedDoctor = await this.getDoctorById(id);
             if (!updatedDoctor) {
                 throw new Error('Doctor not found after update');

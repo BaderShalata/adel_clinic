@@ -64,7 +64,8 @@ app.use((req, res, next) => {
     next();
 });
 // ----- JSON Middleware -----
-app.use(express_1.default.json());
+// Increase limit for base64 image uploads
+app.use(express_1.default.json({ limit: '10mb' }));
 // ----- Rate Limiting -----
 // General limiter: 500 requests per 15 minutes per IP
 const generalLimiter = (0, express_rate_limit_1.default)({
@@ -95,6 +96,7 @@ const fileRoutes_1 = __importDefault(require("./routes/fileRoutes"));
 const analyticsRoutes_1 = __importDefault(require("./routes/analyticsRoutes"));
 const waitingListRoutes_1 = __importDefault(require("./routes/waitingListRoutes"));
 const lockedSlotRoutes_1 = __importDefault(require("./routes/lockedSlotRoutes"));
+const uploadRoutes_1 = __importDefault(require("./routes/uploadRoutes"));
 // ----- Prefix Routes -----
 app.use('/api/appointments', appointmentRoutes_1.default);
 app.use('/api/auth', authRoutes_1.default);
@@ -106,6 +108,7 @@ app.use('/api/files', fileRoutes_1.default);
 app.use('/api/analytics', analyticsRoutes_1.default);
 app.use('/api/waiting-list', waitingListRoutes_1.default);
 app.use('/api/locked-slots', lockedSlotRoutes_1.default);
+app.use('/api/upload', uploadRoutes_1.default);
 // ----- Health Check -----
 app.get('/', (_req, res) => res.json({ status: 'ok', message: 'Adel Clinic API is running' }));
 app.get('/health', (_req, res) => res.json({ status: 'ok', message: 'Adel Clinic API is running' }));

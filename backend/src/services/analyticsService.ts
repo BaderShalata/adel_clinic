@@ -10,12 +10,16 @@ export interface AnalyticsData {
   upcomingAppointments: number;
   completedAppointments: number;
   cancelledAppointments: number;
+  pendingAppointments: number;
+  completedToday: number;
+  waitingListCount: number;
   recentPatients: number;
   appointmentsByStatus: {
     scheduled: number;
     completed: number;
     cancelled: number;
     noShow: number;
+    pending: number;
   };
   appointmentsByDoctor: Array<{
     doctorId: string;
@@ -42,6 +46,8 @@ export class AnalyticsService {
         upcomingAppointmentsSnapshot,
         completedAppointmentsSnapshot,
         cancelledAppointmentsSnapshot,
+        pendingAppointmentsSnapshot,
+        waitingListSnapshot,
       ] = await Promise.all([
         db.collection('patients').get(),
         db.collection('doctors').where('isActive', '==', true).get(),
@@ -60,6 +66,12 @@ export class AnalyticsService {
         db.collection('appointments')
           .where('status', '==', 'cancelled')
           .get(),
+        db.collection('appointments')
+          .where('status', '==', 'pending')
+          .get(),
+        db.collection('waitingList')
+          .where('status', '==', 'waiting')
+          .get(),
       ]);
 
       // Get recent patients (last 30 days)
@@ -75,14 +87,38 @@ export class AnalyticsService {
         completed: 0,
         cancelled: 0,
         noShow: 0,
+        pending: 0,
       };
 
+      // Count completed today
+      let completedToday = 0;
+
       appointmentsSnapshot.docs.forEach(doc => {
-        const status = doc.data().status;
+        const data = doc.data();
+        const status = data.status;
         if (status === 'scheduled') appointmentsByStatus.scheduled++;
         else if (status === 'completed') appointmentsByStatus.completed++;
         else if (status === 'cancelled') appointmentsByStatus.cancelled++;
         else if (status === 'no-show') appointmentsByStatus.noShow++;
+        else if (status === 'pending') appointmentsByStatus.pending++;
+
+        // Check if completed today
+        if (status === 'completed' && data.appointmentDate) {
+          let appointmentDate: Date;
+          const dateVal = data.appointmentDate as any;
+          if (typeof dateVal.toDate === 'function') {
+            appointmentDate = dateVal.toDate();
+          } else if (typeof dateVal._seconds === 'number') {
+            appointmentDate = new Date(dateVal._seconds * 1000);
+          } else if (typeof dateVal === 'string') {
+            appointmentDate = new Date(dateVal);
+          } else {
+            return;
+          }
+          if (appointmentDate >= today && appointmentDate < tomorrow) {
+            completedToday++;
+          }
+        }
       });
 
       // Count appointments by doctor
@@ -114,6 +150,9 @@ export class AnalyticsService {
         upcomingAppointments: upcomingAppointmentsSnapshot.size,
         completedAppointments: completedAppointmentsSnapshot.size,
         cancelledAppointments: cancelledAppointmentsSnapshot.size,
+        pendingAppointments: pendingAppointmentsSnapshot.size,
+        completedToday,
+        waitingListCount: waitingListSnapshot.size,
         recentPatients: recentPatientsSnapshot.size,
         appointmentsByStatus,
         appointmentsByDoctor,

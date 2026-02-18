@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { uploadService } from '../services/uploadService';
 import { AuthRequest } from '../middleware/auth';
 
@@ -45,6 +45,38 @@ export class UploadController {
     } catch (error: any) {
       console.error('Upload error:', error);
       res.status(500).json({ error: error.message || 'Failed to upload image' });
+    }
+  }
+
+  /**
+   * Delete an image from Firebase Storage
+   * DELETE /api/upload/image
+   * Body: { path: string } - the file path returned from upload
+   */
+  async deleteImage(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const uid = req.user?.uid;
+      if (!uid) {
+        res.status(401).json({ error: 'User not authenticated' });
+        return;
+      }
+
+      const { path } = req.body;
+
+      if (!path) {
+        res.status(400).json({ error: 'File path is required' });
+        return;
+      }
+
+      await uploadService.deleteFile(path);
+
+      res.status(200).json({
+        success: true,
+        message: 'Image deleted successfully',
+      });
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      res.status(500).json({ error: error.message || 'Failed to delete image' });
     }
   }
 }

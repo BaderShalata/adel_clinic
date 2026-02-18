@@ -21,6 +21,7 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   DateTime _selectedDate = DateTime.now();
+  bool _showPendingOnly = false; // Filter for pending appointments
 
   @override
   void initState() {
@@ -51,7 +52,14 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen> {
     });
 
     try {
-      final appointments = await _apiService.getAllAppointments(date: _selectedDate);
+      List<Appointment> appointments;
+      if (_showPendingOnly) {
+        // Load all pending appointments regardless of date
+        appointments = await _apiService.getAllAppointments(status: 'pending');
+      } else {
+        // Load appointments for selected date
+        appointments = await _apiService.getAllAppointments(date: _selectedDate);
+      }
       setState(() {
         _appointments = appointments;
         _isLoading = false;
@@ -410,76 +418,153 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen> {
       ),
       body: Column(
       children: [
-        // Date selector
+        // Filter tabs and Date selector
         Container(
-          padding: const EdgeInsets.all(AppTheme.spacingM),
           color: Colors.white,
-          child: Row(
+          child: Column(
             children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: () {
-                  setState(() {
-                    _selectedDate = _selectedDate.subtract(const Duration(days: 1));
-                  });
-                  _loadAppointments();
-                },
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2030),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _selectedDate = picked;
-                      });
-                      _loadAppointments();
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppTheme.spacingM,
-                      vertical: AppTheme.spacingS,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.calendar_today,
-                          size: 18,
-                          color: AppTheme.primaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          dateFormat.format(_selectedDate),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor,
+              // Filter tabs
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (_showPendingOnly) {
+                            setState(() => _showPendingOnly = false);
+                            _loadAppointments();
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: !_showPendingOnly ? AppTheme.primaryColor : Colors.grey[200],
+                            borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'By Date',
+                              style: TextStyle(
+                                color: !_showPendingOnly ? Colors.white : Colors.grey[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (!_showPendingOnly) {
+                            setState(() => _showPendingOnly = true);
+                            _loadAppointments();
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _showPendingOnly ? AppTheme.warningColor : Colors.grey[200],
+                            borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.pending_actions,
+                                size: 18,
+                                color: _showPendingOnly ? Colors.white : Colors.grey[700],
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Pending',
+                                style: TextStyle(
+                                  color: _showPendingOnly ? Colors.white : Colors.grey[700],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: () {
-                  setState(() {
-                    _selectedDate = _selectedDate.add(const Duration(days: 1));
-                  });
-                  _loadAppointments();
-                },
-              ),
+              // Date selector (only shown when not filtering by pending)
+              if (!_showPendingOnly)
+                Padding(
+                  padding: const EdgeInsets.only(left: AppTheme.spacingM, right: AppTheme.spacingM, bottom: AppTheme.spacingS),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: () {
+                          setState(() {
+                            _selectedDate = _selectedDate.subtract(const Duration(days: 1));
+                          });
+                          _loadAppointments();
+                        },
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _selectedDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2030),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _selectedDate = picked;
+                              });
+                              _loadAppointments();
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppTheme.spacingM,
+                              vertical: AppTheme.spacingS,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.calendar_today,
+                                  size: 18,
+                                  color: AppTheme.primaryColor,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  dateFormat.format(_selectedDate),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: () {
+                          setState(() {
+                            _selectedDate = _selectedDate.add(const Duration(days: 1));
+                          });
+                          _loadAppointments();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -516,17 +601,29 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.event_available,
+                                _showPendingOnly ? Icons.check_circle : Icons.event_available,
                                 size: 64,
-                                color: Colors.grey[400],
+                                color: _showPendingOnly ? AppTheme.successColor : Colors.grey[400],
                               ),
                               const SizedBox(height: AppTheme.spacingM),
                               Text(
-                                'No appointments for this day',
+                                _showPendingOnly
+                                    ? 'No pending appointments'
+                                    : 'No appointments for this day',
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                       color: Colors.grey[600],
                                     ),
                               ),
+                              if (_showPendingOnly)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    'All appointment requests have been handled',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: Colors.grey[500],
+                                        ),
+                                  ),
+                                ),
                             ],
                           ),
                         )

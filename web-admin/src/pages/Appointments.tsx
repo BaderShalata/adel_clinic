@@ -32,10 +32,7 @@ import {
   Tooltip,
   Tabs,
   Tab,
-  Select,
-  FormControl,
 } from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -294,40 +291,34 @@ export const Appointments: React.FC = () => {
     },
   });
 
-  // Inline status update mutation (doesn't close edit dialog)
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const token = await getToken();
-      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      return await apiClient.put(`/appointments/${id}`, { status });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments'] });
-    },
-  });
-
-  // Helper to check if appointment is in the past
-  const isAppointmentPast = (appointment: Appointment) => {
+  // Helper to check if appointment is before today (yesterday or earlier)
+  const isAppointmentArchived = (appointment: Appointment) => {
     const aptDate = typeof appointment.appointmentDate === 'string'
       ? dayjs(appointment.appointmentDate)
       : dayjs(appointment.appointmentDate._seconds * 1000);
-    return aptDate.isBefore(dayjs(), 'day');
+    // Archive = before today (yesterday and earlier)
+    return aptDate.isBefore(dayjs().startOf('day'));
   };
 
   // Filter appointments for active/archive tabs
+  // Active: today and future appointments (shown in Kanban)
+  // Archive: yesterday and earlier (shown in list)
   const activeAppointments = appointments?.filter(apt => {
-    const isPast = isAppointmentPast(apt);
-    const isArchiveStatus = apt.status === 'completed' || apt.status === 'cancelled';
-    return !isPast && !isArchiveStatus;
+    return !isAppointmentArchived(apt); // Today and future
   }) || [];
 
   const archivedAppointments = appointments?.filter(apt => {
-    const isPast = isAppointmentPast(apt);
-    const isArchiveStatus = apt.status === 'completed' || apt.status === 'cancelled';
-    return isPast || isArchiveStatus;
+    return isAppointmentArchived(apt); // Yesterday and before
+  }).sort((a, b) => {
+    // Sort archive by date descending (newest first)
+    const dateA = typeof a.appointmentDate === 'string'
+      ? dayjs(a.appointmentDate)
+      : dayjs(a.appointmentDate._seconds * 1000);
+    const dateB = typeof b.appointmentDate === 'string'
+      ? dayjs(b.appointmentDate)
+      : dayjs(b.appointmentDate._seconds * 1000);
+    return dateB.valueOf() - dateA.valueOf();
   }) || [];
-
-  const displayedAppointments = listTab === 'active' ? activeAppointments : archivedAppointments;
 
   // Delete confirmation handlers
   const handleDeleteClick = (appointment: Appointment) => {
@@ -346,9 +337,54 @@ export const Appointments: React.FC = () => {
     setAppointmentToDelete(null);
   };
 
-  // Inline status change handler
-  const handleStatusChange = (appointmentId: string, newStatus: string) => {
-    updateStatusMutation.mutate({ id: appointmentId, status: newStatus });
+  // Drag and drop state
+  const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
+  const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
+
+  // Track expanded Kanban columns (show all vs max 5)
+  const [expandedColumns, setExpandedColumns] = useState<Set<string>>(new Set());
+  const MAX_VISIBLE_APPOINTMENTS = 5;
+
+  // Status update mutation for drag and drop
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      return await apiClient.put(`/appointments/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+    },
+  });
+
+  // Drag handlers
+  const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {
+    setDraggedAppointment(appointment);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragEnd = () => {
+    setDraggedAppointment(null);
+    setDragOverStatus(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, status: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverStatus(status);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverStatus(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, newStatus: string) => {
+    e.preventDefault();
+    setDragOverStatus(null);
+    if (draggedAppointment && draggedAppointment.status !== newStatus) {
+      updateStatusMutation.mutate({ id: draggedAppointment.id, status: newStatus });
+    }
+    setDraggedAppointment(null);
   };
 
   const createPatientMutation = useMutation({
@@ -591,6 +627,8 @@ export const Appointments: React.FC = () => {
 
   const getAppointmentsForDate = (date: dayjs.Dayjs) => {
     return appointments?.filter(apt => {
+      // Exclude cancelled appointments from calendar view (they appear in Kanban)
+      if (apt.status === 'cancelled') return false;
       const aptDate = typeof apt.appointmentDate === 'string'
         ? dayjs(apt.appointmentDate)
         : dayjs(apt.appointmentDate._seconds * 1000);
@@ -630,127 +668,356 @@ export const Appointments: React.FC = () => {
       </Box>
 
       {viewMode === 'list' ? (
-        <Paper>
+        /* Kanban Board View */
+        <Box>
           {/* Active/Archive Tabs */}
-          <Tabs
-            value={listTab}
-            onChange={(_, newTab) => setListTab(newTab)}
-            sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
-          >
-            <Tab
-              value="active"
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ActiveIcon fontSize="small" />
-                  Active ({activeAppointments.length})
-                </Box>
-              }
-            />
-            <Tab
-              value="archive"
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ArchiveIcon fontSize="small" />
-                  Archive ({archivedAppointments.length})
-                </Box>
-              }
-            />
-          </Tabs>
+          <Paper sx={{ mb: 2 }}>
+            <Tabs
+              value={listTab}
+              onChange={(_, newTab) => setListTab(newTab)}
+              sx={{ px: 2 }}
+            >
+              <Tab
+                value="active"
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ActiveIcon fontSize="small" />
+                    Active ({activeAppointments.length})
+                  </Box>
+                }
+              />
+              <Tab
+                value="archive"
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ArchiveIcon fontSize="small" />
+                    Archive ({archivedAppointments.length})
+                  </Box>
+                }
+              />
+            </Tabs>
+          </Paper>
 
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Patient</TableCell>
-                  <TableCell>Doctor</TableCell>
-                  <TableCell>Service</TableCell>
-                  <TableCell>Date & Time</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {isLoading ? (
+          {isLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : listTab === 'archive' ? (
+            /* Archive List View */
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
+                    <TableCell>Patient</TableCell>
+                    <TableCell>Doctor</TableCell>
+                    <TableCell>Service</TableCell>
+                    <TableCell>Date & Time</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ) : displayedAppointments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      {listTab === 'active' ? 'No active appointments' : 'No archived appointments'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  displayedAppointments.map((appointment) => (
-                    <TableRow key={appointment.id} hover>
-                      <TableCell>{appointment.patientName}</TableCell>
-                      <TableCell>{appointment.doctorName}</TableCell>
-                      <TableCell>{appointment.serviceType || '-'}</TableCell>
-                      <TableCell>
-                        {typeof appointment.appointmentDate === 'string'
-                          ? dayjs(appointment.appointmentDate).format('MMM DD, YYYY')
-                          : dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD, YYYY')}
-                        {appointment.appointmentTime && ` at ${appointment.appointmentTime}`}
-                      </TableCell>
-                      <TableCell>
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                          <Select
-                            value={appointment.status}
-                            onChange={(e: SelectChangeEvent) => handleStatusChange(appointment.id, e.target.value)}
-                            sx={{
-                              '& .MuiSelect-select': { py: 0.5 },
-                              bgcolor: getStatusBgColor(appointment.status),
-                              borderColor: getStatusBorderColor(appointment.status),
-                              '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: getStatusBorderColor(appointment.status),
-                              },
-                            }}
-                          >
-                            <MenuItem value="pending">Pending</MenuItem>
-                            <MenuItem value="scheduled">Scheduled</MenuItem>
-                            <MenuItem value="completed">Completed</MenuItem>
-                            <MenuItem value="cancelled">Cancelled</MenuItem>
-                            <MenuItem value="no-show">No-Show</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                          <Tooltip title="Edit Appointment">
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="primary"
-                              startIcon={<EditIcon />}
-                              onClick={() => handleOpen(appointment)}
-                              sx={{ minWidth: 'auto', px: 1.5 }}
-                            >
-                              Edit
-                            </Button>
-                          </Tooltip>
-                          <Tooltip title="Delete Appointment">
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              startIcon={<DeleteIcon />}
-                              onClick={() => handleDeleteClick(appointment)}
-                              sx={{ minWidth: 'auto', px: 1.5 }}
-                            >
-                              Delete
-                            </Button>
-                          </Tooltip>
-                        </Stack>
+                </TableHead>
+                <TableBody>
+                  {archivedAppointments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center">
+                        No archived appointments
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
+                  ) : (
+                    archivedAppointments.map((appointment) => (
+                      <TableRow key={appointment.id} hover>
+                        <TableCell>{appointment.patientName}</TableCell>
+                        <TableCell>{appointment.doctorName}</TableCell>
+                        <TableCell>{appointment.serviceType || '-'}</TableCell>
+                        <TableCell>
+                          {typeof appointment.appointmentDate === 'string'
+                            ? dayjs(appointment.appointmentDate).format('MMM DD, YYYY')
+                            : dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD, YYYY')}
+                          {appointment.appointmentTime && ` at ${appointment.appointmentTime}`}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={appointment.status}
+                            color={getStatusColor(appointment.status)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                            <Tooltip title="Edit">
+                              <IconButton size="small" onClick={() => handleOpen(appointment)}>
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete">
+                              <IconButton size="small" color="error" onClick={() => handleDeleteClick(appointment)}>
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            /* Kanban Columns for Active Tab */
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(5, 1fr)',
+                gap: 2,
+                height: 'calc(100vh - 250px)',
+                minHeight: 400,
+              }}
+            >
+              {(['pending', 'scheduled', 'completed', 'cancelled', 'no-show'] as const).map((status) => {
+                const statusAppointments = activeAppointments.filter(apt => apt.status === status);
+                const statusLabels: Record<string, string> = {
+                  'pending': 'Pending',
+                  'scheduled': 'Scheduled',
+                  'completed': 'Completed',
+                  'cancelled': 'Cancelled',
+                  'no-show': 'No-Show',
+                };
+
+                return (
+                  <Paper
+                    key={status}
+                    onDragOver={(e) => handleDragOver(e, status)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, status)}
+                    sx={{
+                      p: 1.5,
+                      bgcolor: dragOverStatus === status ? 'action.hover' : 'grey.50',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%',
+                      overflow: 'hidden',
+                      transition: 'background-color 0.2s',
+                      outline: dragOverStatus === status ? '2px dashed' : 'none',
+                      outlineColor: dragOverStatus === status ? getStatusBorderColor(status) : 'transparent',
+                    }}
+                  >
+                    {/* Column Header */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        mb: 1.5,
+                        pb: 1,
+                        borderBottom: '2px solid',
+                        borderColor: getStatusBorderColor(status),
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            bgcolor: getStatusBorderColor(status),
+                          }}
+                        />
+                        <Typography variant="subtitle2" fontWeight={600}>
+                          {statusLabels[status]}
+                        </Typography>
+                      </Box>
+                      <Chip
+                        label={statusAppointments.length}
+                        size="small"
+                        sx={{
+                          height: 20,
+                          fontSize: '0.7rem',
+                          bgcolor: getStatusBgColor(status),
+                          color: getStatusBorderColor(status),
+                          fontWeight: 600,
+                        }}
+                      />
+                    </Box>
+
+                    {/* Column Cards */}
+                    <Box
+                      sx={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1,
+                      }}
+                    >
+                      {statusAppointments.length === 0 ? (
+                        <Box
+                          sx={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'text.disabled',
+                          }}
+                        >
+                          <Typography variant="body2">No appointments</Typography>
+                        </Box>
+                      ) : (
+                        <>
+                          {(() => {
+                            const sortedAppointments = statusAppointments.sort((a, b) => {
+                              const dateA = typeof a.appointmentDate === 'string'
+                                ? dayjs(a.appointmentDate)
+                                : dayjs(a.appointmentDate._seconds * 1000);
+                              const dateB = typeof b.appointmentDate === 'string'
+                                ? dayjs(b.appointmentDate)
+                                : dayjs(b.appointmentDate._seconds * 1000);
+                              return dateA.valueOf() - dateB.valueOf();
+                            });
+
+                            const isExpanded = expandedColumns.has(status);
+                            const hasMore = sortedAppointments.length > MAX_VISIBLE_APPOINTMENTS;
+                            const visibleAppointments = isExpanded
+                              ? sortedAppointments
+                              : sortedAppointments.slice(0, MAX_VISIBLE_APPOINTMENTS);
+
+                            return (
+                              <>
+                                {visibleAppointments.map((appointment) => (
+                                  <Paper
+                                    key={appointment.id}
+                                    elevation={1}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, appointment)}
+                                    onDragEnd={handleDragEnd}
+                                    sx={{
+                                      p: 1.5,
+                                      cursor: 'grab',
+                                      transition: 'all 0.2s',
+                                      borderLeft: '3px solid',
+                                      borderColor: getStatusBorderColor(appointment.status),
+                                      opacity: draggedAppointment?.id === appointment.id ? 0.5 : 1,
+                                      // Virtual scroll optimization - skip rendering off-screen items
+                                      contentVisibility: 'auto',
+                                      containIntrinsicSize: '0 100px',
+                                      '&:hover': {
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: 3,
+                                      },
+                                      '&:active': {
+                                        cursor: 'grabbing',
+                                      },
+                                    }}
+                                    onClick={() => handleOpen(appointment)}
+                                  >
+                                    {/* Patient Name */}
+                                    <Typography variant="subtitle2" fontWeight={600} noWrap>
+                                      {appointment.patientName}
+                                    </Typography>
+
+                                    {/* Doctor */}
+                                    <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                                      Dr. {appointment.doctorName}
+                                    </Typography>
+
+                                    {/* Date & Time */}
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+                                      <CalendarIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                      <Typography variant="caption" color="text.secondary">
+                                        {typeof appointment.appointmentDate === 'string'
+                                          ? dayjs(appointment.appointmentDate).format('MMM DD')
+                                          : dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD')}
+                                        {appointment.appointmentTime && ` • ${appointment.appointmentTime}`}
+                                      </Typography>
+                                    </Box>
+
+                                    {/* Service Type */}
+                                    {appointment.serviceType && (
+                                      <Chip
+                                        label={appointment.serviceType}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                          mt: 1,
+                                          height: 20,
+                                          fontSize: '0.65rem',
+                                        }}
+                                      />
+                                    )}
+
+                                    {/* Quick Actions */}
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1, gap: 0.5 }}>
+                                      <Tooltip title="Edit">
+                                        <IconButton
+                                          size="small"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleOpen(appointment);
+                                          }}
+                                          sx={{ p: 0.5 }}
+                                        >
+                                          <EditIcon sx={{ fontSize: 16 }} />
+                                        </IconButton>
+                                      </Tooltip>
+                                      <Tooltip title="Delete">
+                                        <IconButton
+                                          size="small"
+                                          color="error"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteClick(appointment);
+                                          }}
+                                          sx={{ p: 0.5 }}
+                                        >
+                                          <DeleteIcon sx={{ fontSize: 16 }} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Box>
+                                  </Paper>
+                                ))}
+
+                                {/* Show more/less button */}
+                                {hasMore && (
+                                  <Button
+                                    size="small"
+                                    variant="text"
+                                    onClick={() => {
+                                      setExpandedColumns(prev => {
+                                        const next = new Set(prev);
+                                        if (isExpanded) {
+                                          next.delete(status);
+                                        } else {
+                                          next.add(status);
+                                        }
+                                        return next;
+                                      });
+                                    }}
+                                    sx={{
+                                      mt: 0.5,
+                                      py: 0.5,
+                                      fontSize: '0.75rem',
+                                      color: 'text.secondary',
+                                      '&:hover': {
+                                        bgcolor: 'action.hover',
+                                      },
+                                    }}
+                                  >
+                                    {isExpanded
+                                      ? 'Show less'
+                                      : `Show ${sortedAppointments.length - MAX_VISIBLE_APPOINTMENTS} more`}
+                                  </Button>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </>
+                      )}
+                    </Box>
+                  </Paper>
+                );
+              })}
+            </Box>
+          )}
+        </Box>
       ) : viewMode === 'calendar' ? (
         /* Calendar View */
         <Paper sx={{ p: 2 }}>

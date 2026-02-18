@@ -64,6 +64,10 @@ export class DoctorController {
         qualifications,
         qualificationsEn,
         qualificationsHe,
+        bio,
+        bioEn,
+        bioHe,
+        imageUrl,
         scheduleEntries
       } = req.body;
 
@@ -81,13 +85,18 @@ export class DoctorController {
         }
 
         for (const day of entry.days) {
-          schedule.push({
+          const scheduleEntry: any = {
             dayOfWeek: day,
             startTime: entry.startTime,
             endTime: entry.endTime,
             slotDuration: entry.slotDuration,
-            type: entry.type || (specialties.length === 1 ? specialties[0] : undefined)
-          });
+          };
+          // Only add type if it has a value
+          const typeValue = entry.type || (specialties && specialties.length === 1 ? specialties[0] : null);
+          if (typeValue) {
+            scheduleEntry.type = typeValue;
+          }
+          schedule.push(scheduleEntry);
         }
       }
 
@@ -102,6 +111,10 @@ export class DoctorController {
         qualifications: qualifications || [],
         qualificationsEn: qualificationsEn || [],
         qualificationsHe: qualificationsHe || [],
+        bio,
+        bioEn,
+        bioHe,
+        imageUrl,
         schedule
       };
 
@@ -148,13 +161,18 @@ export class DoctorController {
         for (const entry of scheduleEntries) {
           if (entry.days && Array.isArray(entry.days)) {
             for (const day of entry.days) {
-              schedule.push({
+              const scheduleEntry: any = {
                 dayOfWeek: day,
                 startTime: entry.startTime,
                 endTime: entry.endTime,
                 slotDuration: entry.slotDuration,
-                type: entry.type || (specialties && specialties.length === 1 ? specialties[0] : undefined)
-              });
+              };
+              // Only add type if it has a value
+              const typeValue = entry.type || (specialties && specialties.length === 1 ? specialties[0] : null);
+              if (typeValue) {
+                scheduleEntry.type = typeValue;
+              }
+              schedule.push(scheduleEntry);
             }
           }
         }

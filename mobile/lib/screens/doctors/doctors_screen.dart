@@ -222,6 +222,20 @@ class ModernDoctorCard extends StatelessWidget {
     return name[0].toUpperCase();
   }
 
+  /// Get the doctor bio based on current locale
+  String? _getLocalizedBio(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    if (locale.languageCode == 'en' && doctor.bioEn != null && doctor.bioEn!.isNotEmpty) {
+      return doctor.bioEn;
+    } else if (locale.languageCode == 'he' && doctor.bioHe != null && doctor.bioHe!.isNotEmpty) {
+      return doctor.bioHe;
+    }
+    if (doctor.bio != null && doctor.bio!.isNotEmpty) {
+      return doctor.bio;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final displayName = _getLocalizedName(context);
@@ -257,6 +271,20 @@ class ModernDoctorCard extends StatelessWidget {
                             color: AppTheme.textSecondary,
                           ),
                       textDirection: TextDirection.rtl,
+                    ),
+                  ),
+                // Bio snippet
+                if (_getLocalizedBio(context) != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppTheme.spacingXS),
+                    child: Text(
+                      _getLocalizedBio(context)!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondary,
+                            height: 1.3,
+                          ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 const SizedBox(height: AppTheme.spacingS),

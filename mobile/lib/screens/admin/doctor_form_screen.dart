@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -28,11 +29,15 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   final _fullNameController = TextEditingController();
   final _fullNameEnController = TextEditingController();
   final _fullNameHeController = TextEditingController();
-  final _imageUrlController = TextEditingController();
+
+  // Bio controllers
+  final _bioController = TextEditingController();
+  final _bioEnController = TextEditingController();
+  final _bioHeController = TextEditingController();
 
   // Image state
   File? _selectedImage;
-  bool _useImageUrl = true; // Toggle between URL and device image
+  String? _existingImageUrl; // Existing image URL from the doctor
 
   // Specialties
   final List<String> _specialties = [];
@@ -63,12 +68,15 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     _fullNameController.text = doctor.fullName;
     _fullNameEnController.text = doctor.fullNameEn ?? '';
     _fullNameHeController.text = doctor.fullNameHe ?? '';
-    _imageUrlController.text = doctor.imageUrl ?? '';
+    _existingImageUrl = doctor.imageUrl;
+    _bioController.text = doctor.bio ?? '';
+    _bioEnController.text = doctor.bioEn ?? '';
+    _bioHeController.text = doctor.bioHe ?? '';
     _specialties.addAll(doctor.specialties);
     _specialtiesEn.addAll(doctor.specialtiesEn ?? []);
     _qualifications.addAll(doctor.qualifications);
     _qualificationsEn.addAll(doctor.qualificationsEn ?? []);
-    _schedule.addAll(doctor.schedule.map((s) => {
+    _schedule.addAll(doctor.schedule.map((s) => <String, dynamic>{
           'dayOfWeek': s.dayOfWeek,
           'startTime': s.startTime,
           'endTime': s.endTime,
@@ -82,7 +90,9 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     _fullNameController.dispose();
     _fullNameEnController.dispose();
     _fullNameHeController.dispose();
-    _imageUrlController.dispose();
+    _bioController.dispose();
+    _bioEnController.dispose();
+    _bioHeController.dispose();
     _specialtyController.dispose();
     _specialtyEnController.dispose();
     _qualificationController.dispose();
@@ -101,7 +111,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       if (pickedFile != null) {
         setState(() {
           _selectedImage = File(pickedFile.path);
-          _useImageUrl = false;
+          _existingImageUrl = null; // Clear existing URL when new image selected
         });
       }
     } catch (e) {
@@ -178,25 +188,6 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 _pickImage(ImageSource.gallery);
               },
             ),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.link, color: Colors.blue),
-              ),
-              title: const Text('Use URL'),
-              subtitle: const Text('Enter image link'),
-              onTap: () {
-                Navigator.pop(ctx);
-                setState(() {
-                  _useImageUrl = true;
-                  _selectedImage = null;
-                });
-              },
-            ),
             const SizedBox(height: AppTheme.spacingS),
           ],
         ),
@@ -233,13 +224,13 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       );
     }
 
-    // Show URL image
-    if (_useImageUrl && _imageUrlController.text.isNotEmpty) {
+    // Show existing image from URL
+    if (_existingImageUrl != null && _existingImageUrl!.isNotEmpty) {
       return Stack(
         fit: StackFit.expand,
         children: [
           CachedNetworkImage(
-            imageUrl: _imageUrlController.text,
+            imageUrl: _existingImageUrl!,
             fit: BoxFit.cover,
             placeholder: (context, url) => const Center(
               child: CircularProgressIndicator(strokeWidth: 2),
@@ -252,7 +243,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
             top: 4,
             right: 4,
             child: GestureDetector(
-              onTap: () => setState(() => _imageUrlController.clear()),
+              onTap: () => setState(() => _existingImageUrl = null),
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
@@ -362,6 +353,24 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Upload image to Firebase Storage if a file was selected
+      String? imageUrl = _existingImageUrl;
+
+      if (_selectedImage != null) {
+        final bytes = await _selectedImage!.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        final fileName = 'doctor_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final extension = _selectedImage!.path.split('.').last.toLowerCase();
+        final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
+
+        imageUrl = await _apiService.uploadImage(
+          base64Image: base64Image,
+          fileName: fileName,
+          folder: 'doctors',
+          mimeType: mimeType,
+        );
+      }
+
       if (isEditing) {
         await _apiService.updateDoctor(
           doctorId: widget.doctor!.id,
@@ -376,9 +385,16 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           specialtiesEn: _specialtiesEn.isNotEmpty ? _specialtiesEn : null,
           qualifications: _qualifications,
           qualificationsEn: _qualificationsEn.isNotEmpty ? _qualificationsEn : null,
-          imageUrl: _imageUrlController.text.trim().isNotEmpty
-              ? _imageUrlController.text.trim()
+          bio: _bioController.text.trim().isNotEmpty
+              ? _bioController.text.trim()
               : null,
+          bioEn: _bioEnController.text.trim().isNotEmpty
+              ? _bioEnController.text.trim()
+              : null,
+          bioHe: _bioHeController.text.trim().isNotEmpty
+              ? _bioHeController.text.trim()
+              : null,
+          imageUrl: imageUrl,
           schedule: _schedule,
         );
       } else {
@@ -395,9 +411,16 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           specialtiesEn: _specialtiesEn.isNotEmpty ? _specialtiesEn : null,
           qualifications: _qualifications,
           qualificationsEn: _qualificationsEn.isNotEmpty ? _qualificationsEn : null,
-          imageUrl: _imageUrlController.text.trim().isNotEmpty
-              ? _imageUrlController.text.trim()
+          bio: _bioController.text.trim().isNotEmpty
+              ? _bioController.text.trim()
               : null,
+          bioEn: _bioEnController.text.trim().isNotEmpty
+              ? _bioEnController.text.trim()
+              : null,
+          bioHe: _bioHeController.text.trim().isNotEmpty
+              ? _bioHeController.text.trim()
+              : null,
+          imageUrl: imageUrl,
           schedule: _schedule,
         );
       }
@@ -527,7 +550,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                             ElevatedButton.icon(
                               onPressed: _showImagePickerOptions,
                               icon: const Icon(Icons.add_a_photo, size: 18),
-                              label: Text(_selectedImage != null || _imageUrlController.text.isNotEmpty
+                              label: Text(_selectedImage != null || (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
                                   ? 'Change Photo'
                                   : 'Add Photo'),
                               style: ElevatedButton.styleFrom(
@@ -537,7 +560,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                             ),
                             const SizedBox(height: AppTheme.spacingS),
                             Text(
-                              'Tap to upload from camera, gallery, or use URL',
+                              'Take a photo or choose from gallery',
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: AppTheme.textHint,
                                   ),
@@ -547,20 +570,50 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                       ),
                     ],
                   ),
-                  // URL input (shown when using URL mode)
-                  if (_useImageUrl) ...[
-                    const SizedBox(height: AppTheme.spacingM),
-                    TextFormField(
-                      controller: _imageUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'Image URL',
-                        hintText: 'https://example.com/photo.jpg',
-                        prefixIcon: Icon(Icons.link),
-                      ),
-                      keyboardType: TextInputType.url,
-                      onChanged: (_) => setState(() {}),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingL),
+
+            // Bio/About Section
+            _buildSectionHeader('About / Bio', Icons.info_outline),
+            ModernCard(
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _bioController,
+                    decoration: const InputDecoration(
+                      labelText: 'Bio / About (Arabic)',
+                      hintText: 'Short description about the doctor',
+                      alignLabelWithHint: true,
                     ),
-                  ],
+                    textDirection: TextDirection.rtl,
+                    maxLines: 3,
+                    maxLength: 500,
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  TextFormField(
+                    controller: _bioEnController,
+                    decoration: const InputDecoration(
+                      labelText: 'Bio / About (English)',
+                      hintText: 'Short description in English',
+                      alignLabelWithHint: true,
+                    ),
+                    maxLines: 3,
+                    maxLength: 500,
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  TextFormField(
+                    controller: _bioHeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Bio / About (Hebrew)',
+                      hintText: 'Short description in Hebrew',
+                      alignLabelWithHint: true,
+                    ),
+                    textDirection: TextDirection.rtl,
+                    maxLines: 3,
+                    maxLength: 500,
+                  ),
                 ],
               ),
             ),

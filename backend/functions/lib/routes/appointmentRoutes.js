@@ -10,6 +10,9 @@ router.use(auth_1.authenticate);
 router.post('/book', appointmentController_1.appointmentController.bookAppointment.bind(appointmentController_1.appointmentController));
 router.get('/my', appointmentController_1.appointmentController.getMyAppointments.bind(appointmentController_1.appointmentController));
 router.put('/my/:id/cancel', appointmentController_1.appointmentController.cancelMyAppointment.bind(appointmentController_1.appointmentController));
+// Note: clear-history must come BEFORE :id route to avoid matching "clear-history" as an id
+router.delete('/my/clear-history', appointmentController_1.appointmentController.clearMyHistory.bind(appointmentController_1.appointmentController));
+router.delete('/my/:id', appointmentController_1.appointmentController.deleteMyAppointment.bind(appointmentController_1.appointmentController));
 // Admin/Doctor routes
 router.post('/', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.createAppointment.bind(appointmentController_1.appointmentController));
 router.get('/', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.getAllAppointments.bind(appointmentController_1.appointmentController));

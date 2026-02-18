@@ -7,23 +7,11 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Avatar,
-  Chip,
-  Divider,
 } from '@mui/material';
 import {
   People as PeopleIcon,
   EventNote as AppointmentIcon,
   LocalHospital as DoctorIcon,
-  PendingActions as PendingIcon,
-  CheckCircle as CheckCircleIcon,
-  HourglassEmpty as WaitingIcon,
-  CalendarToday as CalendarIcon,
-  Event as EventIcon,
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -54,15 +42,6 @@ interface AnalyticsData {
     doctorName: string;
     count: number;
   }>;
-}
-
-interface Appointment {
-  id: string;
-  patientName?: string;
-  appointmentTime?: string;
-  serviceType?: string;
-  status: string;
-  doctorName?: string;
 }
 
 const StatCard: React.FC<{

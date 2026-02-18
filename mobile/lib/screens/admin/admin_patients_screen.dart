@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 
@@ -65,130 +66,74 @@ class _AdminPatientsScreenState extends State<AdminPatientsScreen> {
   }
 
   void _showCreatePatientDialog() {
-    final nameController = TextEditingController();
-    final phoneController = TextEditingController();
-    final idNumberController = TextEditingController();
-    final emailController = TextEditingController();
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 16,
-          right: 16,
-          top: 16,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'New Patient',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name *',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
-                ),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.phone),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: idNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'ID Number',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.badge),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter patient name')),
-                      );
-                      return;
-                    }
-                    try {
-                      await _apiService.createPatient(
-                        fullName: nameController.text,
-                        phoneNumber: phoneController.text,
-                        idNumber: idNumberController.text,
-                        email: emailController.text,
-                      );
-                      if (mounted) {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Patient created successfully'),
-                            backgroundColor: AppTheme.successColor,
-                          ),
-                        );
-                        _loadPatients();
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
-                          backgroundColor: AppTheme.errorColor,
-                        ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('Create Patient'),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _CreatePatientSheet(
+        apiService: _apiService,
+        onCreated: () {
+          Navigator.pop(ctx);
+          _loadPatients();
+        },
       ),
     );
+  }
+
+  Future<void> _confirmDeletePatient(Map<String, dynamic> patient) async {
+    final patientName = patient['fullName'] ?? 'this patient';
+    final patientId = patient['id'];
+
+    if (patientId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot delete: Patient ID not found'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Patient'),
+        content: Text('Are you sure you want to delete $patientName? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await _apiService.deletePatient(patientId);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$patientName deleted successfully'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+        _loadPatients();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting patient: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -283,7 +228,10 @@ class _AdminPatientsScreenState extends State<AdminPatientsScreen> {
                             itemCount: _filteredPatients.length,
                             itemBuilder: (context, index) {
                               final patient = _filteredPatients[index];
-                              return _PatientTile(patient: patient);
+                              return _PatientTile(
+                                patient: patient,
+                                onDelete: () => _confirmDeletePatient(patient),
+                              );
                             },
                           ),
                         ),
@@ -296,8 +244,9 @@ class _AdminPatientsScreenState extends State<AdminPatientsScreen> {
 
 class _PatientTile extends StatelessWidget {
   final Map<String, dynamic> patient;
+  final VoidCallback onDelete;
 
-  const _PatientTile({required this.patient});
+  const _PatientTile({required this.patient, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -392,7 +341,16 @@ class _PatientTile extends StatelessWidget {
                     ),
                   ),
                 ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
+              // Delete button
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                onPressed: onDelete,
+                tooltip: 'Delete patient',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 4),
               const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
@@ -516,6 +474,371 @@ class _DetailRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CreatePatientSheet extends StatefulWidget {
+  final ApiService apiService;
+  final VoidCallback onCreated;
+
+  const _CreatePatientSheet({
+    required this.apiService,
+    required this.onCreated,
+  });
+
+  @override
+  State<_CreatePatientSheet> createState() => _CreatePatientSheetState();
+}
+
+class _CreatePatientSheetState extends State<_CreatePatientSheet> {
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _idNumberController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _addressController = TextEditingController();
+  DateTime? _dateOfBirth;
+  String _gender = 'male';
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _idNumberController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDateOfBirth() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth ?? DateTime(2000, 1, 1),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (date != null) {
+      setState(() => _dateOfBirth = date);
+    }
+  }
+
+  Future<void> _createPatient() async {
+    if (_nameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter patient name')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await widget.apiService.createPatient(
+        fullName: _nameController.text,
+        phoneNumber: _phoneController.text,
+        idNumber: _idNumberController.text,
+        email: _emailController.text,
+        dateOfBirth: _dateOfBirth,
+        gender: _gender,
+        address: _addressController.text,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Patient created successfully'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+
+      widget.onCreated();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('MMM d, yyyy');
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXL)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.dividerColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                  ),
+                  child: const Icon(Icons.person_add, color: AppTheme.primaryColor),
+                ),
+                const SizedBox(width: AppTheme.spacingM),
+                Text(
+                  'Add New Patient',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingL),
+
+          // Form
+          Flexible(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: AppTheme.spacingL,
+                right: AppTheme.spacingL,
+                bottom: MediaQuery.of(context).viewInsets.bottom + AppTheme.spacingL,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Full Name
+                  TextField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Full Name *',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+
+                  // ID Number
+                  TextField(
+                    controller: _idNumberController,
+                    decoration: const InputDecoration(
+                      labelText: 'ID Number (Teudat Zehut)',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.badge),
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+
+                  // Date of Birth
+                  InkWell(
+                    onTap: _selectDateOfBirth,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Date of Birth',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.cake),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _dateOfBirth != null
+                                ? dateFormat.format(_dateOfBirth!)
+                                : 'Select date',
+                            style: TextStyle(
+                              color: _dateOfBirth != null
+                                  ? AppTheme.textPrimary
+                                  : AppTheme.textHint,
+                            ),
+                          ),
+                          const Icon(Icons.arrow_drop_down, color: AppTheme.textHint),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+
+                  // Gender
+                  Text(
+                    'Gender',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _GenderOption(
+                          label: 'Male',
+                          icon: Icons.male,
+                          isSelected: _gender == 'male',
+                          color: Colors.blue,
+                          onTap: () => setState(() => _gender = 'male'),
+                        ),
+                      ),
+                      const SizedBox(width: AppTheme.spacingS),
+                      Expanded(
+                        child: _GenderOption(
+                          label: 'Female',
+                          icon: Icons.female,
+                          isSelected: _gender == 'female',
+                          color: Colors.pink,
+                          onTap: () => setState(() => _gender = 'female'),
+                        ),
+                      ),
+                      const SizedBox(width: AppTheme.spacingS),
+                      Expanded(
+                        child: _GenderOption(
+                          label: 'Other',
+                          icon: Icons.transgender,
+                          isSelected: _gender == 'other',
+                          color: Colors.purple,
+                          onTap: () => setState(() => _gender = 'other'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+
+                  // Phone Number
+                  TextField(
+                    controller: _phoneController,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone Number',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.phone),
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+
+                  // Email
+                  TextField(
+                    controller: _emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.email),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+
+                  // Address
+                  TextField(
+                    controller: _addressController,
+                    decoration: const InputDecoration(
+                      labelText: 'Address',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.home),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: AppTheme.spacingL),
+
+                  // Submit button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _createPatient,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Text('Create Patient'),
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GenderOption extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _GenderOption({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.1) : AppTheme.surfaceLight,
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          border: Border.all(
+            color: isSelected ? color : AppTheme.dividerColor,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? color : AppTheme.textSecondary,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? color : AppTheme.textSecondary,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

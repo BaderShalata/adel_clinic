@@ -43,29 +43,14 @@ class AppointmentService {
         this.patientsCollection = db.collection('patients');
         this.doctorsCollection = db.collection('doctors');
     }
+    /**
+     * Create appointment using Firestore transaction to ensure atomicity.
+     * This prevents double-booking race conditions by checking availability
+     * and creating the appointment in a single atomic operation.
+     */
     async createAppointment(data, createdBy, role) {
         try {
-            // Fetch patient and doctor details
-            const [patientDoc, doctorDoc] = await Promise.all([
-                this.patientsCollection.doc(data.patientId).get(),
-                this.doctorsCollection.doc(data.doctorId).get(),
-            ]);
-            if (!patientDoc.exists) {
-                throw new Error('Patient not found');
-            }
-            if (!doctorDoc.exists) {
-                throw new Error('Doctor not found');
-            }
-            const patient = patientDoc.data();
-            const doctor = doctorDoc.data();
-            // === ROLE-BASED ACCESS ===
-            // Admin can create for anyone
-            if (role !== 'admin') {
-                if (patient?.createdBy && patient.createdBy !== createdBy) {
-                    throw new Error('Cannot create appointment for another user');
-                }
-            }
-            // Convert appointmentDate to Date object - handle all formats
+            // Convert appointmentDate to Date object - handle all formats (outside transaction)
             let appointmentDateObj;
             const aptDateInput = data.appointmentDate;
             if (aptDateInput instanceof Date) {
@@ -83,42 +68,91 @@ class AppointmentService {
             else {
                 throw new Error('Invalid appointment date format');
             }
-            // Check for double-booking if appointmentTime is provided
+            const dateStr = appointmentDateObj.toISOString().split('T')[0];
+            // Check if slot is locked (outside transaction - locked slots are admin-controlled)
             if (data.appointmentTime) {
-                const isAvailable = await this.checkSlotAvailability(data.doctorId, appointmentDateObj, data.appointmentTime);
-                if (!isAvailable) {
-                    throw new Error('This time slot is no longer available. Please select another time.');
+                const isLocked = await lockedSlotService_1.lockedSlotService.isSlotLocked(data.doctorId, dateStr, data.appointmentTime);
+                if (isLocked) {
+                    throw new Error('This time slot is locked and not available for booking.');
                 }
             }
-            // Build appointment data - only include fields with values
-            // Patient bookings start as 'pending', admin bookings as 'scheduled'
-            const appointmentData = {
-                patientId: data.patientId,
-                doctorId: data.doctorId,
-                appointmentDate: admin.firestore.Timestamp.fromDate(appointmentDateObj),
-                status: role === 'admin' ? 'scheduled' : 'pending',
-                createdAt: admin.firestore.Timestamp.now(),
-                updatedAt: admin.firestore.Timestamp.now(),
-                createdBy,
-            };
-            // Only add optional fields if they have values (Firestore doesn't accept undefined)
-            if (patient?.fullName)
-                appointmentData.patientName = patient.fullName;
-            if (doctor?.fullName)
-                appointmentData.doctorName = doctor.fullName;
-            if (data.appointmentTime)
-                appointmentData.appointmentTime = data.appointmentTime;
-            if (data.serviceType)
-                appointmentData.serviceType = data.serviceType;
-            if (data.duration)
-                appointmentData.duration = data.duration;
-            if (data.notes)
-                appointmentData.notes = data.notes;
-            const docRef = await this.appointmentsCollection.add(appointmentData);
-            return {
-                id: docRef.id,
-                ...appointmentData,
-            };
+            // Use transaction to ensure atomic check-and-create
+            const result = await db.runTransaction(async (transaction) => {
+                // Fetch patient and doctor details within transaction
+                const patientDoc = await transaction.get(this.patientsCollection.doc(data.patientId));
+                const doctorDoc = await transaction.get(this.doctorsCollection.doc(data.doctorId));
+                if (!patientDoc.exists) {
+                    throw new Error('Patient not found');
+                }
+                if (!doctorDoc.exists) {
+                    throw new Error('Doctor not found');
+                }
+                const patient = patientDoc.data();
+                const doctor = doctorDoc.data();
+                // === ROLE-BASED ACCESS ===
+                if (role !== 'admin') {
+                    if (patient?.createdBy && patient.createdBy !== createdBy) {
+                        throw new Error('Cannot create appointment for another user');
+                    }
+                }
+                // Check for double-booking within the transaction
+                if (data.appointmentTime) {
+                    const existingAppointments = await transaction.get(this.appointmentsCollection
+                        .where('doctorId', '==', data.doctorId)
+                        .where('appointmentTime', '==', data.appointmentTime));
+                    for (const doc of existingAppointments.docs) {
+                        const aptData = doc.data();
+                        if (aptData.appointmentDate) {
+                            let aptDate;
+                            const dateVal = aptData.appointmentDate;
+                            if (typeof dateVal.toDate === 'function') {
+                                aptDate = dateVal.toDate();
+                            }
+                            else if (typeof dateVal._seconds === 'number') {
+                                aptDate = new Date(dateVal._seconds * 1000);
+                            }
+                            else {
+                                continue;
+                            }
+                            const aptDateStr = aptDate.toISOString().split('T')[0];
+                            if (aptDateStr === dateStr && ['pending', 'scheduled', 'completed'].includes(aptData.status)) {
+                                throw new Error('This time slot is no longer available. Please select another time.');
+                            }
+                        }
+                    }
+                }
+                // Build appointment data
+                const appointmentData = {
+                    patientId: data.patientId,
+                    doctorId: data.doctorId,
+                    appointmentDate: admin.firestore.Timestamp.fromDate(appointmentDateObj),
+                    status: role === 'admin' ? 'scheduled' : 'pending',
+                    createdAt: admin.firestore.Timestamp.now(),
+                    updatedAt: admin.firestore.Timestamp.now(),
+                    createdBy,
+                };
+                // Only add optional fields if they have values
+                if (patient?.fullName)
+                    appointmentData.patientName = patient.fullName;
+                if (doctor?.fullName)
+                    appointmentData.doctorName = doctor.fullName;
+                if (data.appointmentTime)
+                    appointmentData.appointmentTime = data.appointmentTime;
+                if (data.serviceType)
+                    appointmentData.serviceType = data.serviceType;
+                if (data.duration)
+                    appointmentData.duration = data.duration;
+                if (data.notes)
+                    appointmentData.notes = data.notes;
+                // Create the appointment document
+                const newDocRef = this.appointmentsCollection.doc();
+                transaction.set(newDocRef, appointmentData);
+                return {
+                    id: newDocRef.id,
+                    ...appointmentData,
+                };
+            });
+            return result;
         }
         catch (error) {
             throw new Error(`Failed to create appointment: ${error.message}`);
@@ -179,6 +213,10 @@ class AppointmentService {
     async getAllAppointments(filters) {
         try {
             let query = this.appointmentsCollection;
+            // When filtering by status only (without date), we need to avoid the composite index requirement
+            // by querying without orderBy and sorting in memory
+            const hasDateFilter = filters?.startDate || filters?.endDate;
+            const hasStatusOnly = filters?.status && !hasDateFilter;
             if (filters?.status)
                 query = query.where('status', '==', filters.status);
             if (filters?.doctorId)
@@ -189,9 +227,25 @@ class AppointmentService {
                 query = query.where('appointmentDate', '>=', admin.firestore.Timestamp.fromDate(filters.startDate));
             if (filters?.endDate)
                 query = query.where('appointmentDate', '<=', admin.firestore.Timestamp.fromDate(filters.endDate));
-            query = query.orderBy('appointmentDate', 'desc');
+            // Only use orderBy when we have date filters (to avoid needing composite index for status + date)
+            if (!hasStatusOnly) {
+                query = query.orderBy('appointmentDate', 'desc');
+            }
             const snapshot = await query.get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            let appointments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Sort in memory if we couldn't use orderBy
+            if (hasStatusOnly) {
+                appointments.sort((a, b) => {
+                    const dateA = a.appointmentDate instanceof Date
+                        ? a.appointmentDate
+                        : a.appointmentDate.toDate?.() || new Date(a.appointmentDate._seconds * 1000);
+                    const dateB = b.appointmentDate instanceof Date
+                        ? b.appointmentDate
+                        : b.appointmentDate.toDate?.() || new Date(b.appointmentDate._seconds * 1000);
+                    return dateB.getTime() - dateA.getTime(); // desc order
+                });
+            }
+            return appointments;
         }
         catch (error) {
             throw new Error(`Failed to get appointments: ${error.message}`);
@@ -234,6 +288,127 @@ class AppointmentService {
         }
         catch (error) {
             throw new Error(`Failed to delete appointment: ${error.message}`);
+        }
+    }
+    /**
+     * Book appointment with automatic patient creation in a single atomic transaction.
+     * Creates patient if not exists, then creates the appointment - all or nothing.
+     */
+    async bookAppointmentAtomic(data, userId, userEmail, userName) {
+        try {
+            // Convert appointmentDate to Date object
+            let appointmentDateObj;
+            const aptDateInput = data.appointmentDate;
+            if (aptDateInput instanceof Date) {
+                appointmentDateObj = aptDateInput;
+            }
+            else if (typeof aptDateInput === 'string') {
+                appointmentDateObj = new Date(aptDateInput);
+            }
+            else if (typeof aptDateInput._seconds === 'number') {
+                appointmentDateObj = new Date(aptDateInput._seconds * 1000);
+            }
+            else if (typeof aptDateInput.toDate === 'function') {
+                appointmentDateObj = aptDateInput.toDate();
+            }
+            else {
+                throw new Error('Invalid appointment date format');
+            }
+            const dateStr = appointmentDateObj.toISOString().split('T')[0];
+            // Check if slot is locked (outside transaction)
+            if (data.appointmentTime) {
+                const isLocked = await lockedSlotService_1.lockedSlotService.isSlotLocked(data.doctorId, dateStr, data.appointmentTime);
+                if (isLocked) {
+                    throw new Error('This time slot is locked and not available for booking.');
+                }
+            }
+            // Use transaction for atomic patient creation + appointment booking
+            const result = await db.runTransaction(async (transaction) => {
+                // Check if patient exists
+                const patientRef = this.patientsCollection.doc(userId);
+                const patientDoc = await transaction.get(patientRef);
+                // Get doctor details
+                const doctorDoc = await transaction.get(this.doctorsCollection.doc(data.doctorId));
+                if (!doctorDoc.exists) {
+                    throw new Error('Doctor not found');
+                }
+                const doctor = doctorDoc.data();
+                // Create patient if not exists
+                let patientName = userName || 'Patient';
+                if (!patientDoc.exists) {
+                    const patientData = {
+                        userId,
+                        email: userEmail || '',
+                        fullName: userName || 'Patient',
+                        role: 'patient',
+                        isActive: true,
+                        createdAt: admin.firestore.Timestamp.now(),
+                        updatedAt: admin.firestore.Timestamp.now(),
+                    };
+                    transaction.set(patientRef, patientData);
+                }
+                else {
+                    patientName = patientDoc.data()?.fullName || userName || 'Patient';
+                }
+                // Check for double-booking within the transaction
+                if (data.appointmentTime) {
+                    const existingAppointments = await transaction.get(this.appointmentsCollection
+                        .where('doctorId', '==', data.doctorId)
+                        .where('appointmentTime', '==', data.appointmentTime));
+                    for (const doc of existingAppointments.docs) {
+                        const aptData = doc.data();
+                        if (aptData.appointmentDate) {
+                            let aptDate;
+                            const dateVal = aptData.appointmentDate;
+                            if (typeof dateVal.toDate === 'function') {
+                                aptDate = dateVal.toDate();
+                            }
+                            else if (typeof dateVal._seconds === 'number') {
+                                aptDate = new Date(dateVal._seconds * 1000);
+                            }
+                            else {
+                                continue;
+                            }
+                            const aptDateStr = aptDate.toISOString().split('T')[0];
+                            if (aptDateStr === dateStr && ['pending', 'scheduled', 'completed'].includes(aptData.status)) {
+                                throw new Error('This time slot is no longer available. Please select another time.');
+                            }
+                        }
+                    }
+                }
+                // Build appointment data
+                const appointmentData = {
+                    patientId: userId,
+                    doctorId: data.doctorId,
+                    appointmentDate: admin.firestore.Timestamp.fromDate(appointmentDateObj),
+                    status: 'pending', // User bookings start as pending
+                    createdAt: admin.firestore.Timestamp.now(),
+                    updatedAt: admin.firestore.Timestamp.now(),
+                    createdBy: userId,
+                    patientName,
+                };
+                if (doctor?.fullName)
+                    appointmentData.doctorName = doctor.fullName;
+                if (data.appointmentTime)
+                    appointmentData.appointmentTime = data.appointmentTime;
+                if (data.serviceType)
+                    appointmentData.serviceType = data.serviceType;
+                if (data.duration)
+                    appointmentData.duration = data.duration;
+                if (data.notes)
+                    appointmentData.notes = data.notes;
+                // Create the appointment
+                const newDocRef = this.appointmentsCollection.doc();
+                transaction.set(newDocRef, appointmentData);
+                return {
+                    id: newDocRef.id,
+                    ...appointmentData,
+                };
+            });
+            return result;
+        }
+        catch (error) {
+            throw new Error(`Failed to book appointment: ${error.message}`);
         }
     }
     async getTodayAppointments(doctorId) {

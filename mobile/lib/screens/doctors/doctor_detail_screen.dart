@@ -403,6 +403,50 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                   ),
                 ).animate().fadeIn(duration: AppTheme.animMedium).slideY(begin: 0.1, end: 0),
 
+                // Bio Section
+                if (doctor.bio != null && doctor.bio!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
+                    child: ModernCard(
+                      margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                                ),
+                                child: const Icon(
+                                  Icons.info_outline,
+                                  color: Colors.purple,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spacingS),
+                              Text(
+                                'About',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppTheme.spacingM),
+                          Text(
+                            doctor.bio!,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  height: 1.5,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 100.ms, duration: AppTheme.animMedium).slideY(begin: 0.1, end: 0),
+
                 // Qualifications Section
                 if (doctor.qualifications.isNotEmpty)
                   Padding(
@@ -461,7 +505,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                         ],
                       ),
                     ),
-                  ).animate().fadeIn(delay: 100.ms, duration: AppTheme.animMedium).slideY(begin: 0.1, end: 0),
+                  ).animate().fadeIn(delay: 150.ms, duration: AppTheme.animMedium).slideY(begin: 0.1, end: 0),
 
                 // Schedule Section
                 Padding(
@@ -527,142 +571,44 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   }
 
   List<Widget> _buildWeeklySchedule(List weeklySchedule) {
-    final dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    final dayAbbr = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    final dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    final List<Widget> widgets = [];
-    int animIndex = 0;
+    // Build a map of day -> schedules and collect all service types
+    final Map<int, List<Map<String, dynamic>>> daySchedules = {};
+    final Set<String> allServiceTypes = {};
 
     for (final day in weeklySchedule) {
       final dayOfWeek = day['dayOfWeek'] as int;
-      final schedules = day['schedules'] as List;
-
-      if (schedules.isEmpty) continue;
-
-      final Widget card = ModernCard(
-        margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Day header
-            Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppTheme.primaryColor.withValues(alpha: 0.2),
-                        AppTheme.primaryColor.withValues(alpha: 0.05),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                  ),
-                  child: Center(
-                    child: Text(
-                      dayNames[dayOfWeek].substring(0, 3),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppTheme.spacingM),
-                Text(
-                  dayNames[dayOfWeek],
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacingM),
-            // Schedule entries
-            ...schedules.map((schedule) {
-              final startTime = schedule['startTime'] as String?;
-              final endTime = schedule['endTime'] as String?;
-              final rawServiceType = schedule['type'] as String?;
-              final serviceType = getServiceDisplayName(rawServiceType);
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
-                padding: const EdgeInsets.all(AppTheme.spacingM),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceMedium,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                ),
-                child: Row(
-                  children: [
-                    // Time
-                    const Icon(
-                      Icons.access_time_rounded,
-                      size: 18,
-                      color: AppTheme.primaryColor,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '$startTime - $endTime',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    // Service type (if available)
-                    if (serviceType.isNotEmpty) ...[
-                      const SizedBox(width: AppTheme.spacingM),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.accentColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusRound),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.medical_services_outlined,
-                                size: 14,
-                                color: AppTheme.accentColor,
-                              ),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  serviceType,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppTheme.accentColor,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              );
-            }),
-          ],
-        ),
-      );
-
-      widgets.add(
-        card.animate().fadeIn(
-              delay: Duration(milliseconds: 300 + (50 * animIndex)),
-              duration: AppTheme.animMedium,
-            ).slideX(begin: 0.05, end: 0),
-      );
-      animIndex++;
+      final schedules = (day['schedules'] as List).cast<Map<String, dynamic>>();
+      if (schedules.isNotEmpty) {
+        daySchedules[dayOfWeek] = schedules;
+        for (final s in schedules) {
+          final type = s['type'] as String?;
+          if (type != null && type.isNotEmpty) {
+            allServiceTypes.add(type);
+          }
+        }
+      }
     }
 
-    if (widgets.isEmpty) {
+    // Service type colors
+    final serviceColors = <String, Color>{};
+    final colorPalette = [
+      AppTheme.primaryColor,
+      AppTheme.accentColor,
+      AppTheme.successColor,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+    ];
+    int colorIdx = 0;
+    for (final type in allServiceTypes) {
+      serviceColors[type] = colorPalette[colorIdx % colorPalette.length];
+      colorIdx++;
+    }
+
+    if (daySchedules.isEmpty) {
       return [
         Center(
           child: Padding(
@@ -688,6 +634,310 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
       ];
     }
 
-    return widgets;
+    return [
+      ModernCard(
+        margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Compact Week View - 7 day grid
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(7, (index) {
+                final hasSchedule = daySchedules.containsKey(index);
+                final schedules = daySchedules[index];
+
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: hasSchedule
+                        ? () => _showDayScheduleDetail(index, schedules!, dayNames[index])
+                        : null,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingS),
+                      decoration: BoxDecoration(
+                        color: hasSchedule
+                            ? AppTheme.primaryColor.withValues(alpha: 0.15)
+                            : AppTheme.surfaceMedium,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                        border: hasSchedule
+                            ? Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3))
+                            : null,
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            dayAbbr[index],
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: hasSchedule ? AppTheme.primaryColor : AppTheme.textHint,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          if (hasSchedule) ...[
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: AppTheme.successColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ] else ...[
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: AppTheme.textHint.withValues(alpha: 0.3),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            // Schedule summary
+            ...daySchedules.entries.map((entry) {
+              final day = entry.key;
+              final schedules = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppTheme.spacingS),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Center(
+                        child: Text(
+                          dayNames[day],
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spacingS),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: schedules.map((s) {
+                          final startTime = s['startTime'] as String? ?? '';
+                          final endTime = s['endTime'] as String? ?? '';
+                          final type = s['type'] as String?;
+                          final color = type != null ? serviceColors[type] ?? AppTheme.textSecondary : AppTheme.textSecondary;
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: color.withValues(alpha: 0.3)),
+                            ),
+                            child: Text(
+                              '$startTime-$endTime',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: color,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+      // Legend (only if there are different service types)
+      if (allServiceTypes.length > 1)
+        ModernCard(
+          margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Services',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: AppTheme.spacingS),
+              Wrap(
+                spacing: AppTheme.spacingM,
+                runSpacing: AppTheme.spacingS,
+                children: serviceColors.entries.map((entry) {
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: entry.value,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        getServiceDisplayName(entry.key),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+    ];
+  }
+
+  void _showDayScheduleDetail(int dayOfWeek, List<Map<String, dynamic>> schedules, String dayName) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(AppTheme.spacingL),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXL)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
+                decoration: BoxDecoration(
+                  color: AppTheme.dividerColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                  ),
+                  child: const Icon(Icons.calendar_today, color: AppTheme.primaryColor, size: 20),
+                ),
+                const SizedBox(width: AppTheme.spacingM),
+                Text(
+                  '$dayName Schedule',
+                  style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spacingL),
+            ...schedules.map((schedule) {
+              final startTime = schedule['startTime'] as String? ?? '';
+              final endTime = schedule['endTime'] as String? ?? '';
+              final slotDuration = schedule['slotDuration'] as int? ?? 15;
+              final type = schedule['type'] as String?;
+              final serviceType = getServiceDisplayName(type);
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                padding: const EdgeInsets.all(AppTheme.spacingM),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceLight,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                  border: Border.all(color: AppTheme.dividerColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time, size: 18, color: AppTheme.primaryColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$startTime - $endTime',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        if (serviceType.isNotEmpty) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accentColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.medical_services, size: 14, color: AppTheme.accentColor),
+                                const SizedBox(width: 4),
+                                Text(
+                                  serviceType,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.accentColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppTheme.spacingS),
+                        ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.successColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                          ),
+                          child: Text(
+                            '$slotDuration min slots',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.successColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: AppTheme.spacingS),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -528,6 +528,9 @@ class ApiService {
     String? phoneNumber,
     String? idNumber,
     String? email,
+    DateTime? dateOfBirth,
+    String? gender,
+    String? address,
   }) async {
     try {
       final response = await _dio.post(
@@ -537,8 +540,9 @@ class ApiService {
           if (phoneNumber != null && phoneNumber.isNotEmpty) 'phoneNumber': phoneNumber,
           if (idNumber != null && idNumber.isNotEmpty) 'idNumber': idNumber,
           if (email != null && email.isNotEmpty) 'email': email,
-          'dateOfBirth': DateTime(2000, 1, 1).toIso8601String(),
-          'gender': 'other',
+          'dateOfBirth': (dateOfBirth ?? DateTime(2000, 1, 1)).toIso8601String(),
+          'gender': gender ?? 'other',
+          if (address != null && address.isNotEmpty) 'address': address,
         },
       );
       return response.data as Map<String, dynamic>;
@@ -811,6 +815,21 @@ class ApiService {
         }
       }
       throw Exception('Failed to delete doctor: $e');
+    }
+  }
+
+  // Admin: Delete a patient
+  Future<void> deletePatient(String patientId) async {
+    try {
+      await _dio.delete('/patients/$patientId');
+    } catch (e) {
+      if (e is DioException && e.response?.data != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map && errorData['error'] != null) {
+          throw Exception(errorData['error']);
+        }
+      }
+      throw Exception('Failed to delete patient: $e');
     }
   }
 

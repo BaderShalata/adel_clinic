@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import * as admin from 'firebase-admin';
 import { appointmentService } from '../services/appointmentService';
 import { CreateAppointmentInput, UpdateAppointmentInput } from '../models/Appointment';
 import { AuthRequest } from '../middleware/auth';
@@ -20,12 +19,13 @@ export class AppointmentController {
   /**
    * Patient booking endpoint - allows patients to book their own appointments
    * POST /api/appointments/book
+   * Uses atomic transaction to create patient (if needed) and appointment together
    */
   async bookAppointment(req: AuthRequest, res: Response): Promise<void> {
     try {
       const uid = req.user?.uid;
-      const userEmail = req.user?.email;
-      const userName = req.user?.name;
+      const userEmail = req.user?.email || '';
+      const userName = req.user?.name || 'Patient';
 
       if (!uid) {
         res.status(401).json({ error: 'User not authenticated' });
@@ -39,25 +39,7 @@ export class AppointmentController {
         return;
       }
 
-      // Ensure patient exists - create if not
-      const db = admin.firestore();
-      const patientDoc = await db.collection('patients').doc(uid).get();
-
-      if (!patientDoc.exists) {
-        // Create patient document for this user
-        await db.collection('patients').doc(uid).set({
-          userId: uid,
-          email: userEmail || '',
-          fullName: userName || 'Patient',
-          role: 'patient',
-          isActive: true,
-          createdAt: admin.firestore.Timestamp.now(),
-          updatedAt: admin.firestore.Timestamp.now(),
-        });
-        console.log('Created patient document for user:', uid);
-      }
-
-      // Patient ID is the user's UID (patients collection uses UID as document ID)
+      // Use atomic booking method that handles patient creation + appointment in one transaction
       const data: CreateAppointmentInput = {
         patientId: uid,
         doctorId,
@@ -68,7 +50,7 @@ export class AppointmentController {
         notes,
       };
 
-      const appointment = await appointmentService.createAppointment(data, uid, 'user');
+      const appointment = await appointmentService.bookAppointmentAtomic(data, uid, userEmail, userName);
       res.status(201).json(appointment);
     } catch (error: any) {
       console.error('Booking error:', error);
@@ -163,7 +145,12 @@ export class AppointmentController {
       if (doctorId) filters.doctorId = doctorId as string;
       if (patientId) filters.patientId = patientId as string;
       if (startDate) filters.startDate = new Date(startDate as string);
-      if (endDate) filters.endDate = new Date(endDate as string);
+      if (endDate) {
+        // Set endDate to end of day (23:59:59.999) to include all appointments on that day
+        const endDateObj = new Date(endDate as string);
+        endDateObj.setHours(23, 59, 59, 999);
+        filters.endDate = endDateObj;
+      }
 
       const appointments = await appointmentService.getAllAppointments(filters);
       res.status(200).json(appointments);
