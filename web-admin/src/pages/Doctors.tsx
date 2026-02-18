@@ -71,9 +71,11 @@ const DAYS = [
   { label: 'Saturday', value: 6 },
 ];
 
-const formatSchedule = (schedule: DoctorSchedule[]) => {
-  if (!schedule || schedule.length === 0) return 'No schedule';
+const formatScheduleCompact = (schedule: DoctorSchedule[]) => {
+  if (!schedule || schedule.length === 0) return [];
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+  // Group schedules by day
   const dayMap = new Map<number, DoctorSchedule[]>();
   schedule.forEach(s => {
     if (!dayMap.has(s.dayOfWeek)) {
@@ -82,22 +84,13 @@ const formatSchedule = (schedule: DoctorSchedule[]) => {
     dayMap.get(s.dayOfWeek)?.push(s);
   });
 
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const formatted: string[] = [];
-
-  dayMap.forEach((schedules, dayOfWeek) => {
-    const times = schedules.map(s => `${s.startTime}-${s.endTime}`).join(', ');
-    formatted.push(`${dayNames[dayOfWeek]}: ${times}`);
+  // Sort by day and return with times
+  const sortedDays = [...dayMap.keys()].sort();
+  return sortedDays.map(day => {
+    const slots = dayMap.get(day) || [];
+    const times = slots.map(s => `${s.startTime}-${s.endTime}`).join(', ');
+    return { day: dayNames[day], times };
   });
-
-  return formatted.join(' | ');
-};
-
-const formatScheduleCompact = (schedule: DoctorSchedule[]) => {
-  if (!schedule || schedule.length === 0) return [];
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const workDays = [...new Set(schedule.map(s => s.dayOfWeek))].sort();
-  return workDays.map(d => dayNames[d]);
 };
 
 export const Doctors: React.FC = () => {
@@ -814,28 +807,30 @@ export const Doctors: React.FC = () => {
                   )}
 
                   {/* Schedule Preview */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ScheduleIcon sx={{ fontSize: 16, color: healthcareColors.neutral[400] }} />
-                    <Stack direction="row" spacing={0.5}>
-                      {formatScheduleCompact(doctor.schedule).map((day, idx) => (
-                        <Chip
-                          key={idx}
-                          label={day}
-                          size="small"
-                          sx={{
-                            height: 20,
-                            fontSize: '0.65rem',
-                            bgcolor: healthcareColors.neutral[100],
-                            color: healthcareColors.neutral[600],
-                          }}
-                        />
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <ScheduleIcon sx={{ fontSize: 16, color: healthcareColors.neutral[400], mt: 0.25 }} />
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {formatScheduleCompact(doctor.schedule).map((item, idx) => (
+                        <Tooltip key={idx} title={item.times} arrow placement="top">
+                          <Chip
+                            label={`${item.day} ${item.times}`}
+                            size="small"
+                            sx={{
+                              height: 22,
+                              fontSize: '0.65rem',
+                              bgcolor: healthcareColors.neutral[100],
+                              color: healthcareColors.neutral[600],
+                              '& .MuiChip-label': { px: 1 },
+                            }}
+                          />
+                        </Tooltip>
                       ))}
                       {doctor.schedule?.length === 0 && (
                         <Typography variant="caption" color="text.secondary">
                           No schedule
                         </Typography>
                       )}
-                    </Stack>
+                    </Box>
                   </Box>
                 </CardContent>
               </Card>

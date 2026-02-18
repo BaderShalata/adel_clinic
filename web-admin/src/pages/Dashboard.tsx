@@ -21,7 +21,7 @@ import {
   HourglassEmpty as PendingIcon,
   PersonOff as NoShowIcon,
 } from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -180,7 +180,7 @@ const StatusItem: React.FC<{
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(color, 0.1) }}>
-            {React.cloneElement(icon as React.ReactElement, { sx: { fontSize: 18, color } })}
+            {React.cloneElement(icon as React.ReactElement<{ style?: React.CSSProperties }>, { style: { fontSize: 18, color } })}
           </Avatar>
           <Typography variant="body2" fontWeight={500}>
             {label}

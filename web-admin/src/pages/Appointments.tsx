@@ -33,9 +33,8 @@ import {
   Tabs,
   Tab,
   alpha,
-  Avatar,
 } from '@mui/material';
-import { healthcareColors, gradients, glassStyles, shadows } from '../theme/healthcareTheme';
+import { healthcareColors, glassStyles, shadows } from '../theme/healthcareTheme';
 import {
   Add as AddIcon,
   Edit as EditIcon,
