@@ -51,6 +51,7 @@ import {
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import dayjs from 'dayjs';
 
 interface Appointment {
@@ -130,6 +131,7 @@ export const Appointments: React.FC = () => {
   });
 
   const { getToken } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
 
   const { data: appointments, isLoading } = useQuery<Appointment[]>({
@@ -644,7 +646,7 @@ export const Appointments: React.FC = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Appointments</Typography>
+        <Typography variant="h4">{t('appointments')}</Typography>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <ToggleButtonGroup
             value={viewMode}
@@ -653,18 +655,18 @@ export const Appointments: React.FC = () => {
             size="small"
           >
             <ToggleButton value="list">
-              <Tooltip title="List View">
+              <Tooltip title={t('listView')}>
                 <ViewListIcon />
               </Tooltip>
             </ToggleButton>
             <ToggleButton value="calendar">
-              <Tooltip title="Calendar View">
+              <Tooltip title={t('calendarView')}>
                 <CalendarIcon />
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
-            Add Appointment
+            {t('addAppointment')}
           </Button>
         </Box>
       </Box>
@@ -684,7 +686,7 @@ export const Appointments: React.FC = () => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <ActiveIcon fontSize="small" />
-                    Active ({activeAppointments.length})
+                    {t('active')} ({activeAppointments.length})
                   </Box>
                 }
               />
@@ -693,7 +695,7 @@ export const Appointments: React.FC = () => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <ArchiveIcon fontSize="small" />
-                    Archive ({archivedAppointments.length})
+                    {t('archive')} ({archivedAppointments.length})
                   </Box>
                 }
               />
@@ -710,19 +712,19 @@ export const Appointments: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Patient</TableCell>
-                    <TableCell>Doctor</TableCell>
-                    <TableCell>Service</TableCell>
-                    <TableCell>Date & Time</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell>{t('patient')}</TableCell>
+                    <TableCell>{t('doctor')}</TableCell>
+                    <TableCell>{t('service')}</TableCell>
+                    <TableCell>{t('dateTime')}</TableCell>
+                    <TableCell>{t('status')}</TableCell>
+                    <TableCell align="right">{t('actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {archivedAppointments.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} align="center">
-                        No archived appointments
+                        {t('noArchivedAppointments')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -746,12 +748,12 @@ export const Appointments: React.FC = () => {
                         </TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                            <Tooltip title="Edit">
+                            <Tooltip title={t('edit')}>
                               <IconButton size="small" onClick={() => handleOpen(appointment)}>
                                 <EditIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Delete">
+                            <Tooltip title={t('delete')}>
                               <IconButton size="small" color="error" onClick={() => handleDeleteClick(appointment)}>
                                 <DeleteIcon fontSize="small" />
                               </IconButton>
@@ -778,11 +780,11 @@ export const Appointments: React.FC = () => {
               {(['pending', 'scheduled', 'completed', 'cancelled', 'no-show'] as const).map((status) => {
                 const statusAppointments = activeAppointments.filter(apt => apt.status === status);
                 const statusLabels: Record<string, string> = {
-                  'pending': 'Pending',
-                  'scheduled': 'Scheduled',
-                  'completed': 'Completed',
-                  'cancelled': 'Cancelled',
-                  'no-show': 'No-Show',
+                  'pending': t('pending'),
+                  'scheduled': t('scheduled'),
+                  'completed': t('completed'),
+                  'cancelled': t('cancelled'),
+                  'no-show': t('noShow'),
                 };
 
                 return (
@@ -861,7 +863,7 @@ export const Appointments: React.FC = () => {
                             color: 'text.disabled',
                           }}
                         >
-                          <Typography variant="body2">No appointments</Typography>
+                          <Typography variant="body2">{t('noAppointments')}</Typography>
                         </Box>
                       ) : (
                         <>
@@ -948,7 +950,7 @@ export const Appointments: React.FC = () => {
 
                                     {/* Quick Actions */}
                                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1, gap: 0.5 }}>
-                                      <Tooltip title="Edit">
+                                      <Tooltip title={t('edit')}>
                                         <IconButton
                                           size="small"
                                           onClick={(e) => {
@@ -960,7 +962,7 @@ export const Appointments: React.FC = () => {
                                           <EditIcon sx={{ fontSize: 16 }} />
                                         </IconButton>
                                       </Tooltip>
-                                      <Tooltip title="Delete">
+                                      <Tooltip title={t('delete')}>
                                         <IconButton
                                           size="small"
                                           color="error"
@@ -1004,8 +1006,8 @@ export const Appointments: React.FC = () => {
                                     }}
                                   >
                                     {isExpanded
-                                      ? 'Show less'
-                                      : `Show ${sortedAppointments.length - MAX_VISIBLE_APPOINTMENTS} more`}
+                                      ? t('showLess')
+                                      : `${t('showMore').replace('{count}', String(sortedAppointments.length - MAX_VISIBLE_APPOINTMENTS))}`}
                                   </Button>
                                 )}
                               </>
@@ -1039,7 +1041,7 @@ export const Appointments: React.FC = () => {
                 {calendarDate.format('MMMM YYYY')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {activeAppointments.length} upcoming appointments
+                {t('upcomingAppointmentsCount').replace('{count}', String(activeAppointments.length))}
               </Typography>
             </Box>
             <IconButton
@@ -1210,7 +1212,7 @@ export const Appointments: React.FC = () => {
                           fontWeight: 500,
                         }}
                       >
-                        +{dayAppointments.length - 2} more
+                        +{dayAppointments.length - 2} {t('more')}
                       </Typography>
                     )}
                   </Box>
@@ -1233,7 +1235,7 @@ export const Appointments: React.FC = () => {
                   {selectedDay.format('dddd, MMMM D, YYYY')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {getAppointmentsForDate(selectedDay).length} appointment(s)
+                  {t('appointmentsCount').replace('{count}', String(getAppointmentsForDate(selectedDay).length))}
                 </Typography>
               </Box>
             </Box>
@@ -1253,7 +1255,7 @@ export const Appointments: React.FC = () => {
                   handleOpen();
                 }}
               >
-                Add
+                {t('add')}
               </Button>
             </Box>
           </Box>
@@ -1361,7 +1363,7 @@ export const Appointments: React.FC = () => {
                       {loadingDayViewSlots ? (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
                           <CircularProgress size={14} />
-                          <Typography variant="caption" color="text.secondary">Loading...</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('loading')}</Typography>
                         </Box>
                       ) : (
                         (() => {
@@ -1377,7 +1379,7 @@ export const Appointments: React.FC = () => {
                           if (uniqueDoctors.length === 0) {
                             return (
                               <Typography variant="caption" color="text.disabled" sx={{ py: 1 }}>
-                                No doctors available
+                                {t('noDoctorsAvailable')}
                               </Typography>
                             );
                           }
@@ -1428,14 +1430,14 @@ export const Appointments: React.FC = () => {
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>
-          {editingId ? 'Edit Appointment' : 'New Appointment'}
+          {editingId ? t('editAppointment') : t('newAppointment')}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
             {/* Patient Section */}
             <Box>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Patient Information
+                {t('patientInformation')}
               </Typography>
               <FormControlLabel
                 control={
@@ -1456,7 +1458,7 @@ export const Appointments: React.FC = () => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <PersonAddIcon fontSize="small" />
-                    <Typography variant="body2">New Patient</Typography>
+                    <Typography variant="body2">{t('newPatient')}</Typography>
                   </Box>
                 }
                 sx={{ mb: 1.5 }}
@@ -1468,7 +1470,7 @@ export const Appointments: React.FC = () => {
                   value={selectedPatient}
                   onChange={(_, newValue) => setSelectedPatient(newValue)}
                   renderInput={(params) => (
-                    <TextField {...params} label="Select Patient" size="small" required fullWidth />
+                    <TextField {...params} label={t('selectPatient')} size="small" required fullWidth />
                   )}
                 />
               ) : (
@@ -1476,7 +1478,7 @@ export const Appointments: React.FC = () => {
                   <TextField
                     fullWidth
                     size="small"
-                    label="Full Name"
+                    label={t('fullName')}
                     value={newPatientData.fullName}
                     onChange={(e) => setNewPatientData({ ...newPatientData, fullName: e.target.value })}
                     required
@@ -1485,14 +1487,14 @@ export const Appointments: React.FC = () => {
                     <TextField
                       fullWidth
                       size="small"
-                      label="ID Number"
+                      label={t('idNumber')}
                       value={newPatientData.idNumber}
                       onChange={(e) => setNewPatientData({ ...newPatientData, idNumber: e.target.value })}
                     />
                     <TextField
                       fullWidth
                       size="small"
-                      label="Phone Number"
+                      label={t('phoneNumber')}
                       value={newPatientData.phoneNumber}
                       onChange={(e) => setNewPatientData({ ...newPatientData, phoneNumber: e.target.value })}
                     />
@@ -1506,7 +1508,7 @@ export const Appointments: React.FC = () => {
             {/* Appointment Details Section */}
             <Box>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Appointment Details
+                {t('appointmentDetails')}
               </Typography>
               <Stack spacing={1.5}>
                 <Autocomplete
@@ -1519,7 +1521,7 @@ export const Appointments: React.FC = () => {
                     setSelectedTime('');
                   }}
                   renderInput={(params) => (
-                    <TextField {...params} label="Doctor" size="small" required fullWidth />
+                    <TextField {...params} label={t('doctor')} size="small" required fullWidth />
                   )}
                 />
                 <Stack direction="row" spacing={1.5}>
@@ -1527,7 +1529,7 @@ export const Appointments: React.FC = () => {
                     fullWidth
                     size="small"
                     select
-                    label="Service"
+                    label={t('service')}
                     value={selectedService}
                     onChange={(e) => {
                       setSelectedService(e.target.value);
@@ -1545,7 +1547,7 @@ export const Appointments: React.FC = () => {
                   <TextField
                     fullWidth
                     size="small"
-                    label="Date"
+                    label={t('date')}
                     type="date"
                     value={selectedDate}
                     onChange={(e) => {
@@ -1563,27 +1565,27 @@ export const Appointments: React.FC = () => {
             {/* Time Slots Section */}
             <Box>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Time Slot
+                {t('timeSlot')}
               </Typography>
               {loadingSlots ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 2 }}>
                   <CircularProgress size={18} />
-                  <Typography variant="body2" color="text.secondary">Loading available slots...</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('loadingAvailableSlots')}</Typography>
                 </Box>
               ) : selectedDoctor && selectedDate ? (
                 <>
                   {noSlotsAvailable ? (
                     <Alert severity="warning" >
-                      No available slots for this date. You can add the patient to the waiting list.
+                      {t('noAvailableSlotsWarning')}
                     </Alert>
                   ) : availableSlots.length === 0 ? (
                     <Alert severity="info">
-                      Doctor is not available on this date.
+                      {t('doctorNotAvailable')}
                     </Alert>
                   ) : (
                     <Box>
                       <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                        {availableTimeSlots.length} slots available
+                        {t('slotsAvailable').replace('{count}', String(availableTimeSlots.length))}
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                         {availableSlots.map((slot) => (
@@ -1607,7 +1609,7 @@ export const Appointments: React.FC = () => {
                 </>
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  Select a doctor and date to see available time slots
+                  {t('selectDoctorAndDate')}
                 </Typography>
               )}
             </Box>
@@ -1618,7 +1620,7 @@ export const Appointments: React.FC = () => {
                 <Divider />
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Status
+                    {t('status')}
                   </Typography>
                   <TextField
                     fullWidth
@@ -1627,11 +1629,11 @@ export const Appointments: React.FC = () => {
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                   >
-                    <MenuItem value="pending">Pending</MenuItem>
-                    <MenuItem value="scheduled">Scheduled</MenuItem>
-                    <MenuItem value="completed">Completed</MenuItem>
-                    <MenuItem value="cancelled">Cancelled</MenuItem>
-                    <MenuItem value="no-show">No-Show</MenuItem>
+                    <MenuItem value="pending">{t('pending')}</MenuItem>
+                    <MenuItem value="scheduled">{t('scheduled')}</MenuItem>
+                    <MenuItem value="completed">{t('completed')}</MenuItem>
+                    <MenuItem value="cancelled">{t('cancelled')}</MenuItem>
+                    <MenuItem value="no-show">{t('noShow')}</MenuItem>
                   </TextField>
                 </Box>
               </>
@@ -1641,7 +1643,7 @@ export const Appointments: React.FC = () => {
             <TextField
               fullWidth
               size="small"
-              label="Notes (optional)"
+              label={t('notesOptional')}
               multiline
               rows={2}
               value={formData.notes}
@@ -1650,7 +1652,7 @@ export const Appointments: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleClose} size="small">Cancel</Button>
+          <Button onClick={handleClose} size="small">{t('cancel')}</Button>
           {noSlotsAvailable && !editingId && (
             <Button
               onClick={handleAddToWaitingList}
@@ -1666,7 +1668,7 @@ export const Appointments: React.FC = () => {
                 !selectedDate
               }
             >
-              Add to Waiting List
+              {t('addToWaitingList')}
             </Button>
           )}
           <Button
@@ -1685,36 +1687,36 @@ export const Appointments: React.FC = () => {
               createPatientMutation.isPending
             }
           >
-            {createPatientMutation.isPending ? 'Creating...' : editingId ? 'Update' : 'Create Appointment'}
+            {createPatientMutation.isPending ? t('creating') : editingId ? t('update') : t('createAppointment')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
-        <DialogTitle>Delete Appointment</DialogTitle>
+        <DialogTitle>{t('deleteAppointment')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete the appointment for{' '}
-            <strong>{appointmentToDelete?.patientName}</strong> on{' '}
+            {t('confirmDeleteAppointment')}{' '}
+            <strong>{appointmentToDelete?.patientName}</strong> {t('on')}{' '}
             <strong>
               {appointmentToDelete && (typeof appointmentToDelete.appointmentDate === 'string'
                 ? dayjs(appointmentToDelete.appointmentDate).format('MMM DD, YYYY')
                 : dayjs(appointmentToDelete.appointmentDate._seconds * 1000).format('MMM DD, YYYY'))}
             </strong>
-            {appointmentToDelete?.appointmentTime && ` at ${appointmentToDelete.appointmentTime}`}?
-            This action cannot be undone.
+            {appointmentToDelete?.appointmentTime && ` ${t('at')} ${appointmentToDelete.appointmentTime}`}?
+            {t('actionCannotBeUndone')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button onClick={handleDeleteCancel}>{t('cancel')}</Button>
           <Button
             onClick={handleDeleteConfirm}
             color="error"
             variant="contained"
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            {deleteMutation.isPending ? t('deleting') : t('delete')}
           </Button>
         </DialogActions>
       </Dialog>

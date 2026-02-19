@@ -49,6 +49,7 @@ import {
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import dayjs from 'dayjs';
 
 interface WaitingListEntry {
@@ -110,6 +111,7 @@ export const WaitingList: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('');
 
   const { getToken } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
 
   const { data: waitingList, isLoading } = useQuery<WaitingListEntry[]>({
@@ -322,11 +324,11 @@ export const WaitingList: React.FC = () => {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'waiting':
-        return { color: healthcareColors.warning, icon: <WaitingIcon />, label: 'Waiting' };
+        return { color: healthcareColors.warning, icon: <WaitingIcon />, label: t('waiting') };
       case 'booked':
-        return { color: healthcareColors.success, icon: <BookedIcon />, label: 'Booked' };
+        return { color: healthcareColors.success, icon: <BookedIcon />, label: t('booked') };
       case 'cancelled':
-        return { color: healthcareColors.error, icon: <CancelledIcon />, label: 'Cancelled' };
+        return { color: healthcareColors.error, icon: <CancelledIcon />, label: t('cancelled') };
       default:
         return { color: healthcareColors.neutral[400], icon: <WaitingIcon />, label: status };
     }
@@ -366,10 +368,10 @@ export const WaitingList: React.FC = () => {
               </Box>
               <Box>
                 <Typography variant="h5" fontWeight={700} color="text.primary">
-                  Waiting List
+                  {t('waitingList')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Manage patient waiting queue and appointments
+                  {t('manageWaitingQueue')}
                 </Typography>
               </Box>
             </Box>
@@ -392,7 +394,7 @@ export const WaitingList: React.FC = () => {
               borderRadius: 2,
             }}
           >
-            Add to Waiting List
+            {t('addToWaitingList')}
           </Button>
         </Box>
 
@@ -400,7 +402,7 @@ export const WaitingList: React.FC = () => {
         <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
           <Chip
             icon={<WaitingIcon />}
-            label={`${statusCounts.waiting} Waiting`}
+            label={`${statusCounts.waiting} ${t('waiting')}`}
             sx={{
               bgcolor: alpha(healthcareColors.warning, 0.1),
               color: healthcareColors.warning,
@@ -412,7 +414,7 @@ export const WaitingList: React.FC = () => {
           />
           <Chip
             icon={<BookedIcon />}
-            label={`${statusCounts.booked} Booked`}
+            label={`${statusCounts.booked} ${t('booked')}`}
             sx={{
               bgcolor: alpha(healthcareColors.success, 0.1),
               color: healthcareColors.success,
@@ -437,7 +439,7 @@ export const WaitingList: React.FC = () => {
       >
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
           <TextField
-            placeholder="Search by patient, doctor, or service..."
+            placeholder={t('searchByPatientDoctorService')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             size="small"
@@ -465,13 +467,13 @@ export const WaitingList: React.FC = () => {
             }}
           />
           <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Doctor</InputLabel>
+            <InputLabel>{t('doctor')}</InputLabel>
             <Select
               value={filterDoctor}
-              label="Doctor"
+              label={t('doctor')}
               onChange={(e) => setFilterDoctor(e.target.value)}
             >
-              <MenuItem value="">All Doctors</MenuItem>
+              <MenuItem value="">{t('allDoctors')}</MenuItem>
               {doctors?.map((doctor) => (
                 <MenuItem key={doctor.id} value={doctor.id}>
                   {doctor.fullName}
@@ -482,7 +484,7 @@ export const WaitingList: React.FC = () => {
           <Stack direction="row" spacing={1}>
             <Chip
               icon={<FilterIcon />}
-              label="All"
+              label={t('all')}
               onClick={() => setFilterStatus('')}
               variant={!filterStatus ? 'filled' : 'outlined'}
               sx={{
@@ -493,7 +495,7 @@ export const WaitingList: React.FC = () => {
             />
             <Chip
               icon={<WaitingIcon />}
-              label="Waiting"
+              label={t('waiting')}
               onClick={() => setFilterStatus('waiting')}
               variant={filterStatus === 'waiting' ? 'filled' : 'outlined'}
               sx={{
@@ -504,7 +506,7 @@ export const WaitingList: React.FC = () => {
             />
             <Chip
               icon={<BookedIcon />}
-              label="Booked"
+              label={t('booked')}
               onClick={() => setFilterStatus('booked')}
               variant={filterStatus === 'booked' ? 'filled' : 'outlined'}
               sx={{
@@ -553,14 +555,14 @@ export const WaitingList: React.FC = () => {
             <Paper sx={{ p: 6, textAlign: 'center', ...glassStyles.card }}>
               <WaitingIcon sx={{ fontSize: 64, color: healthcareColors.neutral[300], mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
-                {searchQuery || filterDoctor || filterStatus ? 'No entries match your filters' : 'No entries in waiting list'}
+                {searchQuery || filterDoctor || filterStatus ? t('noEntriesMatchFilters') : t('noEntriesInWaitingList')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchQuery || filterDoctor || filterStatus ? 'Try adjusting your filters' : 'Add patients to the waiting list to get started'}
+                {searchQuery || filterDoctor || filterStatus ? t('tryAdjustingFiltersWaitingList') : t('addPatientsToGetStarted')}
               </Typography>
               {!searchQuery && !filterDoctor && !filterStatus && (
                 <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen}>
-                  Add to Waiting List
+                  {t('addToWaitingList')}
                 </Button>
               )}
             </Paper>
@@ -663,7 +665,7 @@ export const WaitingList: React.FC = () => {
 
                     <Stack direction="row" spacing={1} justifyContent="flex-end">
                       {entry.status === 'waiting' && (
-                        <Tooltip title="Convert to Appointment">
+                        <Tooltip title={t('convertToAppointment')}>
                           <Button
                             size="small"
                             variant="contained"
@@ -674,11 +676,11 @@ export const WaitingList: React.FC = () => {
                               '&:hover': { filter: 'brightness(0.95)' },
                             }}
                           >
-                            Book
+                            {t('book')}
                           </Button>
                         </Tooltip>
                       )}
-                      <Tooltip title="Remove">
+                      <Tooltip title={t('remove')}>
                         <IconButton
                           size="small"
                           onClick={() => deleteMutation.mutate(entry.id)}
@@ -734,7 +736,7 @@ export const WaitingList: React.FC = () => {
               <AddIcon sx={{ color: 'white', fontSize: 20 }} />
             </Box>
             <Typography variant="h6" fontWeight={600} color="white">
-              Add to Waiting List
+              {t('addToWaitingList')}
             </Typography>
           </Box>
           <IconButton onClick={handleClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
@@ -745,7 +747,7 @@ export const WaitingList: React.FC = () => {
           <Stack spacing={3}>
             <Box>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Patient Information
+                {t('patientInformation')}
               </Typography>
               <FormControlLabel
                 control={
@@ -765,7 +767,7 @@ export const WaitingList: React.FC = () => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <PersonAddIcon fontSize="small" />
-                    <Typography variant="body2">New Patient</Typography>
+                    <Typography variant="body2">{t('newPatient')}</Typography>
                   </Box>
                 }
                 sx={{ mb: 1.5 }}
@@ -777,7 +779,7 @@ export const WaitingList: React.FC = () => {
                   value={selectedPatient}
                   onChange={(_, newValue) => setSelectedPatient(newValue)}
                   renderInput={(params) => (
-                    <TextField {...params} label="Select Patient" size="small" required fullWidth />
+                    <TextField {...params} label={t('selectPatient')} size="small" required fullWidth />
                   )}
                 />
               ) : (
@@ -785,7 +787,7 @@ export const WaitingList: React.FC = () => {
                   <TextField
                     fullWidth
                     size="small"
-                    label="Full Name"
+                    label={t('fullName')}
                     value={newPatientData.fullName}
                     onChange={(e) => setNewPatientData({ ...newPatientData, fullName: e.target.value })}
                     required
@@ -794,14 +796,14 @@ export const WaitingList: React.FC = () => {
                     <TextField
                       fullWidth
                       size="small"
-                      label="ID Number"
+                      label={t('idNumber')}
                       value={newPatientData.idNumber}
                       onChange={(e) => setNewPatientData({ ...newPatientData, idNumber: e.target.value })}
                     />
                     <TextField
                       fullWidth
                       size="small"
-                      label="Phone Number"
+                      label={t('phoneNumber')}
                       value={newPatientData.phoneNumber}
                       onChange={(e) => setNewPatientData({ ...newPatientData, phoneNumber: e.target.value })}
                     />
@@ -814,7 +816,7 @@ export const WaitingList: React.FC = () => {
 
             <Box>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Waiting List Details
+                {t('waitingListDetails')}
               </Typography>
               <Stack spacing={1.5}>
                 <Autocomplete
@@ -826,7 +828,7 @@ export const WaitingList: React.FC = () => {
                     setSelectedService('');
                   }}
                   renderInput={(params) => (
-                    <TextField {...params} label="Doctor" size="small" required fullWidth />
+                    <TextField {...params} label={t('doctor')} size="small" required fullWidth />
                   )}
                 />
                 <Stack direction="row" spacing={1.5}>
@@ -834,7 +836,7 @@ export const WaitingList: React.FC = () => {
                     fullWidth
                     size="small"
                     select
-                    label="Service"
+                    label={t('service')}
                     value={selectedService}
                     onChange={(e) => setSelectedService(e.target.value)}
                     required
@@ -849,7 +851,7 @@ export const WaitingList: React.FC = () => {
                   <TextField
                     fullWidth
                     size="small"
-                    label="Preferred Date"
+                    label={t('preferredDate')}
                     type="date"
                     value={preferredDate}
                     onChange={(e) => setPreferredDate(e.target.value)}
@@ -863,7 +865,7 @@ export const WaitingList: React.FC = () => {
             <TextField
               fullWidth
               size="small"
-              label="Notes (optional)"
+              label={t('notesOptional')}
               multiline
               rows={2}
               value={notes}
@@ -882,7 +884,7 @@ export const WaitingList: React.FC = () => {
               '&:hover': { bgcolor: healthcareColors.neutral[100] },
             }}
           >
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -905,7 +907,7 @@ export const WaitingList: React.FC = () => {
               '&:hover': { filter: 'brightness(0.95)', boxShadow: 'none' },
             }}
           >
-            {createPatientMutation.isPending ? 'Creating...' : 'Add to Waiting List'}
+            {createPatientMutation.isPending ? t('creating') : t('addToWaitingList')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -944,7 +946,7 @@ export const WaitingList: React.FC = () => {
               <BookIcon sx={{ color: 'white', fontSize: 20 }} />
             </Box>
             <Typography variant="h6" fontWeight={600} color="white">
-              Convert to Appointment
+              {t('convertToAppointment')}
             </Typography>
           </Box>
           <IconButton onClick={handleBookDialogClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
@@ -958,13 +960,13 @@ export const WaitingList: React.FC = () => {
                 <Alert severity="info" icon={false} sx={{ borderRadius: 2, bgcolor: alpha(healthcareColors.info, 0.08) }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <PersonIcon sx={{ fontSize: 16 }} />
-                    <Typography variant="body2"><strong>Patient:</strong> {selectedEntry.patientName}</Typography>
+                    <Typography variant="body2"><strong>{t('patient')}:</strong> {selectedEntry.patientName}</Typography>
                   </Box>
                 </Alert>
 
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Appointment Details
+                    {t('appointmentDetails')}
                   </Typography>
                   <Stack spacing={2}>
                     <Autocomplete
@@ -977,7 +979,7 @@ export const WaitingList: React.FC = () => {
                         setBookingTime('');
                       }}
                       renderInput={(params) => (
-                        <TextField {...params} label="Doctor" size="small" required fullWidth />
+                        <TextField {...params} label={t('doctor')} size="small" required fullWidth />
                       )}
                     />
                     <Stack direction="row" spacing={1.5}>
@@ -985,7 +987,7 @@ export const WaitingList: React.FC = () => {
                         fullWidth
                         size="small"
                         select
-                        label="Service"
+                        label={t('service')}
                         value={bookingService}
                         onChange={(e) => {
                           setBookingService(e.target.value);
@@ -1003,7 +1005,7 @@ export const WaitingList: React.FC = () => {
                       <TextField
                         fullWidth
                         size="small"
-                        label="Date"
+                        label={t('date')}
                         type="date"
                         value={bookingDate}
                         onChange={(e) => {
@@ -1019,27 +1021,27 @@ export const WaitingList: React.FC = () => {
 
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Select Time Slot
+                    {t('selectTimeSlot')}
                   </Typography>
                   {loadingSlots ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 2 }}>
                       <CircularProgress size={18} />
-                      <Typography variant="body2" color="text.secondary">Loading available slots...</Typography>
+                      <Typography variant="body2" color="text.secondary">{t('loadingAvailableSlots')}</Typography>
                     </Box>
                   ) : bookingDoctor && bookingService && bookingDate ? (
                     <>
                       {availableSlots.length === 0 ? (
                         <Alert severity="info" sx={{ borderRadius: 2 }}>
-                          Doctor is not available for this service on the selected date.
+                          {t('doctorNotAvailableForService')}
                         </Alert>
                       ) : availableTimeSlots.length === 0 ? (
                         <Alert severity="warning" sx={{ borderRadius: 2 }}>
-                          All slots are booked for this date. Please select another date.
+                          {t('allSlotsBookedWarning')}
                         </Alert>
                       ) : (
                         <Box>
                           <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                            {availableTimeSlots.length} slots available
+                            {t('slotsAvailable').replace('{count}', String(availableTimeSlots.length))}
                           </Typography>
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                             {availableSlots.map((slot) => (
@@ -1063,7 +1065,7 @@ export const WaitingList: React.FC = () => {
                     </>
                   ) : (
                     <Typography variant="body2" color="text.secondary">
-                      Select doctor, service, and date to see available time slots
+                      {t('selectDoctorServiceAndDate')}
                     </Typography>
                   )}
                 </Box>
@@ -1082,7 +1084,7 @@ export const WaitingList: React.FC = () => {
               '&:hover': { bgcolor: healthcareColors.neutral[100] },
             }}
           >
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleBookSubmit}
@@ -1097,7 +1099,7 @@ export const WaitingList: React.FC = () => {
               '&:hover': { filter: 'brightness(0.95)', boxShadow: 'none' },
             }}
           >
-            {bookMutation.isPending ? 'Converting...' : 'Convert to Appointment'}
+            {bookMutation.isPending ? t('converting') : t('convertToAppointment')}
           </Button>
         </DialogActions>
       </Dialog>

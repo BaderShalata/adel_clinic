@@ -15,6 +15,7 @@ import {
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import dayjs from 'dayjs';
 import { healthcareColors, gradients, glassStyles, shadows, animations } from '../theme/healthcareTheme';
 
@@ -46,6 +47,7 @@ export const Patients: React.FC = () => {
   });
 
   const { getToken } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
 
   const { data: patients, isLoading } = useQuery<Patient[]>({
@@ -201,10 +203,10 @@ export const Patients: React.FC = () => {
               </Box>
               <Box>
                 <Typography variant="h5" fontWeight={700} color="text.primary">
-                  Patients
+                  {t('patients')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Manage patient records and information
+                  {t('managePatients')}
                 </Typography>
               </Box>
             </Box>
@@ -227,7 +229,7 @@ export const Patients: React.FC = () => {
               borderRadius: 2,
             }}
           >
-            Add Patient
+            {t('addPatient')}
           </Button>
         </Box>
 
@@ -235,7 +237,7 @@ export const Patients: React.FC = () => {
         <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
           <Chip
             icon={<PersonIcon />}
-            label={`${patients?.length || 0} Total`}
+            label={`${patients?.length || 0} ${t('total')}`}
             sx={{
               bgcolor: alpha(healthcareColors.primary.main, 0.1),
               color: healthcareColors.primary.main,
@@ -247,7 +249,7 @@ export const Patients: React.FC = () => {
           />
           <Chip
             icon={<MaleIcon />}
-            label={`${patients?.filter(p => p.gender === 'male').length || 0} Male`}
+            label={`${patients?.filter(p => p.gender === 'male').length || 0} ${t('male')}`}
             sx={{
               bgcolor: alpha('#3b82f6', 0.1),
               color: '#3b82f6',
@@ -259,7 +261,7 @@ export const Patients: React.FC = () => {
           />
           <Chip
             icon={<FemaleIcon />}
-            label={`${patients?.filter(p => p.gender === 'female').length || 0} Female`}
+            label={`${patients?.filter(p => p.gender === 'female').length || 0} ${t('female')}`}
             sx={{
               bgcolor: alpha('#ec4899', 0.1),
               color: '#ec4899',
@@ -284,7 +286,7 @@ export const Patients: React.FC = () => {
       >
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
           <TextField
-            placeholder="Search patients by name, phone, email, or ID..."
+            placeholder={t('searchPatientsPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             size="small"
@@ -314,7 +316,7 @@ export const Patients: React.FC = () => {
           <Stack direction="row" spacing={1}>
             <Chip
               icon={<FilterIcon />}
-              label="All"
+              label={t('all')}
               onClick={() => setGenderFilter('all')}
               variant={genderFilter === 'all' ? 'filled' : 'outlined'}
               sx={{
@@ -326,7 +328,7 @@ export const Patients: React.FC = () => {
             />
             <Chip
               icon={<MaleIcon />}
-              label="Male"
+              label={t('male')}
               onClick={() => setGenderFilter('male')}
               variant={genderFilter === 'male' ? 'filled' : 'outlined'}
               sx={{
@@ -338,7 +340,7 @@ export const Patients: React.FC = () => {
             />
             <Chip
               icon={<FemaleIcon />}
-              label="Female"
+              label={t('female')}
               onClick={() => setGenderFilter('female')}
               variant={genderFilter === 'female' ? 'filled' : 'outlined'}
               sx={{
@@ -352,7 +354,7 @@ export const Patients: React.FC = () => {
         </Stack>
         {searchQuery && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-            Found {filteredPatients.length} patient{filteredPatients.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            {t('foundPatients').replace('{count}', String(filteredPatients.length)).replace('{query}', searchQuery)}
           </Typography>
         )}
       </Paper>
@@ -402,14 +404,14 @@ export const Patients: React.FC = () => {
             >
               <PersonIcon sx={{ fontSize: 64, color: healthcareColors.neutral[300], mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
-                {searchQuery || genderFilter !== 'all' ? 'No patients match your filters' : 'No patients yet'}
+                {searchQuery || genderFilter !== 'all' ? t('noMatchingPatients') : t('noPatientsYet')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchQuery || genderFilter !== 'all' ? 'Try adjusting your search criteria' : 'Add your first patient to get started'}
+                {searchQuery || genderFilter !== 'all' ? t('tryAdjustingFilters') : t('addFirstPatient')}
               </Typography>
               {!searchQuery && genderFilter === 'all' && (
                 <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
-                  Add Patient
+                  {t('addPatient')}
                 </Button>
               )}
             </Paper>
@@ -450,7 +452,7 @@ export const Patients: React.FC = () => {
                       {patient.fullName.charAt(0).toUpperCase()}
                     </Avatar>
                     <Stack direction="row" spacing={0.5}>
-                      <Tooltip title="Edit">
+                      <Tooltip title={t('edit')}>
                         <IconButton
                           size="small"
                           onClick={(e) => { e.stopPropagation(); handleOpen(patient); }}
@@ -463,7 +465,7 @@ export const Patients: React.FC = () => {
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Delete">
+                      <Tooltip title={t('delete')}>
                         <IconButton
                           size="small"
                           onClick={(e) => { e.stopPropagation(); handleDeleteClick(patient); }}
@@ -497,7 +499,7 @@ export const Patients: React.FC = () => {
                     />
                     {patient.dateOfBirth?._seconds && (
                       <Typography variant="caption" color="text.secondary">
-                        {calculateAge(patient.dateOfBirth._seconds)} years old
+                        {calculateAge(patient.dateOfBirth._seconds)} {t('yearsOld')}
                       </Typography>
                     )}
                   </Stack>
@@ -593,7 +595,7 @@ export const Patients: React.FC = () => {
               {editingId ? <EditIcon sx={{ color: 'white', fontSize: 20 }} /> : <AddIcon sx={{ color: 'white', fontSize: 20 }} />}
             </Box>
             <Typography variant="h6" fontWeight={600} color="white">
-              {editingId ? 'Edit Patient' : 'Add New Patient'}
+              {editingId ? t('editPatient') : t('addNewPatient')}
             </Typography>
           </Box>
           <IconButton onClick={handleClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
@@ -604,7 +606,7 @@ export const Patients: React.FC = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
               fullWidth
-              label="Full Name"
+              label={t('fullName')}
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               slotProps={{
@@ -620,10 +622,10 @@ export const Patients: React.FC = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
               <TextField
                 fullWidth
-                label="ID Number"
+                label={t('idNumber')}
                 value={formData.idNumber}
                 onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
-                placeholder="National ID"
+                placeholder={t('nationalId')}
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -636,7 +638,7 @@ export const Patients: React.FC = () => {
               />
               <TextField
                 fullWidth
-                label="Date of Birth"
+                label={t('dateOfBirth')}
                 type="date"
                 value={formData.dateOfBirth}
                 onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
@@ -656,25 +658,25 @@ export const Patients: React.FC = () => {
               <TextField
                 fullWidth
                 select
-                label="Gender"
+                label={t('gender')}
                 value={formData.gender}
                 onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
               >
                 <MenuItem value="male">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <MaleIcon sx={{ color: '#3b82f6' }} /> Male
+                    <MaleIcon sx={{ color: '#3b82f6' }} /> {t('male')}
                   </Box>
                 </MenuItem>
                 <MenuItem value="female">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <FemaleIcon sx={{ color: '#ec4899' }} /> Female
+                    <FemaleIcon sx={{ color: '#ec4899' }} /> {t('female')}
                   </Box>
                 </MenuItem>
-                <MenuItem value="other">Other</MenuItem>
+                <MenuItem value="other">{t('other')}</MenuItem>
               </TextField>
               <TextField
                 fullWidth
-                label="Phone Number"
+                label={t('phoneNumber')}
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                 slotProps={{
@@ -690,7 +692,7 @@ export const Patients: React.FC = () => {
             </Box>
             <TextField
               fullWidth
-              label="Email"
+              label={t('email')}
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -706,7 +708,7 @@ export const Patients: React.FC = () => {
             />
             <TextField
               fullWidth
-              label="Address"
+              label={t('address')}
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               multiline
@@ -724,7 +726,7 @@ export const Patients: React.FC = () => {
               '&:hover': { bgcolor: healthcareColors.neutral[100] },
             }}
           >
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -741,7 +743,7 @@ export const Patients: React.FC = () => {
               },
             }}
           >
-            {editingId ? 'Update Patient' : 'Add Patient'}
+            {editingId ? t('updatePatient') : t('addPatient')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -784,7 +786,7 @@ export const Patients: React.FC = () => {
               <DeleteIcon sx={{ color: 'white', fontSize: 20 }} />
             </Box>
             <Typography variant="h6" fontWeight={600} color="white">
-              Delete Patient
+              {t('deletePatient')}
             </Typography>
           </Box>
           <IconButton onClick={handleDeleteCancel} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
@@ -793,8 +795,8 @@ export const Patients: React.FC = () => {
         </Box>
         <DialogContent sx={{ pt: 3 }}>
           <DialogContentText>
-            Are you sure you want to delete <strong>{patientToDelete?.fullName}</strong>?
-            This action cannot be undone and will remove all associated data.
+            {t('confirmDeletePatient')} <strong>{patientToDelete?.fullName}</strong>?
+            {t('actionCannotBeUndone')}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
@@ -807,7 +809,7 @@ export const Patients: React.FC = () => {
               '&:hover': { bgcolor: healthcareColors.neutral[100] },
             }}
           >
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleDeleteConfirm}
@@ -825,7 +827,7 @@ export const Patients: React.FC = () => {
               },
             }}
           >
-            {deleteMutation.isPending ? 'Deleting...' : 'Delete Patient'}
+            {deleteMutation.isPending ? t('deleting') : t('deletePatient')}
           </Button>
         </DialogActions>
       </Dialog>

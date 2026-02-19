@@ -8,6 +8,7 @@ import {
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Block, CheckCircle } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface User {
   uid: string;
@@ -32,6 +33,7 @@ export const Users: React.FC = () => {
   });
 
   const { getToken } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
 
   const { data: users } = useQuery<User[]>({
@@ -142,9 +144,9 @@ export const Users: React.FC = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4">Users</Typography>
+        <Typography variant="h4">{t('users')}</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
-          Add User
+          {t('addUser')}
         </Button>
       </Box>
 
@@ -152,12 +154,12 @@ export const Users: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Phone</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t('name')}</TableCell>
+              <TableCell>{t('email')}</TableCell>
+              <TableCell>{t('phone')}</TableCell>
+              <TableCell>{t('role')}</TableCell>
+              <TableCell>{t('status')}</TableCell>
+              <TableCell align="right">{t('actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -171,14 +173,14 @@ export const Users: React.FC = () => {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={user.isActive ? 'Active' : 'Inactive'}
+                    label={user.isActive ? t('active') : t('inactive')}
                     color={user.isActive ? 'success' : 'default'}
                     size="small"
                   />
                 </TableCell>
                 <TableCell align="right">
                   <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                    <Tooltip title="Edit User">
+                    <Tooltip title={t('editUser')}>
                       <Button
                         size="small"
                         variant="outlined"
@@ -187,10 +189,10 @@ export const Users: React.FC = () => {
                         onClick={() => handleOpen(user)}
                         sx={{ minWidth: 'auto', px: 1.5 }}
                       >
-                        Edit
+                        {t('edit')}
                       </Button>
                     </Tooltip>
-                    <Tooltip title={user.isActive ? 'Deactivate User' : 'Activate User'}>
+                    <Tooltip title={user.isActive ? t('deactivateUser') : t('activateUser')}>
                       <Button
                         size="small"
                         variant="outlined"
@@ -199,10 +201,10 @@ export const Users: React.FC = () => {
                         onClick={() => toggleActiveMutation.mutate({ id: user.uid, isActive: user.isActive })}
                         sx={{ minWidth: 'auto', px: 1.5 }}
                       >
-                        {user.isActive ? 'Deactivate' : 'Activate'}
+                        {user.isActive ? t('deactivate') : t('activate')}
                       </Button>
                     </Tooltip>
-                    <Tooltip title="Delete User">
+                    <Tooltip title={t('deleteUser')}>
                       <Button
                         size="small"
                         variant="outlined"
@@ -211,7 +213,7 @@ export const Users: React.FC = () => {
                         onClick={() => handleDeleteClick(user)}
                         sx={{ minWidth: 'auto', px: 1.5 }}
                       >
-                        Delete
+                        {t('delete')}
                       </Button>
                     </Tooltip>
                   </Stack>
@@ -224,18 +226,18 @@ export const Users: React.FC = () => {
 
       {/* Edit/Create Dialog */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit User' : 'Add User'}</DialogTitle>
+        <DialogTitle>{editingId ? t('editUser') : t('addUser')}</DialogTitle>
         <DialogContent>
           <TextField
             fullWidth
-            label="Full Name"
+            label={t('fullName')}
             value={formData.fullName}
             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             margin="normal"
           />
           <TextField
             fullWidth
-            label="Email"
+            label={t('email')}
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -245,7 +247,7 @@ export const Users: React.FC = () => {
           {!editingId && (
             <TextField
               fullWidth
-              label="Password"
+              label={t('password')}
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -254,7 +256,7 @@ export const Users: React.FC = () => {
           )}
           <TextField
             fullWidth
-            label="Phone Number"
+            label={t('phoneNumber')}
             value={formData.phoneNumber}
             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
             margin="normal"
@@ -262,42 +264,42 @@ export const Users: React.FC = () => {
           <TextField
             fullWidth
             select
-            label="Role"
+            label={t('role')}
             value={formData.role}
             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
             margin="normal"
           >
-            <MenuItem value="admin">Admin</MenuItem>
-            <MenuItem value="doctor">Doctor</MenuItem>
-            <MenuItem value="patient">Patient</MenuItem>
+            <MenuItem value="admin">{t('admin')}</MenuItem>
+            <MenuItem value="doctor">{t('doctor')}</MenuItem>
+            <MenuItem value="patient">{t('patient')}</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleClose}>{t('cancel')}</Button>
           <Button onClick={handleSubmit} variant="contained">
-            {editingId ? 'Update' : 'Create'}
+            {editingId ? t('update') : t('create')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
-        <DialogTitle>Delete User</DialogTitle>
+        <DialogTitle>{t('deleteUser')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete <strong>{userToDelete?.fullName}</strong> ({userToDelete?.email})?
-            This action cannot be undone.
+            {t('confirmDeleteUser')} <strong>{userToDelete?.fullName}</strong> ({userToDelete?.email})?
+            {t('actionCannotBeUndone')}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button onClick={handleDeleteCancel}>{t('cancel')}</Button>
           <Button
             onClick={handleDeleteConfirm}
             color="error"
             variant="contained"
             disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            {deleteMutation.isPending ? t('deleting') : t('delete')}
           </Button>
         </DialogActions>
       </Dialog>

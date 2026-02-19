@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { healthcareColors, gradients, glassStyles, shadows, animations } from '../theme/healthcareTheme';
 
 interface DoctorSchedule {
@@ -124,6 +125,7 @@ export const Doctors: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { getToken } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
 
   const { data: doctors, isLoading } = useQuery<Doctor[]>({
@@ -454,10 +456,10 @@ export const Doctors: React.FC = () => {
               </Box>
               <Box>
                 <Typography variant="h5" fontWeight={700} color="text.primary">
-                  Doctors
+                  {t('doctors')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Manage medical staff and schedules
+                  {t('manageDoctors')}
                 </Typography>
               </Box>
             </Box>
@@ -480,7 +482,7 @@ export const Doctors: React.FC = () => {
               borderRadius: 2,
             }}
           >
-            Add Doctor
+            {t('addDoctor')}
           </Button>
         </Box>
 
@@ -488,7 +490,7 @@ export const Doctors: React.FC = () => {
         <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
           <Chip
             icon={<HospitalIcon />}
-            label={`${doctors?.length || 0} Total`}
+            label={`${t('total')} ${doctors?.length || 0}`}
             sx={{
               bgcolor: alpha(healthcareColors.secondary.main, 0.1),
               color: healthcareColors.secondary.main,
@@ -500,7 +502,7 @@ export const Doctors: React.FC = () => {
           />
           <Chip
             icon={<ActiveIcon />}
-            label={`${doctors?.filter(d => d.isActive).length || 0} Active`}
+            label={`${t('active')} ${doctors?.filter(d => d.isActive).length || 0}`}
             sx={{
               bgcolor: alpha(healthcareColors.success, 0.1),
               color: healthcareColors.success,
@@ -512,7 +514,7 @@ export const Doctors: React.FC = () => {
           />
           <Chip
             icon={<InactiveIcon />}
-            label={`${doctors?.filter(d => !d.isActive).length || 0} Inactive`}
+            label={`${t('inactive')} ${doctors?.filter(d => !d.isActive).length || 0}`}
             sx={{
               bgcolor: alpha(healthcareColors.neutral[500], 0.1),
               color: healthcareColors.neutral[500],
@@ -537,7 +539,7 @@ export const Doctors: React.FC = () => {
       >
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
           <TextField
-            placeholder="Search doctors by name or specialty..."
+            placeholder={t('searchDoctorsPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             size="small"
@@ -567,7 +569,7 @@ export const Doctors: React.FC = () => {
           <Stack direction="row" spacing={1}>
             <Chip
               icon={<FilterIcon />}
-              label="All"
+              label={t('all')}
               onClick={() => setStatusFilter('all')}
               variant={statusFilter === 'all' ? 'filled' : 'outlined'}
               sx={{
@@ -579,7 +581,7 @@ export const Doctors: React.FC = () => {
             />
             <Chip
               icon={<ActiveIcon />}
-              label="Active"
+              label={t('active')}
               onClick={() => setStatusFilter('active')}
               variant={statusFilter === 'active' ? 'filled' : 'outlined'}
               sx={{
@@ -591,7 +593,7 @@ export const Doctors: React.FC = () => {
             />
             <Chip
               icon={<InactiveIcon />}
-              label="Inactive"
+              label={t('inactive')}
               onClick={() => setStatusFilter('inactive')}
               variant={statusFilter === 'inactive' ? 'filled' : 'outlined'}
               sx={{
@@ -605,7 +607,7 @@ export const Doctors: React.FC = () => {
         </Stack>
         {searchQuery && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-            Found {filteredDoctors.length} doctor{filteredDoctors.length !== 1 ? 's' : ''} matching "{searchQuery}"
+            {t('foundDoctors').replace('{count}', String(filteredDoctors.length)).replace('{query}', searchQuery)}
           </Typography>
         )}
       </Paper>
@@ -654,14 +656,14 @@ export const Doctors: React.FC = () => {
             >
               <HospitalIcon sx={{ fontSize: 64, color: healthcareColors.neutral[300], mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
-                {searchQuery || statusFilter !== 'all' ? 'No doctors match your filters' : 'No doctors yet'}
+                {searchQuery || statusFilter !== 'all' ? t('noMatchingDoctors') : t('noDoctorsYet')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchQuery || statusFilter !== 'all' ? 'Try adjusting your search criteria' : 'Add your first doctor to get started'}
+                {searchQuery || statusFilter !== 'all' ? t('tryAdjustingFilters') : t('addFirstDoctor')}
               </Typography>
               {!searchQuery && statusFilter === 'all' && (
                 <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
-                  Add Doctor
+                  {t('addDoctor')}
                 </Button>
               )}
             </Paper>
@@ -704,7 +706,7 @@ export const Doctors: React.FC = () => {
                       {doctor.fullName.charAt(0).toUpperCase()}
                     </Avatar>
                     <Stack direction="row" spacing={0.5}>
-                      <Tooltip title="Edit">
+                      <Tooltip title={t('edit')}>
                         <IconButton
                           size="small"
                           onClick={(e) => { e.stopPropagation(); handleOpen(doctor); }}
@@ -717,7 +719,7 @@ export const Doctors: React.FC = () => {
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Delete">
+                      <Tooltip title={t('delete')}>
                         <IconButton
                           size="small"
                           onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(doctor.id); }}
@@ -747,7 +749,7 @@ export const Doctors: React.FC = () => {
                   <Chip
                     size="small"
                     icon={doctor.isActive ? <ActiveIcon /> : <InactiveIcon />}
-                    label={doctor.isActive ? 'Active' : 'Inactive'}
+                    label={doctor.isActive ? t('active') : t('inactive')}
                     sx={{
                       mb: 2,
                       bgcolor: doctor.isActive ? alpha(healthcareColors.success, 0.1) : alpha(healthcareColors.neutral[400], 0.1),
@@ -827,7 +829,7 @@ export const Doctors: React.FC = () => {
                       ))}
                       {doctor.schedule?.length === 0 && (
                         <Typography variant="caption" color="text.secondary">
-                          No schedule
+                          {t('noSchedule')}
                         </Typography>
                       )}
                     </Box>
@@ -880,7 +882,7 @@ export const Doctors: React.FC = () => {
               {editingId ? <EditIcon sx={{ color: 'white', fontSize: 20 }} /> : <AddIcon sx={{ color: 'white', fontSize: 20 }} />}
             </Box>
             <Typography variant="h6" fontWeight={600} color="white">
-              {editingId ? 'Edit Doctor' : 'Add New Doctor'}
+              {editingId ? t('editDoctor') : t('addNewDoctor')}
             </Typography>
           </Box>
           <IconButton onClick={handleClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
@@ -891,7 +893,7 @@ export const Doctors: React.FC = () => {
           {/* Doctor Image */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-              Doctor Photo
+              {t('doctorPhoto')}
             </Typography>
             <input
               type="file"
@@ -935,7 +937,7 @@ export const Doctors: React.FC = () => {
                 htmlFor="doctor-image-upload"
                 startIcon={<UploadIcon />}
               >
-                {imagePreview ? 'Change Photo' : 'Upload Photo'}
+                {imagePreview ? t('changePhoto') : t('uploadPhoto')}
               </Button>
             </Box>
             {uploadError && (
@@ -949,11 +951,11 @@ export const Doctors: React.FC = () => {
 
           {/* Arabic Inputs */}
           <Typography variant="subtitle2" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
-            Arabic (العربية)
+            {t('arabicSection')}
           </Typography>
           <TextField
             fullWidth
-            label="Full Name (Arabic)"
+            label={t('fullNameArabic')}
             value={formData.fullName}
             onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             margin="dense"
@@ -973,25 +975,25 @@ export const Doctors: React.FC = () => {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Specialties (Arabic)"
+                label={t('specialtiesArabic')}
                 margin="dense"
                 placeholder="اخصائي اطفال (press Enter to add)"
-                helperText="Type and press Enter to add each specialty"
+                helperText={t('pressEnterToAdd')}
               />
             )}
           />
           <TextField
             fullWidth
-            label="Qualifications (Arabic)"
+            label={t('qualificationsArabic')}
             value={formData.qualifications}
             onChange={(e) => setFormData({ ...formData, qualifications: e.target.value })}
             margin="dense"
             placeholder="دكتوراه في طب الأطفال, استشاري"
-            helperText="Separate with commas"
+            helperText={t('separateWithCommas')}
           />
           <TextField
             fullWidth
-            label="Bio (Arabic)"
+            label={t('bioArabic')}
             value={formData.bio}
             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
             margin="dense"
@@ -1004,11 +1006,11 @@ export const Doctors: React.FC = () => {
 
           {/* English Inputs */}
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-            English
+            {t('englishSection')}
           </Typography>
           <TextField
             fullWidth
-            label="Full Name (English)"
+            label={t('fullNameEnglish')}
             value={formData.fullNameEn}
             onChange={(e) => setFormData({ ...formData, fullNameEn: e.target.value })}
             margin="dense"
@@ -1028,25 +1030,25 @@ export const Doctors: React.FC = () => {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Specialties (English)"
+                label={t('specialtiesEnglish')}
                 margin="dense"
                 placeholder="Pediatrician (press Enter to add)"
-                helperText="Type and press Enter to add each specialty"
+                helperText={t('pressEnterToAdd')}
               />
             )}
           />
           <TextField
             fullWidth
-            label="Qualifications (English)"
+            label={t('qualificationsEnglish')}
             value={formData.qualificationsEn}
             onChange={(e) => setFormData({ ...formData, qualificationsEn: e.target.value })}
             margin="dense"
             placeholder="PhD in Pediatrics, Consultant"
-            helperText="Separate with commas"
+            helperText={t('separateWithCommas')}
           />
           <TextField
             fullWidth
-            label="Bio (English)"
+            label={t('bioEnglish')}
             value={formData.bioEn}
             onChange={(e) => setFormData({ ...formData, bioEn: e.target.value })}
             margin="dense"
@@ -1058,11 +1060,11 @@ export const Doctors: React.FC = () => {
 
           {/* Hebrew Inputs */}
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-            Hebrew (עברית)
+            {t('hebrewSection')}
           </Typography>
           <TextField
             fullWidth
-            label="Full Name (Hebrew)"
+            label={t('fullNameHebrew')}
             value={formData.fullNameHe}
             onChange={(e) => setFormData({ ...formData, fullNameHe: e.target.value })}
             margin="dense"
@@ -1082,25 +1084,25 @@ export const Doctors: React.FC = () => {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Specialties (Hebrew)"
+                label={t('specialtiesHebrew')}
                 margin="dense"
                 placeholder="רופא ילדים (press Enter to add)"
-                helperText="Type and press Enter to add each specialty"
+                helperText={t('pressEnterToAdd')}
               />
             )}
           />
           <TextField
             fullWidth
-            label="Qualifications (Hebrew)"
+            label={t('qualificationsHebrew')}
             value={formData.qualificationsHe}
             onChange={(e) => setFormData({ ...formData, qualificationsHe: e.target.value })}
             margin="dense"
             placeholder="דוקטורט ברפואת ילדים, יועץ"
-            helperText="Separate with commas"
+            helperText={t('separateWithCommas')}
           />
           <TextField
             fullWidth
-            label="Bio (Hebrew)"
+            label={t('bioHebrew')}
             value={formData.bioHe}
             onChange={(e) => setFormData({ ...formData, bioHe: e.target.value })}
             margin="dense"
@@ -1114,21 +1116,21 @@ export const Doctors: React.FC = () => {
               <Divider sx={{ my: 2 }} />
               <TextField
                 fullWidth
-                label="User ID"
+                label={t('userId')}
                 value={formData.userId}
                 onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
                 margin="dense"
-                helperText="Link to existing user account"
+                helperText={t('linkToUserAccount')}
               />
             </>
           )}
 
           <Divider sx={{ my: 3 }} />
-          <Typography variant="h6" gutterBottom>Schedule</Typography>
+          <Typography variant="h6" gutterBottom>{t('schedule')}</Typography>
           {scheduleEntries.map((entry, index) => (
             <Paper key={index} sx={{ p: 2, mb: 2, bgcolor: healthcareColors.neutral[50], borderRadius: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="subtitle2">Schedule Block {index + 1}</Typography>
+                <Typography variant="subtitle2">{t('scheduleBlock')} {index + 1}</Typography>
                 {scheduleEntries.length > 1 && (
                   <IconButton size="small" onClick={() => removeScheduleEntry(index)} color="error">
                     <RemoveIcon />
@@ -1138,11 +1140,11 @@ export const Doctors: React.FC = () => {
 
               {formData.specialties.length > 1 ? (
                 <FormControl fullWidth margin="dense" size="small">
-                  <InputLabel>Role/Type</InputLabel>
+                  <InputLabel>{t('roleType')}</InputLabel>
                   <Select
                     value={entry.type}
                     onChange={(e) => updateScheduleEntry(index, 'type', e.target.value)}
-                    label="Role/Type"
+                    label={t('roleType')}
                   >
                     {formData.specialties.map((specialty, idx) => (
                       <MenuItem key={idx} value={specialty}>
@@ -1153,7 +1155,7 @@ export const Doctors: React.FC = () => {
                 </FormControl>
               ) : null}
 
-              <Typography variant="body2" sx={{ mb: 1, mt: 2 }}>Select Days:</Typography>
+              <Typography variant="body2" sx={{ mb: 1, mt: 2 }}>{t('selectDays')}</Typography>
               <FormGroup row>
                 {DAYS.map((day) => (
                   <FormControlLabel
@@ -1172,7 +1174,7 @@ export const Doctors: React.FC = () => {
 
               <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
                 <TextField
-                  label="Start Time"
+                  label={t('startTime')}
                   type="time"
                   value={entry.startTime}
                   onChange={(e) => updateScheduleEntry(index, 'startTime', e.target.value)}
@@ -1181,7 +1183,7 @@ export const Doctors: React.FC = () => {
                   sx={{ flex: 1 }}
                 />
                 <TextField
-                  label="End Time"
+                  label={t('endTime')}
                   type="time"
                   value={entry.endTime}
                   onChange={(e) => updateScheduleEntry(index, 'endTime', e.target.value)}
@@ -1190,7 +1192,7 @@ export const Doctors: React.FC = () => {
                   sx={{ flex: 1 }}
                 />
                 <TextField
-                  label="Slot (mins)"
+                  label={t('slotDuration')}
                   type="number"
                   value={entry.slotDuration}
                   onChange={(e) => updateScheduleEntry(index, 'slotDuration', parseInt(e.target.value) || 15)}
@@ -1205,7 +1207,7 @@ export const Doctors: React.FC = () => {
             </Paper>
           ))}
           <Button startIcon={<AddIcon />} onClick={addScheduleEntry} variant="outlined" fullWidth>
-            Add Another Time Block
+            {t('addAnotherTimeBlock')}
           </Button>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
@@ -1219,7 +1221,7 @@ export const Doctors: React.FC = () => {
               '&:hover': { bgcolor: healthcareColors.neutral[100] },
             }}
           >
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -1238,7 +1240,7 @@ export const Doctors: React.FC = () => {
               },
             }}
           >
-            {uploadingImage ? 'Uploading...' : editingId ? 'Update Doctor' : 'Add Doctor'}
+            {uploadingImage ? t('uploading') : editingId ? t('updateDoctor') : t('addDoctor')}
           </Button>
         </DialogActions>
       </Dialog>

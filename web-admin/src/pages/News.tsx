@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { healthcareColors, gradients, glassStyles, shadows, animations } from '../theme/healthcareTheme';
 
 interface News {
@@ -35,19 +36,6 @@ interface News {
   authorName: string;
   imageURL?: string;
 }
-
-const getCategoryConfig = (category: string) => {
-  switch (category) {
-    case 'announcement':
-      return { color: healthcareColors.info, icon: <AnnouncementIcon />, label: 'Announcement' };
-    case 'health-tip':
-      return { color: healthcareColors.success, icon: <HealthIcon />, label: 'Health Tip' };
-    case 'event':
-      return { color: healthcareColors.warning, icon: <EventIcon />, label: 'Event' };
-    default:
-      return { color: healthcareColors.neutral[500], icon: <ArticleIcon />, label: 'General' };
-  }
-};
 
 export const News: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -69,7 +57,21 @@ export const News: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { getToken } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
+
+  const getCategoryConfig = (category: string) => {
+    switch (category) {
+      case 'announcement':
+        return { color: healthcareColors.info, icon: <AnnouncementIcon />, label: t('announcement') };
+      case 'health-tip':
+        return { color: healthcareColors.success, icon: <HealthIcon />, label: t('healthTip') };
+      case 'event':
+        return { color: healthcareColors.warning, icon: <EventIcon />, label: t('eventCategory') };
+      default:
+        return { color: healthcareColors.neutral[500], icon: <ArticleIcon />, label: t('general') };
+    }
+  };
 
   const { data: newsList, isLoading } = useQuery<News[]>({
     queryKey: ['news'],
@@ -166,11 +168,11 @@ export const News: React.FC = () => {
     const file = event.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        setUploadError('Please select an image file');
+        setUploadError(t('pleaseSelectImageFile'));
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        setUploadError('Image size must be less than 5MB');
+        setUploadError(t('imageSizeTooLarge'));
         return;
       }
       setSelectedImage(file);
@@ -220,7 +222,7 @@ export const News: React.FC = () => {
       return response.data.url;
     } catch (error) {
       console.error('Failed to upload image:', error);
-      setUploadError('Failed to upload image. Please try again.');
+      setUploadError(t('failedToUploadImage'));
       return null;
     } finally {
       setUploadingImage(false);
@@ -283,10 +285,10 @@ export const News: React.FC = () => {
               </Box>
               <Box>
                 <Typography variant="h5" fontWeight={700} color="text.primary">
-                  News & Updates
+                  {t('newsAndUpdates')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Manage clinic announcements and health tips
+                  {t('manageClinicAnnouncements')}
                 </Typography>
               </Box>
             </Box>
@@ -309,7 +311,7 @@ export const News: React.FC = () => {
               borderRadius: 2,
             }}
           >
-            Add News
+            {t('addNews')}
           </Button>
         </Box>
 
@@ -317,7 +319,7 @@ export const News: React.FC = () => {
         <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
           <Chip
             icon={<ArticleIcon />}
-            label={`${categoryCounts.total} Total`}
+            label={`${categoryCounts.total} ${t('total')}`}
             sx={{
               bgcolor: alpha(healthcareColors.accent.main, 0.1),
               color: healthcareColors.accent.main,
@@ -329,7 +331,7 @@ export const News: React.FC = () => {
           />
           <Chip
             icon={<PublishedIcon />}
-            label={`${categoryCounts.published} Published`}
+            label={`${categoryCounts.published} ${t('published')}`}
             sx={{
               bgcolor: alpha(healthcareColors.success, 0.1),
               color: healthcareColors.success,
@@ -341,7 +343,7 @@ export const News: React.FC = () => {
           />
           <Chip
             icon={<DraftIcon />}
-            label={`${categoryCounts.draft} Drafts`}
+            label={`${categoryCounts.draft} ${t('drafts')}`}
             sx={{
               bgcolor: alpha(healthcareColors.neutral[500], 0.1),
               color: healthcareColors.neutral[500],
@@ -366,7 +368,7 @@ export const News: React.FC = () => {
       >
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
           <TextField
-            placeholder="Search news by title, content, or author..."
+            placeholder={t('searchNewsByTitleContentAuthor')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             size="small"
@@ -396,21 +398,21 @@ export const News: React.FC = () => {
           <TextField
             select
             size="small"
-            label="Category"
+            label={t('category')}
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             sx={{ minWidth: 150 }}
           >
-            <MenuItem value="">All Categories</MenuItem>
-            <MenuItem value="announcement">Announcement</MenuItem>
-            <MenuItem value="health-tip">Health Tip</MenuItem>
-            <MenuItem value="event">Event</MenuItem>
-            <MenuItem value="general">General</MenuItem>
+            <MenuItem value="">{t('allCategories')}</MenuItem>
+            <MenuItem value="announcement">{t('announcement')}</MenuItem>
+            <MenuItem value="health-tip">{t('healthTip')}</MenuItem>
+            <MenuItem value="event">{t('eventCategory')}</MenuItem>
+            <MenuItem value="general">{t('general')}</MenuItem>
           </TextField>
           <Stack direction="row" spacing={1}>
             <Chip
               icon={<FilterIcon />}
-              label="All"
+              label={t('all')}
               onClick={() => setStatusFilter('all')}
               variant={statusFilter === 'all' ? 'filled' : 'outlined'}
               sx={{
@@ -421,7 +423,7 @@ export const News: React.FC = () => {
             />
             <Chip
               icon={<PublishedIcon />}
-              label="Published"
+              label={t('published')}
               onClick={() => setStatusFilter('published')}
               variant={statusFilter === 'published' ? 'filled' : 'outlined'}
               sx={{
@@ -432,7 +434,7 @@ export const News: React.FC = () => {
             />
             <Chip
               icon={<DraftIcon />}
-              label="Drafts"
+              label={t('drafts')}
               onClick={() => setStatusFilter('draft')}
               variant={statusFilter === 'draft' ? 'filled' : 'outlined'}
               sx={{
@@ -480,14 +482,14 @@ export const News: React.FC = () => {
             <Paper sx={{ p: 6, textAlign: 'center', ...glassStyles.card }}>
               <ArticleIcon sx={{ fontSize: 64, color: healthcareColors.neutral[300], mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
-                {searchQuery || categoryFilter || statusFilter !== 'all' ? 'No news match your filters' : 'No news yet'}
+                {searchQuery || categoryFilter || statusFilter !== 'all' ? t('noNewsMatchFilters') : t('noNewsYet')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchQuery || categoryFilter || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Create your first news article'}
+                {searchQuery || categoryFilter || statusFilter !== 'all' ? t('tryAdjustingFiltersWaitingList') : t('createFirstNewsArticle')}
               </Typography>
               {!searchQuery && !categoryFilter && statusFilter === 'all' && (
                 <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
-                  Add News
+                  {t('addNews')}
                 </Button>
               )}
             </Paper>
@@ -551,7 +553,7 @@ export const News: React.FC = () => {
                       <Chip
                         size="small"
                         icon={news.isPublished ? <PublishedIcon /> : <DraftIcon />}
-                        label={news.isPublished ? 'Published' : 'Draft'}
+                        label={news.isPublished ? t('published') : t('draft')}
                         sx={{
                           bgcolor: news.isPublished ? alpha(healthcareColors.success, 0.1) : alpha(healthcareColors.neutral[400], 0.1),
                           color: news.isPublished ? healthcareColors.success : healthcareColors.neutral[500],
@@ -584,12 +586,12 @@ export const News: React.FC = () => {
 
                     {news.authorName && (
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                        By {news.authorName}
+                        {t('by')} {news.authorName}
                       </Typography>
                     )}
 
                     <Stack direction="row" spacing={1} justifyContent="flex-end">
-                      <Tooltip title="Edit">
+                      <Tooltip title={t('edit')}>
                         <IconButton
                           size="small"
                           onClick={() => handleOpen(news)}
@@ -602,7 +604,7 @@ export const News: React.FC = () => {
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Delete">
+                      <Tooltip title={t('delete')}>
                         <IconButton
                           size="small"
                           onClick={() => deleteMutation.mutate(news.id)}
@@ -648,7 +650,7 @@ export const News: React.FC = () => {
               {editingId ? <EditIcon sx={{ color: 'white' }} /> : <AddIcon sx={{ color: 'white' }} />}
             </Box>
             <Typography variant="h6" fontWeight={600}>
-              {editingId ? 'Edit News' : 'Add News'}
+              {editingId ? t('editNews') : t('addNews')}
             </Typography>
           </Box>
         </DialogTitle>
@@ -656,7 +658,7 @@ export const News: React.FC = () => {
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               fullWidth
-              label="Title"
+              label={t('title')}
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
@@ -664,34 +666,34 @@ export const News: React.FC = () => {
             <TextField
               fullWidth
               select
-              label="Category"
+              label={t('category')}
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             >
               <MenuItem value="announcement">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AnnouncementIcon sx={{ color: healthcareColors.info }} /> Announcement
+                  <AnnouncementIcon sx={{ color: healthcareColors.info }} /> {t('announcement')}
                 </Box>
               </MenuItem>
               <MenuItem value="health-tip">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <HealthIcon sx={{ color: healthcareColors.success }} /> Health Tip
+                  <HealthIcon sx={{ color: healthcareColors.success }} /> {t('healthTip')}
                 </Box>
               </MenuItem>
               <MenuItem value="event">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <EventIcon sx={{ color: healthcareColors.warning }} /> Event
+                  <EventIcon sx={{ color: healthcareColors.warning }} /> {t('eventCategory')}
                 </Box>
               </MenuItem>
               <MenuItem value="general">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ArticleIcon sx={{ color: healthcareColors.neutral[500] }} /> General
+                  <ArticleIcon sx={{ color: healthcareColors.neutral[500] }} /> {t('general')}
                 </Box>
               </MenuItem>
             </TextField>
             <TextField
               fullWidth
-              label="Content"
+              label={t('content')}
               multiline
               rows={6}
               value={formData.content}
@@ -701,7 +703,7 @@ export const News: React.FC = () => {
 
             <Box>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                News Image
+                {t('newsImage')}
               </Typography>
               <input
                 type="file"
@@ -749,7 +751,7 @@ export const News: React.FC = () => {
                   startIcon={<UploadIcon />}
                   sx={{ py: 2, width: '100%', borderRadius: 2 }}
                 >
-                  Upload Image
+                  {t('uploadImage')}
                 </Button>
               )}
 
@@ -760,7 +762,7 @@ export const News: React.FC = () => {
               )}
 
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                Supported formats: JPG, PNG, GIF. Max size: 5MB
+                {t('supportedFormats')}
               </Typography>
             </Box>
 
@@ -775,7 +777,7 @@ export const News: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {formData.isPublished ? <PublishedIcon color="success" /> : <DraftIcon />}
                   <Typography variant="body2">
-                    {formData.isPublished ? 'Published' : 'Save as draft'}
+                    {formData.isPublished ? t('published') : t('saveAsDraft')}
                   </Typography>
                 </Box>
               }
@@ -784,7 +786,7 @@ export const News: React.FC = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={handleClose} disabled={uploadingImage} sx={{ color: healthcareColors.neutral[600] }}>
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -796,7 +798,7 @@ export const News: React.FC = () => {
               '&:hover': { filter: 'brightness(0.95)' },
             }}
           >
-            {uploadingImage ? 'Uploading...' : editingId ? 'Update News' : 'Create News'}
+            {uploadingImage ? t('uploadingImage') : editingId ? t('updateNews') : t('createNewsBtn')}
           </Button>
         </DialogActions>
       </Dialog>

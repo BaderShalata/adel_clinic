@@ -24,6 +24,7 @@ import {
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface AnalyticsData {
   totalPatients: number;
@@ -209,6 +210,7 @@ const StatusItem: React.FC<{
 
 export const Dashboard: React.FC = () => {
   const { getToken, user } = useAuth();
+  const { t } = useLanguage();
 
   const { data: analytics, isLoading, error: analyticsError } = useQuery<AnalyticsData>({
     queryKey: ['analytics'],
@@ -268,10 +270,10 @@ export const Dashboard: React.FC = () => {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          Dashboard
+          {t('dashboard')}
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
-          Welcome to Adel Clinic Admin Panel
+          {t('welcomeMessage')}
         </Typography>
       </Box>
 
@@ -287,7 +289,7 @@ export const Dashboard: React.FC = () => {
           }}
         >
           <CircularProgress sx={{ color: healthcareColors.primary }} />
-          <Typography color="text.secondary">Loading dashboard...</Typography>
+          <Typography color="text.secondary">{t('loadingDashboard')}</Typography>
         </Box>
       ) : analyticsError ? (
         <Paper
@@ -302,7 +304,7 @@ export const Dashboard: React.FC = () => {
           }}
         >
           <Typography variant="h6" color="error" gutterBottom>
-            Failed to load analytics
+            {t('failedToLoadAnalytics')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {analyticsError instanceof Error ? analyticsError.message : 'Unknown error occurred'}
@@ -323,32 +325,32 @@ export const Dashboard: React.FC = () => {
             }}
           >
             <StatCard
-              title="Total Patients"
+              title={t('totalPatients')}
               value={analytics?.totalPatients || 0}
               icon={<PeopleIcon sx={{ color: 'white', fontSize: 28 }} />}
               gradient={healthcareColors.gradient.primary}
-              subtitle="Registered in system"
+              subtitle={t('registeredInSystem')}
             />
             <StatCard
-              title="Total Doctors"
+              title={t('totalDoctors')}
               value={analytics?.totalDoctors || 0}
               icon={<DoctorIcon sx={{ color: 'white', fontSize: 28 }} />}
               gradient={healthcareColors.gradient.success}
-              subtitle="Active practitioners"
+              subtitle={t('activePractitioners')}
             />
             <StatCard
-              title="Today's Appointments"
+              title={t('todayAppointments')}
               value={analytics?.todayAppointments || 0}
               icon={<TimeIcon sx={{ color: 'white', fontSize: 28 }} />}
               gradient={healthcareColors.gradient.warning}
-              subtitle={`${analytics?.completedToday || 0} completed`}
+              subtitle={`${analytics?.completedToday || 0} ${t('completed')}`}
             />
             <StatCard
-              title="Upcoming"
+              title={t('upcoming')}
               value={analytics?.upcomingAppointments || 0}
               icon={<TrendingUpIcon sx={{ color: 'white', fontSize: 28 }} />}
               gradient={healthcareColors.gradient.secondary}
-              subtitle="Scheduled appointments"
+              subtitle={t('scheduledAppointments')}
             />
           </Box>
 
@@ -377,17 +379,17 @@ export const Dashboard: React.FC = () => {
                   mb: 1,
                 }}
               >
-                Get Started with Adel Clinic
+                {t('getStarted')}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                Start by adding doctors, patients, and scheduling appointments.
+                {t('startByAdding')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                 {[
-                  { icon: '💉', text: 'Add doctors' },
-                  { icon: '👥', text: 'Register patients' },
-                  { icon: '📅', text: 'Schedule appointments' },
-                  { icon: '📰', text: 'Post health news' },
+                  { icon: '💉', text: t('addDoctorsAction') },
+                  { icon: '👥', text: t('registerPatientsAction') },
+                  { icon: '📅', text: t('scheduleAppointmentsAction') },
+                  { icon: '📰', text: t('postHealthNews') },
                 ].map((item, idx) => (
                   <Chip
                     key={idx}
@@ -426,10 +428,10 @@ export const Dashboard: React.FC = () => {
               }}
             >
               <Typography variant="h6" fontWeight={600} gutterBottom>
-                Appointment Trends
+                {t('appointmentTrends')}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-                Last 30 days
+                {t('last30Days')}
               </Typography>
               <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={trends}>
@@ -482,42 +484,42 @@ export const Dashboard: React.FC = () => {
               }}
             >
               <Typography variant="h6" fontWeight={600} gutterBottom>
-                Appointment Status
+                {t('appointmentStatus')}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 3, display: 'block' }}>
-                All time breakdown
+                {t('allTimeBreakdown')}
               </Typography>
               <Box sx={{ mt: 2 }}>
                 <StatusItem
-                  label="Scheduled"
+                  label={t('scheduled')}
                   value={analytics?.appointmentsByStatus?.scheduled || 0}
                   total={totalStatusAppointments}
                   color={healthcareColors.info}
                   icon={<AppointmentIcon />}
                 />
                 <StatusItem
-                  label="Completed"
+                  label={t('completed')}
                   value={analytics?.appointmentsByStatus?.completed || 0}
                   total={totalStatusAppointments}
                   color={healthcareColors.success}
                   icon={<CheckIcon />}
                 />
                 <StatusItem
-                  label="Pending"
+                  label={t('pending')}
                   value={analytics?.appointmentsByStatus?.pending || 0}
                   total={totalStatusAppointments}
                   color={healthcareColors.warning}
                   icon={<PendingIcon />}
                 />
                 <StatusItem
-                  label="Cancelled"
+                  label={t('cancelled')}
                   value={analytics?.appointmentsByStatus?.cancelled || 0}
                   total={totalStatusAppointments}
                   color={healthcareColors.error}
                   icon={<CancelIcon />}
                 />
                 <StatusItem
-                  label="No-Show"
+                  label={t('noShow')}
                   value={analytics?.appointmentsByStatus?.noShow || 0}
                   total={totalStatusAppointments}
                   color="#64748b"
