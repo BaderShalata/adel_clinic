@@ -57,15 +57,83 @@ const getTheme = (direction: 'ltr' | 'rtl') => createTheme({
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Plus Jakarta Sans", "Noto Sans Arabic", "Noto Sans Hebrew", "Segoe UI", system-ui, -apple-system, sans-serif',
+    h1: {
+      fontWeight: 700,
+      fontSize: '2.5rem',
+      lineHeight: 1.2,
+      letterSpacing: '-0.02em',
+    },
+    h2: {
+      fontWeight: 700,
+      fontSize: '2rem',
+      lineHeight: 1.25,
+      letterSpacing: '-0.01em',
+    },
+    h3: {
+      fontWeight: 600,
+      fontSize: '1.75rem',
+      lineHeight: 1.3,
+      letterSpacing: '-0.01em',
+    },
     h4: {
       fontWeight: 600,
+      fontSize: '1.5rem',
+      lineHeight: 1.35,
+      letterSpacing: '-0.005em',
     },
     h5: {
       fontWeight: 600,
+      fontSize: '1.25rem',
+      lineHeight: 1.4,
     },
     h6: {
       fontWeight: 600,
+      fontSize: '1.1rem',
+      lineHeight: 1.45,
+    },
+    subtitle1: {
+      fontWeight: 500,
+      fontSize: '1rem',
+      lineHeight: 1.5,
+      letterSpacing: '0.005em',
+    },
+    subtitle2: {
+      fontWeight: 500,
+      fontSize: '0.875rem',
+      lineHeight: 1.5,
+      letterSpacing: '0.005em',
+    },
+    body1: {
+      fontWeight: 400,
+      fontSize: '1rem',
+      lineHeight: 1.6,
+      letterSpacing: '0.01em',
+    },
+    body2: {
+      fontWeight: 400,
+      fontSize: '0.875rem',
+      lineHeight: 1.6,
+      letterSpacing: '0.01em',
+    },
+    button: {
+      fontWeight: 600,
+      fontSize: '0.875rem',
+      letterSpacing: '0.02em',
+      textTransform: 'none' as const,
+    },
+    caption: {
+      fontWeight: 400,
+      fontSize: '0.75rem',
+      lineHeight: 1.5,
+      letterSpacing: '0.02em',
+    },
+    overline: {
+      fontWeight: 600,
+      fontSize: '0.7rem',
+      lineHeight: 1.5,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase' as const,
     },
   },
   shape: {
@@ -78,6 +146,15 @@ const getTheme = (direction: 'ltr' | 'rtl') => createTheme({
           textTransform: 'none',
           fontWeight: 500,
           borderRadius: 8,
+          gap: 6,
+        },
+        startIcon: {
+          marginLeft: direction === 'rtl' ? 4 : -4,
+          marginRight: direction === 'rtl' ? -4 : 8,
+        },
+        endIcon: {
+          marginLeft: direction === 'rtl' ? -4 : 8,
+          marginRight: direction === 'rtl' ? 4 : -4,
         },
       },
     },
@@ -103,13 +180,127 @@ const getTheme = (direction: 'ltr' | 'rtl') => createTheme({
       styleOverrides: {
         root: {
           fontWeight: 500,
+          gap: 4,
         },
+        icon: {
+          // Fix icon positioning in RTL - use margin-inline for logical properties
+          marginLeft: direction === 'rtl' ? -2 : 5,
+          marginRight: direction === 'rtl' ? 6 : -2,
+        },
+        label: {
+          paddingLeft: direction === 'rtl' ? 8 : 12,
+          paddingRight: direction === 'rtl' ? 12 : 8,
+        },
+      },
+    },
+    MuiStack: {
+      defaultProps: {
+        useFlexGap: true,
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
           boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiInputBase-input': {
+            textAlign: direction === 'rtl' ? 'right' : 'left',
+          },
+        },
+      },
+    },
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          direction: direction,
+        },
+        input: {
+          textAlign: direction === 'rtl' ? 'right' : 'left',
+          direction: direction,
+          '&::placeholder': {
+            textAlign: direction === 'rtl' ? 'right' : 'left',
+            direction: direction,
+          },
+          '&::-webkit-input-placeholder': {
+            textAlign: direction === 'rtl' ? 'right' : 'left',
+            direction: direction,
+          },
+          '&::-moz-placeholder': {
+            textAlign: direction === 'rtl' ? 'right' : 'left',
+            direction: direction,
+          },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          direction: direction,
+        },
+        input: {
+          textAlign: direction === 'rtl' ? 'right' : 'left',
+          direction: direction,
+          '&::placeholder': {
+            textAlign: direction === 'rtl' ? 'right' : 'left',
+            direction: direction,
+          },
+        },
+        notchedOutline: {
+          textAlign: direction === 'rtl' ? 'right' : 'left',
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          left: direction === 'rtl' ? 'auto' : 0,
+          right: direction === 'rtl' ? 28 : 'auto',
+          transformOrigin: direction === 'rtl' ? 'top right' : 'top left',
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        select: {
+          textAlign: direction === 'rtl' ? 'right' : 'left',
+          paddingRight: direction === 'rtl' ? '14px !important' : '32px !important',
+          paddingLeft: direction === 'rtl' ? '48px !important' : '14px !important',
+        },
+        icon: {
+          right: direction === 'rtl' ? 'auto' : 7,
+          left: direction === 'rtl' ? 7 : 'auto',
+        },
+      },
+    },
+    MuiAutocomplete: {
+      styleOverrides: {
+        input: {
+          textAlign: direction === 'rtl' ? 'right' : 'left',
+          paddingLeft: direction === 'rtl' ? '48px !important' : undefined,
+          paddingRight: direction === 'rtl' ? '14px !important' : undefined,
+        },
+        inputRoot: {
+          direction: direction,
+          paddingLeft: direction === 'rtl' ? '48px !important' : undefined,
+          paddingRight: direction === 'rtl' ? '9px !important' : undefined,
+        },
+        endAdornment: {
+          right: direction === 'rtl' ? 'auto' : 9,
+          left: direction === 'rtl' ? 9 : 'auto',
+        },
+      },
+    },
+    MuiToggleButtonGroup: {
+      styleOverrides: {
+        root: {
+          // Maintain visual order in RTL by not reversing
+          flexDirection: 'row',
+          direction: 'ltr',
         },
       },
     },

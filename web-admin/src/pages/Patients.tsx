@@ -313,7 +313,7 @@ export const Patients: React.FC = () => {
               },
             }}
           />
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
             <Chip
               icon={<FilterIcon />}
               label={t('all')}
@@ -324,6 +324,8 @@ export const Patients: React.FC = () => {
                 color: genderFilter === 'all' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
                 '&:hover': { bgcolor: genderFilter === 'all' ? healthcareColors.primary.dark : healthcareColors.neutral[100] },
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
             <Chip
@@ -336,6 +338,8 @@ export const Patients: React.FC = () => {
                 color: genderFilter === 'male' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
                 '&:hover': { bgcolor: genderFilter === 'male' ? '#2563eb' : healthcareColors.neutral[100] },
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
             <Chip
@@ -348,6 +352,8 @@ export const Patients: React.FC = () => {
                 color: genderFilter === 'female' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
                 '&:hover': { bgcolor: genderFilter === 'female' ? '#db2777' : healthcareColors.neutral[100] },
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
           </Stack>
@@ -489,7 +495,7 @@ export const Patients: React.FC = () => {
                     <Chip
                       size="small"
                       icon={getGenderIcon(patient.gender)}
-                      label={patient.gender?.charAt(0).toUpperCase() + patient.gender?.slice(1) || 'N/A'}
+                      label={patient.gender ? t(patient.gender) : 'N/A'}
                       sx={{
                         bgcolor: alpha(getGenderColor(patient.gender), 0.1),
                         color: getGenderColor(patient.gender),

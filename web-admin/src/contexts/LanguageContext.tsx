@@ -264,6 +264,8 @@ const translations: Translations = {
   more: { en: 'more', ar: 'المزيد', he: 'עוד' },
   creating: { en: 'Creating...', ar: 'جاري الإنشاء...', he: 'יוצר...' },
   newAppointment: { en: 'New Appointment', ar: 'موعد جديد', he: 'פגישה חדשה' },
+  scheduleAppointment: { en: 'Schedule Appointment', ar: 'جدولة الموعد', he: 'קבע פגישה' },
+  scheduling: { en: 'Scheduling...', ar: 'جاري الجدولة...', he: 'מתזמן...' },
   dr: { en: 'Dr.', ar: 'د.', he: 'ד"ר' },
 
   // Waiting List Page - Additional

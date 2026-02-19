@@ -174,19 +174,21 @@ export const Layout: React.FC = () => {
                 sx={{
                   borderRadius: 2,
                   py: 1.25,
+                  px: 1.5,
                   bgcolor: active ? alpha(item.color, 0.12) : 'transparent',
                   color: active ? item.color : healthcareColors.neutral[700],
                   position: 'relative',
                   overflow: 'hidden',
+                  flexDirection: direction === 'rtl' ? 'row-reverse' : 'row',
                   '&::before': active ? {
                     content: '""',
                     position: 'absolute',
-                    left: 0,
+                    ...(direction === 'rtl' ? { right: 0 } : { left: 0 }),
                     top: '50%',
                     transform: 'translateY(-50%)',
                     width: 4,
                     height: '60%',
-                    borderRadius: '0 4px 4px 0',
+                    borderRadius: direction === 'rtl' ? '4px 0 0 4px' : '0 4px 4px 0',
                     background: item.color,
                   } : {},
                   '&:hover': {
@@ -198,13 +200,20 @@ export const Layout: React.FC = () => {
                 <ListItemIcon
                   sx={{
                     color: active ? item.color : healthcareColors.neutral[500],
-                    minWidth: 40,
+                    minWidth: 36,
+                    justifyContent: 'center',
+                    order: direction === 'rtl' ? 2 : 0,
                   }}
                 >
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText
                   primary={item.text}
+                  sx={{
+                    textAlign: direction === 'rtl' ? 'right' : 'left',
+                    order: direction === 'rtl' ? 1 : 0,
+                    ...(direction === 'rtl' ? { mr: 0, ml: 1 } : { ml: 0 }),
+                  }}
                   primaryTypographyProps={{
                     fontWeight: active ? 600 : 500,
                     fontSize: '0.9rem',

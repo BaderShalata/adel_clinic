@@ -566,7 +566,7 @@ export const Doctors: React.FC = () => {
               },
             }}
           />
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
             <Chip
               icon={<FilterIcon />}
               label={t('all')}
@@ -577,6 +577,8 @@ export const Doctors: React.FC = () => {
                 color: statusFilter === 'all' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
                 '&:hover': { bgcolor: statusFilter === 'all' ? healthcareColors.primary.dark : healthcareColors.neutral[100] },
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
             <Chip
@@ -589,6 +591,8 @@ export const Doctors: React.FC = () => {
                 color: statusFilter === 'active' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
                 '&:hover': { bgcolor: statusFilter === 'active' ? '#059669' : healthcareColors.neutral[100] },
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
             <Chip
@@ -601,6 +605,8 @@ export const Doctors: React.FC = () => {
                 color: statusFilter === 'inactive' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
                 '&:hover': { bgcolor: statusFilter === 'inactive' ? healthcareColors.neutral[600] : healthcareColors.neutral[100] },
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
           </Stack>

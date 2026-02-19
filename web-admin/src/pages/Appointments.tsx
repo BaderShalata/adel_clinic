@@ -130,6 +130,16 @@ export const Appointments: React.FC = () => {
     notes: '',
   });
 
+  // Scheduling dialog state (for pending -> scheduled drag)
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [appointmentToSchedule, setAppointmentToSchedule] = useState<Appointment | null>(null);
+  const [scheduleDoctor, setScheduleDoctor] = useState<Doctor | null>(null);
+  const [scheduleService, setScheduleService] = useState('');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
+  const [scheduleSlots, setScheduleSlots] = useState<SlotInfo[]>([]);
+  const [loadingScheduleSlots, setLoadingScheduleSlots] = useState(false);
+
   const { getToken } = useAuth();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
@@ -296,7 +306,12 @@ export const Appointments: React.FC = () => {
   });
 
   // Helper to check if appointment is before today (yesterday or earlier)
+  // EXCEPTION: Pending appointments are NEVER archived - admins need to see them
   const isAppointmentArchived = (appointment: Appointment) => {
+    // Pending appointments always stay in active view, even if from past dates
+    if (appointment.status === 'pending') {
+      return false;
+    }
     const aptDate = typeof appointment.appointmentDate === 'string'
       ? dayjs(appointment.appointmentDate)
       : dayjs(appointment.appointmentDate._seconds * 1000);
@@ -386,10 +401,98 @@ export const Appointments: React.FC = () => {
     e.preventDefault();
     setDragOverStatus(null);
     if (draggedAppointment && draggedAppointment.status !== newStatus) {
-      updateStatusMutation.mutate({ id: draggedAppointment.id, status: newStatus });
+      // If moving from pending to scheduled, show scheduling dialog
+      if (draggedAppointment.status === 'pending' && newStatus === 'scheduled') {
+        setAppointmentToSchedule(draggedAppointment);
+        // Pre-fill with existing appointment data if available
+        const doctor = doctors?.find(d => d.id === draggedAppointment.doctorId);
+        setScheduleDoctor(doctor || null);
+        setScheduleService(draggedAppointment.serviceType || '');
+        setScheduleDate(dayjs().format('YYYY-MM-DD')); // Default to today
+        setScheduleTime('');
+        setScheduleSlots([]);
+        setScheduleDialogOpen(true);
+      } else {
+        // For other status changes, update directly
+        updateStatusMutation.mutate({ id: draggedAppointment.id, status: newStatus });
+      }
     }
     setDraggedAppointment(null);
   };
+
+  // Handle scheduling dialog close
+  const handleScheduleDialogClose = () => {
+    setScheduleDialogOpen(false);
+    setAppointmentToSchedule(null);
+    setScheduleDoctor(null);
+    setScheduleService('');
+    setScheduleDate('');
+    setScheduleTime('');
+    setScheduleSlots([]);
+  };
+
+  // Fetch available slots for scheduling dialog
+  useEffect(() => {
+    const fetchScheduleSlots = async () => {
+      if (!scheduleDoctor || !scheduleDate) {
+        setScheduleSlots([]);
+        return;
+      }
+
+      setLoadingScheduleSlots(true);
+      try {
+        const token = await getToken();
+        if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        const params = new URLSearchParams({ date: scheduleDate });
+        if (scheduleService) params.append('serviceType', scheduleService);
+        const response = await apiClient.get<AvailableSlotsResponse>(
+          `/doctors/${scheduleDoctor.id}/available-slots?${params.toString()}`
+        );
+        setScheduleSlots(response.data.slots || []);
+      } catch (error) {
+        console.error('Failed to fetch available slots:', error);
+        setScheduleSlots([]);
+      } finally {
+        setLoadingScheduleSlots(false);
+      }
+    };
+
+    fetchScheduleSlots();
+  }, [scheduleDoctor, scheduleDate, scheduleService, getToken]);
+
+  // Schedule appointment mutation
+  const scheduleAppointmentMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      return await apiClient.put(`/appointments/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      handleScheduleDialogClose();
+    },
+  });
+
+  // Handle scheduling dialog submit
+  const handleScheduleSubmit = () => {
+    if (!appointmentToSchedule || !scheduleDoctor || !scheduleDate || !scheduleTime || !scheduleService) {
+      return;
+    }
+
+    scheduleAppointmentMutation.mutate({
+      id: appointmentToSchedule.id,
+      data: {
+        status: 'scheduled',
+        doctorId: scheduleDoctor.id,
+        doctorName: scheduleDoctor.fullName,
+        serviceType: scheduleService,
+        appointmentDate: scheduleDate,
+        appointmentTime: scheduleTime,
+      },
+    });
+  };
+
+  const availableScheduleSlots = scheduleSlots.filter(s => s.available);
 
   const createPatientMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -875,7 +978,13 @@ export const Appointments: React.FC = () => {
                               const dateB = typeof b.appointmentDate === 'string'
                                 ? dayjs(b.appointmentDate)
                                 : dayjs(b.appointmentDate._seconds * 1000);
-                              return dateA.valueOf() - dateB.valueOf();
+                              // First compare by date
+                              const dateCompare = dateA.startOf('day').valueOf() - dateB.startOf('day').valueOf();
+                              if (dateCompare !== 0) return dateCompare;
+                              // If same date, compare by time
+                              const timeA = a.appointmentTime || '00:00';
+                              const timeB = b.appointmentTime || '00:00';
+                              return timeA.localeCompare(timeB);
                             });
 
                             const isExpanded = expandedColumns.has(status);
@@ -1717,6 +1826,149 @@ export const Appointments: React.FC = () => {
             disabled={deleteMutation.isPending}
           >
             {deleteMutation.isPending ? t('deleting') : t('delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Schedule Pending Appointment Dialog */}
+      <Dialog open={scheduleDialogOpen} onClose={handleScheduleDialogClose} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ pb: 1 }}>
+          {t('scheduleAppointment')}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            {/* Patient Info */}
+            {appointmentToSchedule && (
+              <Alert severity="info" icon={false} sx={{ borderRadius: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2">
+                    <strong>{t('patient')}:</strong> {appointmentToSchedule.patientName}
+                  </Typography>
+                </Box>
+              </Alert>
+            )}
+
+            {/* Doctor Selection */}
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+                {t('appointmentDetails')}
+              </Typography>
+              <Stack spacing={2}>
+                <Autocomplete
+                  options={doctors || []}
+                  getOptionLabel={(option) => option.fullName}
+                  value={scheduleDoctor}
+                  onChange={(_, newValue) => {
+                    setScheduleDoctor(newValue);
+                    setScheduleService('');
+                    setScheduleTime('');
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} label={t('doctor')} size="small" required fullWidth />
+                  )}
+                />
+                <Stack direction="row" spacing={1.5}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    select
+                    label={t('service')}
+                    value={scheduleService}
+                    onChange={(e) => {
+                      setScheduleService(e.target.value);
+                      setScheduleTime('');
+                    }}
+                    required
+                    disabled={!scheduleDoctor}
+                  >
+                    {scheduleDoctor?.specialties.map((specialty) => (
+                      <MenuItem key={specialty} value={specialty}>
+                        {specialty}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label={t('date')}
+                    type="date"
+                    value={scheduleDate}
+                    onChange={(e) => {
+                      setScheduleDate(e.target.value);
+                      setScheduleTime('');
+                    }}
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    required
+                  />
+                </Stack>
+              </Stack>
+            </Box>
+
+            {/* Time Slots */}
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+                {t('selectTimeSlot')}
+              </Typography>
+              {loadingScheduleSlots ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 2 }}>
+                  <CircularProgress size={18} />
+                  <Typography variant="body2" color="text.secondary">{t('loadingAvailableSlots')}</Typography>
+                </Box>
+              ) : scheduleDoctor && scheduleDate ? (
+                <>
+                  {scheduleSlots.length === 0 ? (
+                    <Alert severity="info">
+                      {t('doctorNotAvailable')}
+                    </Alert>
+                  ) : availableScheduleSlots.length === 0 ? (
+                    <Alert severity="warning">
+                      {t('allSlotsBookedWarning')}
+                    </Alert>
+                  ) : (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                        {t('slotsAvailable').replace('{count}', String(availableScheduleSlots.length))}
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                        {scheduleSlots.map((slot) => (
+                          <Chip
+                            key={slot.time}
+                            label={slot.time}
+                            size="small"
+                            onClick={() => slot.available && setScheduleTime(slot.time)}
+                            disabled={!slot.available}
+                            color={scheduleTime === slot.time ? 'primary' : 'default'}
+                            variant={scheduleTime === slot.time ? 'filled' : 'outlined'}
+                            sx={{ cursor: slot.available ? 'pointer' : 'not-allowed' }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  {t('selectDoctorAndDate')}
+                </Typography>
+              )}
+            </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleScheduleDialogClose} size="small">{t('cancel')}</Button>
+          <Button
+            onClick={handleScheduleSubmit}
+            variant="contained"
+            size="small"
+            disabled={
+              !scheduleDoctor ||
+              !scheduleService ||
+              !scheduleDate ||
+              !scheduleTime ||
+              scheduleAppointmentMutation.isPending
+            }
+          >
+            {scheduleAppointmentMutation.isPending ? t('scheduling') : t('scheduleAppointment')}
           </Button>
         </DialogActions>
       </Dialog>

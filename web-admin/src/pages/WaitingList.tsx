@@ -481,7 +481,7 @@ export const WaitingList: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
             <Chip
               icon={<FilterIcon />}
               label={t('all')}
@@ -491,6 +491,8 @@ export const WaitingList: React.FC = () => {
                 bgcolor: !filterStatus ? healthcareColors.primary.main : 'transparent',
                 color: !filterStatus ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
             <Chip
@@ -502,6 +504,8 @@ export const WaitingList: React.FC = () => {
                 bgcolor: filterStatus === 'waiting' ? healthcareColors.warning : 'transparent',
                 color: filterStatus === 'waiting' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
             <Chip
@@ -513,6 +517,8 @@ export const WaitingList: React.FC = () => {
                 bgcolor: filterStatus === 'booked' ? healthcareColors.success : 'transparent',
                 color: filterStatus === 'booked' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
           </Stack>

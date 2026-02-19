@@ -409,7 +409,7 @@ export const News: React.FC = () => {
             <MenuItem value="event">{t('eventCategory')}</MenuItem>
             <MenuItem value="general">{t('general')}</MenuItem>
           </TextField>
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
             <Chip
               icon={<FilterIcon />}
               label={t('all')}
@@ -419,6 +419,8 @@ export const News: React.FC = () => {
                 bgcolor: statusFilter === 'all' ? healthcareColors.primary.main : 'transparent',
                 color: statusFilter === 'all' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
             <Chip
@@ -430,6 +432,8 @@ export const News: React.FC = () => {
                 bgcolor: statusFilter === 'published' ? healthcareColors.success : 'transparent',
                 color: statusFilter === 'published' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
             <Chip
@@ -441,6 +445,8 @@ export const News: React.FC = () => {
                 bgcolor: statusFilter === 'draft' ? healthcareColors.neutral[500] : 'transparent',
                 color: statusFilter === 'draft' ? 'white' : healthcareColors.neutral[600],
                 borderColor: healthcareColors.neutral[300],
+                minWidth: 'fit-content',
+                px: 1,
               }}
             />
           </Stack>
@@ -632,29 +638,42 @@ export const News: React.FC = () => {
         onClose={handleClose}
         maxWidth="md"
         fullWidth
-        slotProps={{ paper: { sx: { ...glassStyles.card } } }}
+        slotProps={{ paper: { sx: { ...glassStyles.dialog, overflow: 'hidden' } } }}
       >
-        <DialogTitle sx={{ pb: 1 }}>
+        {/* Modern Dialog Header */}
+        <Box
+          sx={{
+            background: gradients.purpleToBlue,
+            px: 3,
+            py: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 2,
-                background: gradients.purpleToBlue,
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(255,255,255,0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              {editingId ? <EditIcon sx={{ color: 'white' }} /> : <AddIcon sx={{ color: 'white' }} />}
+              {editingId ? <EditIcon sx={{ color: 'white', fontSize: 20 }} /> : <AddIcon sx={{ color: 'white', fontSize: 20 }} />}
             </Box>
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="h6" fontWeight={600} color="white">
               {editingId ? t('editNews') : t('addNews')}
             </Typography>
           </Box>
-        </DialogTitle>
-        <DialogContent>
+          <IconButton onClick={handleClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ pt: 3 }}>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               fullWidth
@@ -784,18 +803,32 @@ export const News: React.FC = () => {
             />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleClose} disabled={uploadingImage} sx={{ color: healthcareColors.neutral[600] }}>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
+          <Button
+            onClick={handleClose}
+            disabled={uploadingImage}
+            size="small"
+            sx={{
+              color: healthcareColors.neutral[600],
+              borderRadius: 1.5,
+              px: 2.5,
+              '&:hover': { bgcolor: healthcareColors.neutral[100] },
+            }}
+          >
             {t('cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
+            size="small"
             disabled={!formData.title || !formData.content || uploadingImage || createMutation.isPending || updateMutation.isPending}
             startIcon={uploadingImage ? <CircularProgress size={16} /> : undefined}
             sx={{
               background: gradients.purpleToBlue,
-              '&:hover': { filter: 'brightness(0.95)' },
+              borderRadius: 1.5,
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': { filter: 'brightness(0.95)', boxShadow: 'none' },
             }}
           >
             {uploadingImage ? t('uploadingImage') : editingId ? t('updateNews') : t('createNewsBtn')}
