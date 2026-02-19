@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
 import '../auth/login_screen.dart';
@@ -12,79 +13,197 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final languageProvider = context.watch<LanguageProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(languageProvider.t('profile')),
       ),
       body: authProvider.isLoggedIn
-          ? _buildLoggedInProfile(context, authProvider)
-          : _buildGuestProfile(context),
+          ? _buildLoggedInProfile(context, authProvider, languageProvider)
+          : _buildGuestProfile(context, languageProvider),
     );
   }
 
-  Widget _buildGuestProfile(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingL),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppTheme.spacingXL),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+  Widget _buildGuestProfile(BuildContext context, LanguageProvider languageProvider) {
+    return SingleChildScrollView(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppTheme.spacingXL),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.person_outline,
+                  size: 80,
+                  color: AppTheme.primaryColor,
+                ),
               ),
-              child: const Icon(
-                Icons.person_outline,
-                size: 80,
-                color: AppTheme.primaryColor,
+              const SizedBox(height: AppTheme.spacingXL),
+              Text(
+                '${languageProvider.t('welcome')} ${languageProvider.t('appName')}',
+                style: Theme.of(context).textTheme.headlineSmall,
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: AppTheme.spacingXL),
-            Text(
-              'Welcome to Adel Clinic',
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppTheme.spacingS),
-            Text(
-              'Sign in to manage your appointments and profile',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppTheme.spacingXL),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
+              const SizedBox(height: AppTheme.spacingS),
+              Text(
+                languageProvider.t('pleaseSignInToBook'),
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppTheme.spacingXL),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                  },
+                  child: Text(languageProvider.t('signIn')),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+              TextButton(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
                   );
                 },
-                child: const Text('Sign In'),
+                child: Text("${languageProvider.t('dontHaveAccount')} ${languageProvider.t('register')}"),
               ),
-            ),
-            const SizedBox(height: AppTheme.spacingM),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                );
-              },
-              child: const Text("Don't have an account? Register"),
-            ),
-          ],
+              const SizedBox(height: AppTheme.spacingXL),
+              // Language selector for guests
+              _buildLanguageSelector(context, languageProvider),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildLoggedInProfile(BuildContext context, AuthProvider authProvider) {
+  void _showLanguageDialog(BuildContext context, LanguageProvider languageProvider) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXL)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spacingM),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                decoration: BoxDecoration(
+                  color: AppTheme.dividerColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                languageProvider.t('language'),
+                style: Theme.of(ctx).textTheme.titleLarge,
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+              _LanguageOption(
+                label: 'English',
+                locale: const Locale('en'),
+                isSelected: languageProvider.languageCode == 'en',
+                onTap: () {
+                  languageProvider.setLanguage('en');
+                  Navigator.pop(ctx);
+                },
+              ),
+              _LanguageOption(
+                label: 'العربية',
+                locale: const Locale('ar'),
+                isSelected: languageProvider.languageCode == 'ar',
+                onTap: () {
+                  languageProvider.setLanguage('ar');
+                  Navigator.pop(ctx);
+                },
+              ),
+              _LanguageOption(
+                label: 'עברית',
+                locale: const Locale('he'),
+                isSelected: languageProvider.languageCode == 'he',
+                onTap: () {
+                  languageProvider.setLanguage('he');
+                  Navigator.pop(ctx);
+                },
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageSelector(BuildContext context, LanguageProvider languageProvider) {
+    String currentLanguage;
+    switch (languageProvider.languageCode) {
+      case 'ar':
+        currentLanguage = 'العربية';
+        break;
+      case 'he':
+        currentLanguage = 'עברית';
+        break;
+      default:
+        currentLanguage = 'English';
+    }
+
+    return ModernCard(
+      onTap: () => _showLanguageDialog(context, languageProvider),
+      child: Row(
+        children: [
+          const Icon(Icons.language, color: AppTheme.primaryColor),
+          const SizedBox(width: AppTheme.spacingM),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                languageProvider.t('language'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              Text(
+                currentLanguage,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+          const Spacer(),
+          const Icon(Icons.chevron_right, color: AppTheme.textHint),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoggedInProfile(BuildContext context, AuthProvider authProvider, LanguageProvider languageProvider) {
     final user = authProvider.user;
+
+    String currentLanguage;
+    switch (languageProvider.languageCode) {
+      case 'ar':
+        currentLanguage = 'العربية';
+        break;
+      case 'he':
+        currentLanguage = 'עברית';
+        break;
+      default:
+        currentLanguage = 'English';
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -121,7 +240,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppTheme.spacingM),
                 Text(
-                  user?.displayName ?? 'Patient',
+                  user?.displayName ?? languageProvider.t('patient'),
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: AppTheme.spacingXS),
@@ -149,7 +268,7 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 _ProfileMenuItem(
                   icon: Icons.edit,
-                  title: 'Edit Profile',
+                  title: languageProvider.t('editProfile'),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Edit Profile coming soon!')),
@@ -158,34 +277,10 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const Divider(height: 1),
                 _ProfileMenuItem(
-                  icon: Icons.notifications,
-                  title: 'Notifications',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Notifications settings coming soon!')),
-                    );
-                  },
-                ),
-                const Divider(height: 1),
-                _ProfileMenuItem(
                   icon: Icons.language,
-                  title: 'Language',
-                  subtitle: 'English',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Language settings coming soon!')),
-                    );
-                  },
-                ),
-                const Divider(height: 1),
-                _ProfileMenuItem(
-                  icon: Icons.help_outline,
-                  title: 'Help & Support',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Help & Support coming soon!')),
-                    );
-                  },
+                  title: languageProvider.t('language'),
+                  subtitle: currentLanguage,
+                  onTap: () => _showLanguageDialog(context, languageProvider),
                 ),
                 const Divider(height: 1),
                 _ProfileMenuItem(
@@ -194,7 +289,7 @@ class ProfileScreen extends StatelessWidget {
                   onTap: () {
                     showAboutDialog(
                       context: context,
-                      applicationName: 'Adel Clinic',
+                      applicationName: languageProvider.t('appName'),
                       applicationVersion: '1.0.0',
                       applicationLegalese: '2024 Adel Clinic. All rights reserved.',
                     );
@@ -211,23 +306,23 @@ class ProfileScreen extends StatelessWidget {
             padding: EdgeInsets.zero,
             child: _ProfileMenuItem(
               icon: Icons.logout,
-              title: 'Sign Out',
+              title: languageProvider.t('logout'),
               iconColor: AppTheme.errorColor,
               titleColor: AppTheme.errorColor,
               onTap: () async {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Sign Out'),
+                    title: Text(languageProvider.t('logout')),
                     content: const Text('Are you sure you want to sign out?'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
+                        child: Text(languageProvider.t('cancel')),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Sign Out'),
+                        child: Text(languageProvider.t('logout')),
                       ),
                     ],
                   ),
@@ -243,6 +338,37 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: AppTheme.spacingXL),
         ],
       ),
+    );
+  }
+}
+
+class _LanguageOption extends StatelessWidget {
+  final String label;
+  final Locale locale;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _LanguageOption({
+    required this.label,
+    required this.locale,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      title: Text(
+        label,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+          color: isSelected ? AppTheme.primaryColor : null,
+        ),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check_circle, color: AppTheme.primaryColor)
+          : null,
     );
   }
 }

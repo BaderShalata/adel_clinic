@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/news_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../models/news.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
@@ -36,6 +37,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
   Widget build(BuildContext context) {
     final newsProvider = context.watch<NewsProvider>();
     final authProvider = context.watch<AuthProvider>();
+    final languageProvider = context.watch<LanguageProvider>();
 
     return Scaffold(
       body: SafeArea(
@@ -45,17 +47,17 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
             slivers: [
               // Logo and Welcome Header
               SliverToBoxAdapter(
-                child: _buildHeader(context, authProvider),
+                child: _buildHeader(context, authProvider, languageProvider),
               ),
 
               // Quick Actions
               SliverToBoxAdapter(
-                child: _buildQuickActions(context),
+                child: _buildQuickActions(context, languageProvider),
               ),
 
               // Location and Social Media Grid
               SliverToBoxAdapter(
-                child: _buildLocationAndSocialGrid(context),
+                child: _buildLocationAndSocialGrid(context, languageProvider),
               ),
 
               const SliverToBoxAdapter(
@@ -63,8 +65,8 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
               ),
 
               // News Section Header
-              const SliverToBoxAdapter(
-                child: SectionHeader(title: 'Latest News'),
+              SliverToBoxAdapter(
+                child: SectionHeader(title: languageProvider.t('latestNews')),
               ),
 
               // News Feed
@@ -128,7 +130,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, AuthProvider authProvider) {
+  Widget _buildHeader(BuildContext context, AuthProvider authProvider, LanguageProvider languageProvider) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       decoration: BoxDecoration(
@@ -178,8 +180,8 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
           const SizedBox(height: AppTheme.spacingM),
           Text(
             authProvider.isLoggedIn
-                ? 'Welcome back, ${authProvider.user?.displayName ?? 'Patient'}!'
-                : 'Your Health, Our Priority',
+                ? '${languageProvider.t('welcomeBack')}, ${authProvider.user?.displayName ?? languageProvider.t('patient')}!'
+                : languageProvider.t('yourHealthOurPriority'),
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -194,7 +196,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context) {
+  Widget _buildQuickActions(BuildContext context, LanguageProvider languageProvider) {
     final authProvider = context.watch<AuthProvider>();
 
     return Padding(
@@ -204,7 +206,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
           Expanded(
             child: _QuickActionButton(
               icon: Icons.medical_services,
-              label: 'Find Doctor',
+              label: languageProvider.t('findDoctor'),
               color: AppTheme.accentColor,
               onTap: () {
                 Navigator.push(
@@ -221,12 +223,12 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
           Expanded(
             child: _QuickActionButton(
               icon: Icons.calendar_month,
-              label: 'Book Appointment',
+              label: languageProvider.t('bookAppointment'),
               color: AppTheme.primaryColor,
               onTap: () {
                 // Check if user is logged in before allowing booking
                 if (!authProvider.isLoggedIn) {
-                  _showLoginRequiredDialog(context);
+                  _showLoginRequiredDialog(context, languageProvider);
                 } else {
                   Navigator.push(
                     context,
@@ -244,7 +246,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     );
   }
 
-  void _showLoginRequiredDialog(BuildContext context) {
+  void _showLoginRequiredDialog(BuildContext context, LanguageProvider languageProvider) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -284,14 +286,14 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
             ),
             const SizedBox(height: AppTheme.spacingM),
             Text(
-              'Sign In Required',
+              languageProvider.t('signInRequired'),
               style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
             const SizedBox(height: AppTheme.spacingS),
             Text(
-              'Please sign in to book an appointment. Your booking will be saved to your account.',
+              languageProvider.t('pleaseSignInToBook'),
               textAlign: TextAlign.center,
               style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.textSecondary,
@@ -306,7 +308,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(languageProvider.t('cancel')),
                   ),
                 ),
                 const SizedBox(width: AppTheme.spacingM),
@@ -322,7 +324,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: const Text('Sign In'),
+                    child: Text(languageProvider.t('signIn')),
                   ),
                 ),
               ],
@@ -334,7 +336,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     );
   }
 
-  Widget _buildLocationAndSocialGrid(BuildContext context) {
+  Widget _buildLocationAndSocialGrid(BuildContext context, LanguageProvider languageProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
       child: Row(
@@ -373,7 +375,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                     ),
                     const SizedBox(height: AppTheme.spacingS),
                     Text(
-                      'Location',
+                      languageProvider.t('location'),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -388,7 +390,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                     ),
                     const SizedBox(height: AppTheme.spacingS),
                     Text(
-                      'Tap to open',
+                      languageProvider.t('tapToOpen'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.w500,
@@ -412,7 +414,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Follow Us',
+                      languageProvider.t('followUs'),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -463,19 +465,17 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     Uri? uri;
     switch (platform) {
       case 'facebook':
-        // Placeholder - replace with actual Facebook page
-        uri = Uri.parse('https://facebook.com/adelclinic');
+        uri = Uri.parse('https://www.facebook.com/seba.rehana');
         break;
       case 'instagram':
-        // Placeholder - replace with actual Instagram page
-        uri = Uri.parse('https://instagram.com/adelclinic');
+        uri = Uri.parse('https://www.instagram.com/sba_rehana_medical_clinic/');
         break;
       case 'whatsapp':
-        // Placeholder - replace with actual phone number
+        // Clinic WhatsApp number
         uri = Uri.parse('https://wa.me/972XXXXXXXXX');
         break;
       case 'phone':
-        // Placeholder - replace with actual phone number
+        // Clinic phone number
         uri = Uri.parse('tel:+972XXXXXXXXX');
         break;
     }
@@ -494,6 +494,8 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
   }
 
   Future<void> _openMap() async {
+    final languageProvider = context.read<LanguageProvider>();
+
     // Clinic coordinates: Saba Reihana Medical Center, Sakhnin
     const lat = 32.8625292;
     const lng = 35.2958923;
@@ -510,19 +512,19 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Open with',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                languageProvider.t('openWith'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               ListTile(
                 leading: const Icon(Icons.map, color: Colors.red),
-                title: const Text('Google Maps'),
+                title: Text(languageProvider.t('googleMaps')),
                 onTap: () => Navigator.pop(ctx, 'google'),
               ),
               ListTile(
                 leading: const Icon(Icons.navigation, color: Colors.blue),
-                title: const Text('Waze'),
+                title: Text(languageProvider.t('waze')),
                 onTap: () => Navigator.pop(ctx, 'waze'),
               ),
             ],
@@ -552,7 +554,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
       } catch (e2) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not open maps')),
+            SnackBar(content: Text(languageProvider.t('couldNotOpenMaps'))),
           );
         }
       }

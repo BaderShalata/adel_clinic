@@ -209,21 +209,6 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
       return;
     }
 
-    // Check if user already has an active appointment (limit to 1)
-    if (appointmentProvider.hasActiveAppointment) {
-      final existingAppointment = appointmentProvider.activeAppointment;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'You already have an appointment on ${existingAppointment?.appointmentDate.day}/${existingAppointment?.appointmentDate.month}. Please cancel it first to book a new one.',
-          ),
-          backgroundColor: AppTheme.warningColor,
-          duration: const Duration(seconds: 4),
-        ),
-      );
-      return;
-    }
-
     // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,

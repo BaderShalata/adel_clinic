@@ -31,6 +31,10 @@ class StorageService {
     await _prefs?.setString(key, value);
   }
 
+  Future<void> setString(String key, String value) async {
+    await _prefs?.setString(key, value);
+  }
+
   String? getString(String key) {
     return _prefs?.getString(key);
   }

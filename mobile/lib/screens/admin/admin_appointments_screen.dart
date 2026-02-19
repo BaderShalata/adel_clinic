@@ -831,7 +831,7 @@ class _AppointmentTile extends StatelessWidget {
                           Icon(Icons.person, size: 14, color: Colors.grey[600]),
                           const SizedBox(width: 4),
                           Text(
-                            'Dr. ${appointment.doctorName}',
+                            appointment.doctorName ?? 'Doctor',
                             style: TextStyle(color: Colors.grey[600], fontSize: 12),
                           ),
                         ],
