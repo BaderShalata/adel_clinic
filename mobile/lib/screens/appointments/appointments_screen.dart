@@ -6,10 +6,12 @@ import '../../providers/appointment_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/doctor_provider.dart';
 import '../../models/appointment.dart';
+import '../../models/doctor.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/modern_card.dart';
+import '../../widgets/common/doctor_avatar.dart';
 import '../auth/login_screen.dart';
 import '../booking/service_selection_screen.dart';
 
@@ -121,16 +123,19 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ServiceSelectionScreen()),
-          );
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Book'),
-        backgroundColor: AppTheme.primaryColor,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 100),
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ServiceSelectionScreen()),
+            );
+          },
+          icon: const Icon(Icons.add),
+          label: const Text('Book'),
+          backgroundColor: AppTheme.primaryColor,
+        ),
       ),
       body: appointmentProvider.isLoading
           ? const LoadingIndicator(message: 'Loading appointments...')
@@ -535,12 +540,19 @@ class AppointmentCard extends StatelessWidget {
     return name[0].toUpperCase();
   }
 
+  /// Get the Doctor object from provider if available
+  Doctor? _getDoctor(DoctorProvider doctorProvider) {
+    if (doctorProvider.doctors.isEmpty) return null;
+    return doctorProvider.doctors.where((d) => d.id == appointment.doctorId).firstOrNull;
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('EEE, MMM d, yyyy');
     final doctorProvider = context.watch<DoctorProvider>();
     final statusColor = _getStatusColor();
     final doctorName = _getLocalizedDoctorName(context, doctorProvider);
+    final doctor = _getDoctor(doctorProvider);
 
     return ModernCard(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
@@ -633,36 +645,43 @@ class AppointmentCard extends StatelessWidget {
                 // Doctor info row
                 Row(
                   children: [
-                    // Doctor avatar with gradient
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            statusColor.withValues(alpha: 0.2),
-                            statusColor.withValues(alpha: 0.05),
-                          ],
+                    // Doctor avatar - shows image if available, initials otherwise
+                    if (doctor != null)
+                      DoctorAvatarCard(
+                        doctor: doctor,
+                        size: 52,
+                        statusColor: statusColor,
+                      )
+                    else
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              statusColor.withValues(alpha: 0.2),
+                              statusColor.withValues(alpha: 0.05),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                          border: Border.all(
+                            color: statusColor.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                        border: Border.all(
-                          color: statusColor.withValues(alpha: 0.3),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          _getDoctorInitials(context, doctorProvider),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: statusColor,
-                            fontSize: 18,
+                        child: Center(
+                          child: Text(
+                            _getDoctorInitials(context, doctorProvider),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                              fontSize: 18,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     const SizedBox(width: AppTheme.spacingM),
                     Expanded(
                       child: Column(

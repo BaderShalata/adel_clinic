@@ -71,16 +71,19 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
         ],
       ),
       floatingActionButton: authProvider.isAdmin
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DoctorFormScreen()),
-                );
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Add Doctor'),
-              backgroundColor: AppTheme.primaryColor,
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 100),
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DoctorFormScreen()),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Add Doctor'),
+                backgroundColor: AppTheme.primaryColor,
+              ),
             )
           : null,
       body: Column(

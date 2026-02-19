@@ -401,17 +401,24 @@ export const Appointments: React.FC = () => {
     e.preventDefault();
     setDragOverStatus(null);
     if (draggedAppointment && draggedAppointment.status !== newStatus) {
-      // If moving from pending to scheduled, show scheduling dialog
+      // If moving from pending to scheduled, check if appointment already has all required data
       if (draggedAppointment.status === 'pending' && newStatus === 'scheduled') {
-        setAppointmentToSchedule(draggedAppointment);
-        // Pre-fill with existing appointment data if available
-        const doctor = doctors?.find(d => d.id === draggedAppointment.doctorId);
-        setScheduleDoctor(doctor || null);
-        setScheduleService(draggedAppointment.serviceType || '');
-        setScheduleDate(dayjs().format('YYYY-MM-DD')); // Default to today
-        setScheduleTime('');
-        setScheduleSlots([]);
-        setScheduleDialogOpen(true);
+        // If appointment already has doctor, date, time, and service - schedule directly
+        if (draggedAppointment.doctorId && draggedAppointment.appointmentDate &&
+            draggedAppointment.appointmentTime && draggedAppointment.serviceType) {
+          // Schedule directly with existing data - no dialog needed
+          updateStatusMutation.mutate({ id: draggedAppointment.id, status: 'scheduled' });
+        } else {
+          // Missing data - show scheduling dialog to fill in
+          setAppointmentToSchedule(draggedAppointment);
+          const doctor = doctors?.find(d => d.id === draggedAppointment.doctorId);
+          setScheduleDoctor(doctor || null);
+          setScheduleService(draggedAppointment.serviceType || '');
+          setScheduleDate(dayjs().format('YYYY-MM-DD'));
+          setScheduleTime('');
+          setScheduleSlots([]);
+          setScheduleDialogOpen(true);
+        }
       } else {
         // For other status changes, update directly
         updateStatusMutation.mutate({ id: draggedAppointment.id, status: newStatus });
