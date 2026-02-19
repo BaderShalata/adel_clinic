@@ -163,7 +163,11 @@ class _DoctorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = _getLocalizedName(context);
+    final locale = Localizations.localeOf(context);
+    final languageCode = locale.languageCode;
+    final displayName = doctor.getLocalizedName(languageCode);
+    final localizedSpecialties = doctor.getLocalizedSpecialties(languageCode);
+    final localizedQualifications = doctor.getLocalizedQualifications(languageCode);
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
@@ -201,7 +205,7 @@ class _DoctorCard extends StatelessWidget {
                     Wrap(
                       spacing: 4,
                       runSpacing: 4,
-                      children: doctor.specialties
+                      children: localizedSpecialties
                           .map(
                             (s) => Container(
                               padding: const EdgeInsets.symmetric(
@@ -223,10 +227,10 @@ class _DoctorCard extends StatelessWidget {
                           )
                           .toList(),
                     ),
-                    if (doctor.qualifications.isNotEmpty) ...[
+                    if (localizedQualifications.isNotEmpty) ...[
                       const SizedBox(height: AppTheme.spacingXS),
                       Text(
-                        doctor.qualifications.join(', '),
+                        localizedQualifications.join(', '),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Colors.grey[600],
                             ),

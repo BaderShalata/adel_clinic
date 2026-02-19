@@ -83,6 +83,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: AppTheme.spacingXL),
               // Language selector for guests
               _buildLanguageSelector(context, languageProvider),
+              const SizedBox(height: 120), // Space for floating nav bar
             ],
           ),
         ),
@@ -335,7 +336,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: AppTheme.spacingXL),
+          const SizedBox(height: 120), // Space for floating nav bar
         ],
       ),
     );

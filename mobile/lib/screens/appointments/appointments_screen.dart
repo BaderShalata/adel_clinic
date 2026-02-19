@@ -207,7 +207,12 @@ class _AppointmentList extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: () => context.read<AppointmentProvider>().loadAppointments(),
       child: ListView.builder(
-        padding: const EdgeInsets.all(AppTheme.spacingM),
+        padding: const EdgeInsets.only(
+          left: AppTheme.spacingM,
+          right: AppTheme.spacingM,
+          top: AppTheme.spacingM,
+          bottom: 120, // Space for floating nav bar
+        ),
         itemCount: appointments.length,
         itemBuilder: (context, index) {
           final Widget card = AppointmentCard(
@@ -444,7 +449,12 @@ class _PastAppointmentList extends StatelessWidget {
           ),
           // Appointments list
           SliverPadding(
-            padding: const EdgeInsets.all(AppTheme.spacingM),
+            padding: const EdgeInsets.only(
+              left: AppTheme.spacingM,
+              right: AppTheme.spacingM,
+              top: AppTheme.spacingM,
+              bottom: 120, // Space for floating nav bar
+            ),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {

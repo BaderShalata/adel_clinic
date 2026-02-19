@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
 import '../shell/main_shell.dart';
 
@@ -54,11 +55,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
             (route) => false,
           );
         } else {
-          final error = context.read<AuthProvider>().errorMessage;
+          final errorKey = context.read<AuthProvider>().errorKey;
+          final lang = context.read<LanguageProvider>();
+          final errorMessage = errorKey != null
+              ? lang.t(errorKey)
+              : lang.t('registrationFailed');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(error ?? 'Registration failed'),
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(errorMessage)),
+                ],
+              ),
               backgroundColor: AppTheme.errorColor,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
@@ -69,10 +81,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final lang = context.watch<LanguageProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Register'),
+        title: Text(lang.t('register')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -85,12 +98,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               // Header
               Text(
-                'Create Account',
+                lang.t('createAccount'),
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
               const SizedBox(height: AppTheme.spacingS),
               Text(
-                'Register to book appointments and manage your health',
+                lang.t('createAccountSubtitle'),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: AppTheme.spacingXL),
@@ -99,13 +112,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  prefixIcon: Icon(Icons.person_outline),
+                decoration: InputDecoration(
+                  labelText: lang.t('fullName'),
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your full name';
+                    return lang.t('pleaseEnterName');
                   }
                   return null;
                 },
@@ -116,17 +129,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _idNumberController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'ID Number',
-                  prefixIcon: Icon(Icons.badge_outlined),
-                  hintText: 'Enter your national ID number',
+                decoration: InputDecoration(
+                  labelText: lang.t('idNumber'),
+                  prefixIcon: const Icon(Icons.badge_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your ID number';
-                  }
-                  if (value.length < 5) {
-                    return 'ID number is too short';
+                    return lang.t('pleaseEnterIdNumber');
                   }
                   return null;
                 },
@@ -137,16 +146,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
+                decoration: InputDecoration(
+                  labelText: lang.t('email'),
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
+                    return lang.t('pleaseEnterEmail');
                   }
                   if (!value.contains('@') || !value.contains('.')) {
-                    return 'Please enter a valid email';
+                    return lang.t('invalidEmail');
                   }
                   return null;
                 },
@@ -157,13 +166,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  prefixIcon: Icon(Icons.phone_outlined),
+                decoration: InputDecoration(
+                  labelText: lang.t('phoneNumber'),
+                  prefixIcon: const Icon(Icons.phone_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your phone number';
+                    return lang.t('pleaseEnterPhone');
                   }
                   return null;
                 },
@@ -172,14 +181,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               // Gender
               DropdownButtonFormField<String>(
-                initialValue: _selectedGender,
-                decoration: const InputDecoration(
-                  labelText: 'Gender',
-                  prefixIcon: Icon(Icons.wc_outlined),
+                value: _selectedGender,
+                decoration: InputDecoration(
+                  labelText: lang.t('gender'),
+                  prefixIcon: const Icon(Icons.wc_outlined),
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'male', child: Text('Male')),
-                  DropdownMenuItem(value: 'female', child: Text('Female')),
+                items: [
+                  DropdownMenuItem(value: 'male', child: Text(lang.t('male'))),
+                  DropdownMenuItem(value: 'female', child: Text(lang.t('female'))),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -188,7 +197,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please select your gender';
+                    return lang.t('selectGender');
                   }
                   return null;
                 },
@@ -200,7 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: lang.t('password'),
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -215,10 +224,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a password';
+                    return lang.t('pleaseEnterPassword');
                   }
                   if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
+                    return lang.t('passwordMinLength');
                   }
                   return null;
                 },
@@ -230,7 +239,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _confirmPasswordController,
                 obscureText: _obscureConfirmPassword,
                 decoration: InputDecoration(
-                  labelText: 'Confirm Password',
+                  labelText: lang.t('confirmPassword'),
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -245,10 +254,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please confirm your password';
+                    return lang.t('pleaseEnterPassword');
                   }
                   if (value != _passwordController.text) {
-                    return 'Passwords do not match';
+                    return lang.t('passwordsDoNotMatch');
                   }
                   return null;
                 },
@@ -269,9 +278,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Create Account',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      : Text(
+                          lang.t('createAccount'),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                         ),
                 ),
               ),
@@ -282,14 +291,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Already have an account? ',
+                    lang.t('alreadyHaveAccount'),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   TextButton(
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    child: const Text('Sign In'),
+                    child: Text(lang.t('signIn')),
                   ),
                 ],
               ),

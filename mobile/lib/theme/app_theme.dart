@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Primary color palette - Modern Teal with depth
-  static const Color primaryColor = Color(0xFF0D9488);
-  static const Color primaryLight = Color(0xFF14B8A6);
-  static const Color primaryDark = Color(0xFF0F766E);
-  static const Color primarySurface = Color(0xFFE6FFFA);
+  // Primary color palette - Deep Teal with richness
+  static const Color primaryColor = Color(0xFF0F766E);
+  static const Color primaryLight = Color(0xFF0D9488);
+  static const Color primaryDark = Color(0xFF115E59);
+  static const Color primarySurface = Color(0xFFCCFBF1);
 
   // Secondary accent colors
   static const Color accentColor = Color(0xFF6366F1);
@@ -18,12 +18,12 @@ class AppTheme {
   static const Color errorColor = Color(0xFFEF4444);
   static const Color errorLight = Color(0xFFFEE2E2);
 
-  // Neutral colors
-  static const Color surfaceLight = Color(0xFFF8FAFC);
-  static const Color surfaceMedium = Color(0xFFF1F5F9);
-  static const Color cardBackground = Colors.white;
-  static const Color dividerColor = Color(0xFFE2E8F0);
-  static const Color tableHeaderBg = Color(0xFFF1F5F9);
+  // Neutral colors - warm beige palette
+  static const Color surfaceLight = Color(0xFFF7F3EE);  // Warmer beige background
+  static const Color surfaceMedium = Color(0xFFF0EBE3); // Slightly darker beige
+  static const Color cardBackground = Color(0xFFFFFDF9); // Warm off-white for cards
+  static const Color dividerColor = Color(0xFFE5DFD5);  // Warm beige divider
+  static const Color tableHeaderBg = Color(0xFFF0EBE3);
 
   // Text colors
   static const Color textPrimary = Color(0xFF0F172A);
@@ -42,6 +42,46 @@ class AppTheme {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [primaryColor, primaryDark],
+  );
+
+  // Rich diagonal gradient for hero sections
+  static const LinearGradient heroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF0D9488),
+      Color(0xFF0F766E),
+      Color(0xFF115E59),
+    ],
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  // Subtle surface gradient for cards
+  static const LinearGradient surfaceGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [cardBackground, surfaceLight],
+  );
+
+  // Accent gradient for special elements
+  static const LinearGradient accentGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [accentLight, accentColor],
+  );
+
+  // Success gradient for positive actions
+  static const LinearGradient successGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF34D399), successColor],
+  );
+
+  // Warm beige background gradient
+  static const LinearGradient warmBackgroundGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [surfaceLight, surfaceMedium],
   );
 
   // Shadow definitions
@@ -106,7 +146,10 @@ class AppTheme {
   static const Duration animSlow = Duration(milliseconds: 500);
 
   static ThemeData get lightTheme {
-    final baseTextTheme = GoogleFonts.interTextTheme();
+    // Use Outfit for headings - clean, modern, professional medical feel
+    final headingFont = GoogleFonts.outfit();
+    // Use Source Sans 3 for body - highly readable, scientific/medical aesthetic
+    final bodyFont = GoogleFonts.sourceSans3();
 
     return ThemeData(
       useMaterial3: true,
@@ -119,71 +162,86 @@ class AppTheme {
         error: errorColor,
       ),
       scaffoldBackgroundColor: surfaceLight,
-      textTheme: baseTextTheme.copyWith(
-        headlineLarge: baseTextTheme.headlineLarge?.copyWith(
+      textTheme: TextTheme(
+        headlineLarge: headingFont.copyWith(
           fontSize: 32,
           fontWeight: FontWeight.w700,
           color: textPrimary,
-          letterSpacing: -0.5,
+          letterSpacing: -0.8,
+          height: 1.15,
         ),
-        headlineMedium: baseTextTheme.headlineMedium?.copyWith(
+        headlineMedium: headingFont.copyWith(
           fontSize: 26,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: textPrimary,
-          letterSpacing: -0.3,
+          letterSpacing: -0.5,
+          height: 1.2,
         ),
-        headlineSmall: baseTextTheme.headlineSmall?.copyWith(
+        headlineSmall: headingFont.copyWith(
           fontSize: 22,
           fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: -0.3,
+          height: 1.25,
         ),
-        titleLarge: baseTextTheme.titleLarge?.copyWith(
-          fontSize: 18,
+        titleLarge: headingFont.copyWith(
+          fontSize: 19,
           fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: -0.2,
+          height: 1.3,
         ),
-        titleMedium: baseTextTheme.titleMedium?.copyWith(
+        titleMedium: headingFont.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: 0,
+          height: 1.35,
         ),
-        titleSmall: baseTextTheme.titleSmall?.copyWith(
+        titleSmall: headingFont.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: 0.1,
         ),
-        bodyLarge: baseTextTheme.bodyLarge?.copyWith(
+        bodyLarge: bodyFont.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: textPrimary,
-          height: 1.5,
+          height: 1.6,
+          letterSpacing: 0.15,
         ),
-        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
+        bodyMedium: bodyFont.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: textSecondary,
           height: 1.5,
+          letterSpacing: 0.1,
         ),
-        bodySmall: baseTextTheme.bodySmall?.copyWith(
+        bodySmall: bodyFont.copyWith(
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: textHint,
-          height: 1.4,
+          height: 1.45,
+          letterSpacing: 0.2,
         ),
-        labelLarge: baseTextTheme.labelLarge?.copyWith(
+        labelLarge: bodyFont.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: 0.3,
         ),
-        labelMedium: baseTextTheme.labelMedium?.copyWith(
+        labelMedium: bodyFont.copyWith(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: textSecondary,
+          letterSpacing: 0.4,
         ),
-        labelSmall: baseTextTheme.labelSmall?.copyWith(
+        labelSmall: bodyFont.copyWith(
           fontSize: 11,
           fontWeight: FontWeight.w500,
           color: textHint,
+          letterSpacing: 0.5,
         ),
       ),
 
@@ -192,14 +250,15 @@ class AppTheme {
         centerTitle: true,
         elevation: 0,
         scrolledUnderElevation: 1,
-        backgroundColor: Colors.white,
+        backgroundColor: cardBackground,
         foregroundColor: textPrimary,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.black.withOpacity(0.05),
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: bodyFont.copyWith(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: 0.15,
         ),
       ),
 
@@ -228,9 +287,10 @@ class AppTheme {
           ),
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
-          textStyle: GoogleFonts.inter(
+          textStyle: bodyFont.copyWith(
             fontSize: 15,
             fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
           ),
         ),
       ),
@@ -247,9 +307,10 @@ class AppTheme {
           ),
           side: const BorderSide(color: primaryColor, width: 1.5),
           foregroundColor: primaryColor,
-          textStyle: GoogleFonts.inter(
+          textStyle: bodyFont.copyWith(
             fontSize: 15,
             fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
           ),
         ),
       ),
@@ -258,7 +319,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: primaryColor,
-          textStyle: GoogleFonts.inter(
+          textStyle: bodyFont.copyWith(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -268,7 +329,7 @@ class AppTheme {
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: cardBackground,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusM),
           borderSide: const BorderSide(color: dividerColor, width: 1.5),
@@ -293,16 +354,16 @@ class AppTheme {
           horizontal: spacingM,
           vertical: spacingM,
         ),
-        hintStyle: GoogleFonts.inter(
+        hintStyle: bodyFont.copyWith(
           color: textHint,
           fontSize: 14,
         ),
-        labelStyle: GoogleFonts.inter(
+        labelStyle: bodyFont.copyWith(
           color: textSecondary,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
-        floatingLabelStyle: GoogleFonts.inter(
+        floatingLabelStyle: bodyFont.copyWith(
           color: primaryColor,
           fontSize: 14,
           fontWeight: FontWeight.w600,
@@ -311,20 +372,20 @@ class AppTheme {
 
       // Bottom navigation bar theme
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Colors.white,
+        backgroundColor: cardBackground,
         elevation: 0,
         height: 70,
         indicatorColor: primarySurface,
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.inter(
+            return bodyFont.copyWith(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: primaryColor,
             );
           }
-          return GoogleFonts.inter(
+          return bodyFont.copyWith(
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: textSecondary,
@@ -344,11 +405,11 @@ class AppTheme {
         unselectedLabelColor: textSecondary,
         indicatorColor: primaryColor,
         indicatorSize: TabBarIndicatorSize.label,
-        labelStyle: GoogleFonts.inter(
+        labelStyle: bodyFont.copyWith(
           fontWeight: FontWeight.w600,
           fontSize: 14,
         ),
-        unselectedLabelStyle: GoogleFonts.inter(
+        unselectedLabelStyle: bodyFont.copyWith(
           fontWeight: FontWeight.w500,
           fontSize: 14,
         ),
@@ -357,7 +418,7 @@ class AppTheme {
       // Chip theme
       chipTheme: ChipThemeData(
         backgroundColor: primarySurface,
-        labelStyle: GoogleFonts.inter(
+        labelStyle: bodyFont.copyWith(
           color: primaryDark,
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -391,21 +452,21 @@ class AppTheme {
         space: 1,
       ),
 
-      // Dialog theme - modern with smaller radius
+      // Dialog theme - modern with larger radius
       dialogTheme: DialogThemeData(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusXS),
+          borderRadius: BorderRadius.circular(radiusL),
         ),
         backgroundColor: cardBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shadowColor: Colors.black.withOpacity(0.15),
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: bodyFont.copyWith(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        contentTextStyle: GoogleFonts.inter(
+        contentTextStyle: bodyFont.copyWith(
           fontSize: 14,
           color: textSecondary,
         ),
@@ -419,7 +480,7 @@ class AppTheme {
         ),
         elevation: 4,
         backgroundColor: textPrimary,
-        contentTextStyle: GoogleFonts.inter(
+        contentTextStyle: bodyFont.copyWith(
           color: Colors.white,
           fontSize: 14,
         ),
@@ -445,12 +506,12 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusM),
         ),
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: bodyFont.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: textPrimary,
         ),
-        subtitleTextStyle: GoogleFonts.inter(
+        subtitleTextStyle: bodyFont.copyWith(
           fontSize: 14,
           color: textSecondary,
         ),

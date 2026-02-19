@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
 import '../shell/main_shell.dart';
 import 'register_screen.dart';
@@ -41,11 +42,22 @@ class _LoginScreenState extends State<LoginScreen> {
             (route) => false,
           );
         } else {
-          final error = context.read<AuthProvider>().errorMessage;
+          final errorKey = context.read<AuthProvider>().errorKey;
+          final lang = context.read<LanguageProvider>();
+          final errorMessage = errorKey != null
+              ? lang.t(errorKey)
+              : lang.t('loginFailed');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(error ?? 'Login failed'),
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(errorMessage)),
+                ],
+              ),
               backgroundColor: AppTheme.errorColor,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
@@ -56,10 +68,11 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final lang = context.watch<LanguageProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign In'),
+        title: Text(lang.t('signIn')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -101,13 +114,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Header
               Text(
-                'Welcome Back',
+                lang.t('welcomeBack'),
                 style: Theme.of(context).textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppTheme.spacingS),
               Text(
-                'Sign in to book appointments and manage your health',
+                lang.t('signInSubtitle'),
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -117,16 +130,16 @@ class _LoginScreenState extends State<LoginScreen> {
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
+                decoration: InputDecoration(
+                  labelText: lang.t('email'),
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
+                    return lang.t('pleaseEnterEmail');
                   }
                   if (!value.contains('@')) {
-                    return 'Please enter a valid email';
+                    return lang.t('invalidEmail');
                   }
                   return null;
                 },
@@ -138,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: lang.t('password'),
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -153,10 +166,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
+                    return lang.t('pleaseEnterPassword');
                   }
                   if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
+                    return lang.t('passwordMinLength');
                   }
                   return null;
                 },
@@ -177,9 +190,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Sign In',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      : Text(
+                          lang.t('signIn'),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                         ),
                 ),
               ),
@@ -190,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Don't have an account? ",
+                    lang.t('dontHaveAccount'),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   TextButton(
@@ -202,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       );
                     },
-                    child: const Text('Register'),
+                    child: Text(lang.t('register')),
                   ),
                 ],
               ),

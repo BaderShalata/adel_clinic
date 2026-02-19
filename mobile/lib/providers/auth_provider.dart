@@ -7,11 +7,15 @@ class AuthProvider with ChangeNotifier {
 
   AppUser? _user;
   bool _isLoading = false;
-  String? _errorMessage;
+  String? _errorKey; // Translation key for the error
 
   AppUser? get user => _user;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  /// Returns the translation key for the error message.
+  /// Use LanguageProvider.t(errorKey) to get the translated message.
+  String? get errorKey => _errorKey;
+  @Deprecated('Use errorKey instead')
+  String? get errorMessage => _errorKey;
   bool get isLoggedIn => _authService.isLoggedIn();
   bool get isAdmin => _user?.role == 'admin';
   bool get isDoctor => _user?.role == 'doctor';
@@ -19,7 +23,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> signIn(String email, String password) async {
     _isLoading = true;
-    _errorMessage = null;
+    _errorKey = null;
     notifyListeners();
 
     try {
@@ -27,8 +31,13 @@ class AuthProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return true;
+    } on AuthException catch (e) {
+      _errorKey = e.translationKey;
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorKey = 'loginFailed';
       _isLoading = false;
       notifyListeners();
       return false;
@@ -44,7 +53,7 @@ class AuthProvider with ChangeNotifier {
     required String gender,
   }) async {
     _isLoading = true;
-    _errorMessage = null;
+    _errorKey = null;
     notifyListeners();
 
     try {
@@ -59,8 +68,13 @@ class AuthProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return true;
+    } on AuthException catch (e) {
+      _errorKey = e.translationKey;
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorKey = 'registrationFailed';
       _isLoading = false;
       notifyListeners();
       return false;
@@ -74,7 +88,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   void clearError() {
-    _errorMessage = null;
+    _errorKey = null;
     notifyListeners();
   }
 }

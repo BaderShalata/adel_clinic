@@ -155,8 +155,10 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                               ),
                             )
                           : ListView.builder(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppTheme.spacingM,
+                              padding: const EdgeInsets.only(
+                                left: AppTheme.spacingM,
+                                right: AppTheme.spacingM,
+                                bottom: 120, // Space for floating nav bar
                               ),
                               itemCount: filteredDoctors.length,
                               itemBuilder: (context, index) {
@@ -238,7 +240,11 @@ class ModernDoctorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = _getLocalizedName(context);
+    final locale = Localizations.localeOf(context);
+    final languageCode = locale.languageCode;
+    final displayName = doctor.getLocalizedName(languageCode);
+    final localizedBio = doctor.getLocalizedBio(languageCode);
+    final localizedSpecialties = doctor.getLocalizedSpecialties(languageCode);
 
     return ModernCard(
       onTap: onTap,
@@ -274,11 +280,11 @@ class ModernDoctorCard extends StatelessWidget {
                     ),
                   ),
                 // Bio snippet
-                if (_getLocalizedBio(context) != null)
+                if (localizedBio != null && localizedBio.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: AppTheme.spacingXS),
                     child: Text(
-                      _getLocalizedBio(context)!,
+                      localizedBio,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppTheme.textSecondary,
                             height: 1.3,
@@ -291,7 +297,7 @@ class ModernDoctorCard extends StatelessWidget {
                 Wrap(
                   spacing: AppTheme.spacingXS,
                   runSpacing: AppTheme.spacingXS,
-                  children: doctor.specialties.take(2).map((spec) {
+                  children: localizedSpecialties.take(2).map((spec) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppTheme.spacingS,

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../providers/news_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
@@ -41,6 +42,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
 
     return Scaffold(
       body: SafeArea(
+        bottom: false, // Allow content to extend under floating nav bar
         child: RefreshIndicator(
           onRefresh: () => newsProvider.loadNews(),
           child: CustomScrollView(
@@ -55,13 +57,9 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                 child: _buildQuickActions(context, languageProvider),
               ),
 
-              // Location and Social Media Grid
+              // Location Card
               SliverToBoxAdapter(
-                child: _buildLocationAndSocialGrid(context, languageProvider),
-              ),
-
-              const SliverToBoxAdapter(
-                child: SizedBox(height: AppTheme.spacingM),
+                child: _buildLocationCard(context, languageProvider),
               ),
 
               // News Section Header
@@ -119,9 +117,9 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                   ),
                 ),
 
-              // Bottom spacing
+              // Bottom spacing for floating nav bar (72px height + 16px bottom margin + extra buffer)
               const SliverPadding(
-                padding: EdgeInsets.only(bottom: AppTheme.spacingXL),
+                padding: EdgeInsets.only(bottom: 120),
               ),
             ],
           ),
@@ -131,6 +129,8 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
   }
 
   Widget _buildHeader(BuildContext context, AuthProvider authProvider, LanguageProvider languageProvider) {
+    final isRtl = languageProvider.isRTL;
+
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       decoration: BoxDecoration(
@@ -149,48 +149,70 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
       ),
       child: Column(
         children: [
-          // Clinic Logo - Large with animation
-          Container(
-            width: 160,
-            height: 160,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
+          // Social media icons row - aligned based on RTL
+          Align(
+            alignment: isRtl ? Alignment.centerLeft : Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _MiniSocialButton(
+                  icon: FontAwesomeIcons.instagram,
+                  isInstagram: true,
+                  onTap: () => _openSocialMedia('instagram'),
+                ),
+                const SizedBox(width: 5),
+                _MiniSocialButton(
+                  icon: FontAwesomeIcons.facebookF,
+                  color: const Color(0xFF1877F2),
+                  onTap: () => _openSocialMedia('facebook'),
                 ),
               ],
             ),
-            child: ClipOval(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Image.asset(
-                  'assets/ClinicLogo.jpeg',
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          )
-              .animate()
-              .fadeIn(duration: AppTheme.animMedium)
-              .scale(delay: 100.ms, duration: AppTheme.animMedium),
-          const SizedBox(height: AppTheme.spacingM),
-          Text(
-            authProvider.isLoggedIn
-                ? '${languageProvider.t('welcomeBack')}, ${authProvider.user?.displayName ?? languageProvider.t('patient')}!'
-                : languageProvider.t('yourHealthOurPriority'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          ),
+          const SizedBox(height: AppTheme.spacingS),
+          // Clinic Logo - Large with animation
+          Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
                   color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-          )
-              .animate()
-              .fadeIn(delay: 200.ms, duration: AppTheme.animMedium)
-              .slideY(begin: 0.3, end: 0),
+                child: ClipOval(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Image.asset(
+                      'assets/ClinicLogo.jpeg',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: AppTheme.animMedium)
+                  .scale(delay: 100.ms, duration: AppTheme.animMedium),
+              const SizedBox(height: AppTheme.spacingM),
+              Text(
+                authProvider.isLoggedIn
+                    ? '${languageProvider.t('welcomeBack')}, ${authProvider.user?.displayName ?? languageProvider.t('patient')}!'
+                    : languageProvider.t('yourHealthOurPriority'),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppTheme.cardBackground,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                textAlign: TextAlign.center,
+              )
+                  .animate()
+                  .fadeIn(delay: 200.ms, duration: AppTheme.animMedium)
+                  .slideY(begin: 0.3, end: 0),
         ],
       ),
     );
@@ -336,129 +358,92 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     );
   }
 
-  Widget _buildLocationAndSocialGrid(BuildContext context, LanguageProvider languageProvider) {
+  Widget _buildLocationCard(BuildContext context, LanguageProvider languageProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Location Card
-          Expanded(
-            child: Animate(
-              effects: [
-                FadeEffect(delay: 500.ms, duration: AppTheme.animMedium),
-                SlideEffect(begin: const Offset(0, 0.2), end: Offset.zero),
-              ],
-              child: ModernCard(
-                onTap: _openMap,
-                padding: const EdgeInsets.all(AppTheme.spacingM),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(AppTheme.spacingM),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppTheme.successColor.withValues(alpha: 0.2),
-                            AppTheme.successColor.withValues(alpha: 0.05),
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.location_on,
-                        color: AppTheme.successColor,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(height: AppTheme.spacingS),
-                    Text(
-                      languageProvider.t('location'),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Saba Reihana\nMedical Center',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.textSecondary,
-                          ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppTheme.spacingS),
-                    Text(
-                      languageProvider.t('tapToOpen'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppTheme.spacingM),
-          // Social Media Card
-          Expanded(
-            child: Animate(
-              effects: [
-                FadeEffect(delay: 600.ms, duration: AppTheme.animMedium),
-                SlideEffect(begin: const Offset(0, 0.2), end: Offset.zero),
-              ],
-              child: ModernCard(
-                padding: const EdgeInsets.all(AppTheme.spacingM),
-                child: Column(
-                  children: [
-                    Text(
-                      languageProvider.t('followUs'),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: AppTheme.spacingM),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _SocialMediaButton(
-                          icon: Icons.facebook,
-                          color: const Color(0xFF1877F2),
-                          onTap: () => _openSocialMedia('facebook'),
-                        ),
-                        _SocialMediaButton(
-                          icon: Icons.camera_alt,
-                          color: const Color(0xFFE4405F),
-                          onTap: () => _openSocialMedia('instagram'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppTheme.spacingS),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _SocialMediaButton(
-                          icon: Icons.phone,
-                          color: const Color(0xFF25D366),
-                          onTap: () => _openSocialMedia('whatsapp'),
-                        ),
-                        _SocialMediaButton(
-                          icon: Icons.phone_in_talk,
-                          color: AppTheme.primaryColor,
-                          onTap: () => _openSocialMedia('phone'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+      child: Animate(
+        effects: [
+          FadeEffect(delay: 500.ms, duration: AppTheme.animMedium),
+          SlideEffect(begin: const Offset(0, 0.2), end: Offset.zero),
         ],
+        child: ModernCard(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.spacingM,
+            vertical: AppTheme.spacingS,
+          ),
+          child: Row(
+            children: [
+              // Clinic info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      languageProvider.t('clinicName'),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                ),
+              ),
+
+              // Quick action icons
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _CompactIconButton(
+                    icon: Icons.directions_rounded,
+                    color: AppTheme.primaryColor,
+                    onTap: _openMap,
+                  ),
+                  const SizedBox(width: 8),
+                  _CompactIconButton(
+                    icon: Icons.phone_rounded,
+                    color: AppTheme.accentColor,
+                    onTap: () => _makePhoneCall('tel:046740741'),
+                  ),
+                  const SizedBox(width: 8),
+                  _CompactIconButton(
+                    icon: FontAwesomeIcons.whatsapp,
+                    color: const Color(0xFF25D366),
+                    onTap: _openWhatsApp,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  Future<void> _makePhoneCall(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      await launchUrl(uri);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.read<LanguageProvider>().t('couldNotOpen'))),
+        );
+      }
+    }
+  }
+
+  Future<void> _openWhatsApp() async {
+    // Clinic WhatsApp number
+    final uri = Uri.parse('https://wa.me/97241234567');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.read<LanguageProvider>().t('couldNotOpen'))),
+        );
+      }
+    }
   }
 
   Future<void> _openSocialMedia(String platform) async {
@@ -616,12 +601,12 @@ class _QuickActionButton extends StatelessWidget {
   }
 }
 
-class _SocialMediaButton extends StatelessWidget {
+class _CompactIconButton extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
 
-  const _SocialMediaButton({
+  const _CompactIconButton({
     required this.icon,
     required this.color,
     required this.onTap,
@@ -629,19 +614,73 @@ class _SocialMediaButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusM),
-      child: Container(
-        padding: const EdgeInsets.all(AppTheme.spacingS),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+    return Material(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(AppTheme.radiusS),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radiusS),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon, color: color, size: 20),
         ),
-        child: Icon(
-          icon,
-          color: color,
-          size: 24,
+      ),
+    );
+  }
+}
+
+class _MiniSocialButton extends StatelessWidget {
+  final IconData icon;
+  final Color? color;
+  final bool isInstagram;
+  final VoidCallback onTap;
+
+  const _MiniSocialButton({
+    required this.icon,
+    this.color,
+    this.isInstagram = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Instagram gradient for icon
+    const instagramGradient = LinearGradient(
+      begin: Alignment.bottomLeft,
+      end: Alignment.topRight,
+      colors: [
+        Color(0xFFFEDA77), // Yellow
+        Color(0xFFF58529), // Orange
+        Color(0xFFDD2A7B), // Pink
+        Color(0xFF8134AF), // Purple
+      ],
+      stops: [0.0, 0.25, 0.6, 1.0],
+    );
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceLight.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: isInstagram
+              ? ShaderMask(
+                  shaderCallback: (bounds) => instagramGradient.createShader(bounds),
+                  child: FaIcon(
+                    icon,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                )
+              : FaIcon(
+                  icon,
+                  color: color ?? Colors.white,
+                  size: 20,
+                ),
         ),
       ),
     );

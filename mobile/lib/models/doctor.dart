@@ -91,4 +91,44 @@ class Doctor {
       isActive: json['isActive'] as bool,
     );
   }
+
+  /// Get the doctor name based on language code
+  String getLocalizedName(String languageCode) {
+    if (languageCode == 'en' && fullNameEn != null && fullNameEn!.isNotEmpty) {
+      return fullNameEn!;
+    } else if (languageCode == 'he' && fullNameHe != null && fullNameHe!.isNotEmpty) {
+      return fullNameHe!;
+    }
+    return fullName;
+  }
+
+  /// Get the specialties based on language code
+  List<String> getLocalizedSpecialties(String languageCode) {
+    if (languageCode == 'en' && specialtiesEn != null && specialtiesEn!.isNotEmpty) {
+      return specialtiesEn!;
+    } else if (languageCode == 'he' && specialtiesHe != null && specialtiesHe!.isNotEmpty) {
+      return specialtiesHe!;
+    }
+    return specialties;
+  }
+
+  /// Get the qualifications based on language code
+  List<String> getLocalizedQualifications(String languageCode) {
+    if (languageCode == 'en' && qualificationsEn != null && qualificationsEn!.isNotEmpty) {
+      return qualificationsEn!;
+    } else if (languageCode == 'he' && qualificationsHe != null && qualificationsHe!.isNotEmpty) {
+      return qualificationsHe!;
+    }
+    return qualifications;
+  }
+
+  /// Get the bio based on language code
+  String? getLocalizedBio(String languageCode) {
+    if (languageCode == 'en' && bioEn != null && bioEn!.isNotEmpty) {
+      return bioEn;
+    } else if (languageCode == 'he' && bioHe != null && bioHe!.isNotEmpty) {
+      return bioHe;
+    }
+    return bio;
+  }
 }

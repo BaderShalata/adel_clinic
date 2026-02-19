@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/doctor_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/booking_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/service_utils.dart';
 import '../../widgets/common/modern_card.dart';
@@ -66,19 +67,22 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
 
     // Check if logged in
     if (!authProvider.isLoggedIn) {
+      final lang = context.read<LanguageProvider>();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              Icon(Icons.info_outline, color: Colors.white, size: 20),
-              SizedBox(width: 8),
-              Text('Please sign in to book an appointment'),
+              const Icon(Icons.info_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(lang.t('pleaseLoginToBook')),
+              ),
             ],
           ),
           backgroundColor: AppTheme.warningColor,
           behavior: SnackBarBehavior.floating,
           action: SnackBarAction(
-            label: 'Sign In',
+            label: lang.t('signIn'),
             textColor: Colors.white,
             onPressed: () {
               Navigator.push(
@@ -100,9 +104,10 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
       _navigateToSlotSelection(bookingProvider, doctor, doctor.specialties.first);
     } else {
       // No specialties defined
+      final lang = context.read<LanguageProvider>();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No services available for this doctor'),
+        SnackBar(
+          content: Text(lang.t('noServicesForDoctor')),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -110,6 +115,11 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   }
 
   void _showServiceSelectionSheet(doctor, BookingProvider bookingProvider) {
+    final locale = Localizations.localeOf(context);
+    final languageCode = locale.languageCode;
+    final localizedSpecialties = doctor.getLocalizedSpecialties(languageCode);
+    final lang = context.read<LanguageProvider>();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -135,26 +145,31 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
               ),
             ),
             Text(
-              'Select Service',
+              lang.t('selectService'),
               style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
             const SizedBox(height: AppTheme.spacingS),
             Text(
-              'Choose the type of consultation',
+              lang.t('chooseConsultationType'),
               style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.textSecondary,
                   ),
             ),
             const SizedBox(height: AppTheme.spacingL),
-            ...doctor.specialties.map<Widget>((specialty) {
+            ...List.generate(doctor.specialties.length, (index) {
+              final originalSpecialty = doctor.specialties[index];
+              final displaySpecialty = index < localizedSpecialties.length
+                  ? localizedSpecialties[index]
+                  : originalSpecialty;
+
               return Container(
                 margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
                 child: ListTile(
                   onTap: () {
                     Navigator.pop(ctx);
-                    _navigateToSlotSelection(bookingProvider, doctor, specialty);
+                    _navigateToSlotSelection(bookingProvider, doctor, originalSpecialty);
                   },
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppTheme.radiusM),
@@ -173,7 +188,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                     ),
                   ),
                   title: Text(
-                    specialty,
+                    displaySpecialty,
                     style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                   trailing: const Icon(
@@ -206,14 +221,21 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   Widget build(BuildContext context) {
     final doctorProvider = context.watch<DoctorProvider>();
     final doctor = doctorProvider.selectedDoctor;
-    final displayName = _getLocalizedName(context);
+    final locale = Localizations.localeOf(context);
+    final languageCode = locale.languageCode;
+    final displayName = doctor?.getLocalizedName(languageCode) ?? '';
+    final lang = context.watch<LanguageProvider>();
 
     if (doctorProvider.isLoading || doctor == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Doctor Details')),
+        appBar: AppBar(title: Text(lang.t('doctorDetails'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
+
+    final localizedSpecialties = doctor.getLocalizedSpecialties(languageCode);
+    final localizedBio = doctor.getLocalizedBio(languageCode);
+    final localizedQualifications = doctor.getLocalizedQualifications(languageCode);
 
     return Scaffold(
       backgroundColor: AppTheme.surfaceLight,
@@ -358,7 +380,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                           ),
                           const SizedBox(width: AppTheme.spacingS),
                           Text(
-                            'Specialties',
+                            lang.t('specialties'),
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -369,7 +391,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: doctor.specialties
+                        children: localizedSpecialties
                             .map(
                               (spec) => Container(
                                 padding: const EdgeInsets.symmetric(
@@ -404,7 +426,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                 ).animate().fadeIn(duration: AppTheme.animMedium).slideY(begin: 0.1, end: 0),
 
                 // Bio Section
-                if (doctor.bio != null && doctor.bio!.isNotEmpty)
+                if (localizedBio != null && localizedBio.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
                     child: ModernCard(
@@ -428,7 +450,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                               ),
                               const SizedBox(width: AppTheme.spacingS),
                               Text(
-                                'About',
+                                lang.t('about'),
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -437,7 +459,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                           ),
                           const SizedBox(height: AppTheme.spacingM),
                           Text(
-                            doctor.bio!,
+                            localizedBio,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   height: 1.5,
                                 ),
@@ -448,7 +470,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                   ).animate().fadeIn(delay: 100.ms, duration: AppTheme.animMedium).slideY(begin: 0.1, end: 0),
 
                 // Qualifications Section
-                if (doctor.qualifications.isNotEmpty)
+                if (localizedQualifications.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
                     child: ModernCard(
@@ -472,7 +494,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                               ),
                               const SizedBox(width: AppTheme.spacingS),
                               Text(
-                                'Qualifications',
+                                lang.t('qualifications'),
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -480,7 +502,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: AppTheme.spacingM),
-                          ...doctor.qualifications.map(
+                          ...localizedQualifications.map(
                             (qual) => Padding(
                               padding: const EdgeInsets.only(bottom: AppTheme.spacingS),
                               child: Row(
@@ -529,7 +551,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                           ),
                           const SizedBox(width: AppTheme.spacingS),
                           Text(
-                            'Weekly Schedule',
+                            lang.t('weeklySchedule'),
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -563,7 +585,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _handleBookAppointment,
         icon: const Icon(Icons.calendar_today),
-        label: const Text('Book Appointment'),
+        label: Text(lang.t('bookAppointment')),
         backgroundColor: AppTheme.primaryColor,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -622,7 +644,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                 ),
                 const SizedBox(height: AppTheme.spacingM),
                 Text(
-                  'No schedule available',
+                  context.read<LanguageProvider>().t('noScheduleAvailable'),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppTheme.textSecondary,
                       ),
@@ -773,7 +795,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Services',
+                context.read<LanguageProvider>().t('services'),
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

@@ -25,6 +25,7 @@ import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaCh
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { healthcareColors, gradients } from '../theme/healthcareTheme';
 
 interface AnalyticsData {
   totalPatients: number;
@@ -51,23 +52,6 @@ interface AnalyticsData {
     count: number;
   }>;
 }
-
-// Healthcare-optimized color palette
-const healthcareColors = {
-  primary: '#0891b2', // Calming teal
-  secondary: '#0d9488', // Healthcare green
-  accent: '#6366f1', // Soft purple for accents
-  success: '#10b981', // Emerald green
-  warning: '#f59e0b', // Amber
-  error: '#ef4444', // Red
-  info: '#3b82f6', // Blue
-  gradient: {
-    primary: 'linear-gradient(135deg, #0891b2 0%, #0d9488 100%)',
-    secondary: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-    success: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
-    warning: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
-  },
-};
 
 // Modern glassmorphism stat card
 const StatCard: React.FC<{
@@ -264,7 +248,7 @@ export const Dashboard: React.FC = () => {
           variant="h4"
           sx={{
             fontWeight: 700,
-            background: healthcareColors.gradient.primary,
+            background: gradients.primary,
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -288,7 +272,7 @@ export const Dashboard: React.FC = () => {
             gap: 2,
           }}
         >
-          <CircularProgress sx={{ color: healthcareColors.primary }} />
+          <CircularProgress sx={{ color: healthcareColors.primary.main }} />
           <Typography color="text.secondary">{t('loadingDashboard')}</Typography>
         </Box>
       ) : analyticsError ? (
@@ -328,28 +312,28 @@ export const Dashboard: React.FC = () => {
               title={t('totalPatients')}
               value={analytics?.totalPatients || 0}
               icon={<PeopleIcon sx={{ color: 'white', fontSize: 28 }} />}
-              gradient={healthcareColors.gradient.primary}
+              gradient={gradients.primary}
               subtitle={t('registeredInSystem')}
             />
             <StatCard
               title={t('totalDoctors')}
               value={analytics?.totalDoctors || 0}
               icon={<DoctorIcon sx={{ color: 'white', fontSize: 28 }} />}
-              gradient={healthcareColors.gradient.success}
+              gradient={gradients.success}
               subtitle={t('activePractitioners')}
             />
             <StatCard
               title={t('todayAppointments')}
               value={analytics?.todayAppointments || 0}
               icon={<TimeIcon sx={{ color: 'white', fontSize: 28 }} />}
-              gradient={healthcareColors.gradient.warning}
+              gradient={gradients.warning}
               subtitle={`${analytics?.completedToday || 0} ${t('completed')}`}
             />
             <StatCard
               title={t('upcoming')}
               value={analytics?.upcomingAppointments || 0}
               icon={<TrendingUpIcon sx={{ color: 'white', fontSize: 28 }} />}
-              gradient={healthcareColors.gradient.secondary}
+              gradient={gradients.secondary}
               subtitle={t('scheduledAppointments')}
             />
           </Box>
@@ -372,7 +356,7 @@ export const Dashboard: React.FC = () => {
                 variant="h5"
                 sx={{
                   fontWeight: 600,
-                  background: healthcareColors.gradient.primary,
+                  background: gradients.primary,
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
@@ -398,8 +382,8 @@ export const Dashboard: React.FC = () => {
                       px: 1,
                       height: 36,
                       fontSize: '0.875rem',
-                      bgcolor: alpha(healthcareColors.primary, 0.1),
-                      color: healthcareColors.primary,
+                      bgcolor: alpha(healthcareColors.primary.main, 0.1),
+                      color: healthcareColors.primary.main,
                       fontWeight: 500,
                     }}
                   />
@@ -437,8 +421,8 @@ export const Dashboard: React.FC = () => {
                 <AreaChart data={trends}>
                   <defs>
                     <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={healthcareColors.primary} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={healthcareColors.primary} stopOpacity={0} />
+                      <stop offset="5%" stopColor={healthcareColors.primary.main} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={healthcareColors.primary.main} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -464,7 +448,7 @@ export const Dashboard: React.FC = () => {
                   <Area
                     type="monotone"
                     dataKey="count"
-                    stroke={healthcareColors.primary}
+                    stroke={healthcareColors.primary.main}
                     strokeWidth={2}
                     fill="url(#colorCount)"
                   />

@@ -3,6 +3,17 @@ import '../models/user.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
 
+/// Custom exception for authentication errors with a translation key
+class AuthException implements Exception {
+  final String translationKey;
+  final String? details;
+
+  AuthException(this.translationKey, [this.details]);
+
+  @override
+  String toString() => translationKey;
+}
+
 class AuthService {
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
@@ -14,6 +25,34 @@ class AuthService {
 
   User? get currentFirebaseUser => _firebaseAuth.currentUser;
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+
+  /// Maps Firebase error codes to translation keys
+  String _mapFirebaseErrorToKey(String code) {
+    switch (code) {
+      case 'user-not-found':
+        return 'userNotFound';
+      case 'wrong-password':
+        return 'wrongPassword';
+      case 'invalid-email':
+        return 'invalidEmail';
+      case 'email-already-in-use':
+        return 'emailAlreadyInUse';
+      case 'weak-password':
+        return 'weakPassword';
+      case 'too-many-requests':
+        return 'tooManyRequests';
+      case 'user-disabled':
+        return 'userDisabled';
+      case 'network-request-failed':
+        return 'networkError';
+      case 'operation-not-allowed':
+        return 'operationNotAllowed';
+      case 'invalid-credential':
+        return 'invalidCredential';
+      default:
+        return 'loginFailed';
+    }
+  }
 
   Future<AppUser?> signInWithEmailPassword(
     String email,
@@ -27,7 +66,7 @@ class AuthService {
       );
 
       if (credential.user == null) {
-        throw Exception('Sign in failed');
+        throw AuthException('loginFailed');
       }
 
       // Get ID token
@@ -39,8 +78,11 @@ class AuthService {
       // Get user data from backend
       final response = await _apiService.login(email, password);
       return AppUser.fromJson(response);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapFirebaseErrorToKey(e.code), e.message);
     } catch (e) {
-      throw Exception('Sign in failed: $e');
+      if (e is AuthException) rethrow;
+      throw AuthException('loginFailed', e.toString());
     }
   }
 
@@ -60,7 +102,7 @@ class AuthService {
       );
 
       if (credential.user == null) {
-        throw Exception('Registration failed');
+        throw AuthException('registrationFailed');
       }
 
       // Update display name
@@ -83,8 +125,11 @@ class AuthService {
       );
 
       return AppUser.fromJson(response);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapFirebaseErrorToKey(e.code), e.message);
     } catch (e) {
-      throw Exception('Registration failed: $e');
+      if (e is AuthException) rethrow;
+      throw AuthException('registrationFailed', e.toString());
     }
   }
 

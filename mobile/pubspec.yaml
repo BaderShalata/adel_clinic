@@ -60,6 +60,7 @@ dependencies:
   flutter_animate: ^3.1.0
   cached_network_image: ^3.3.1
   google_fonts: ^6.2.1
+  font_awesome_flutter: ^10.6.0
 
   # Image Picker
   image_picker: ^1.0.7

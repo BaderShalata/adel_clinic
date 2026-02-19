@@ -171,7 +171,11 @@ class DoctorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = _getLocalizedName(context);
+    final locale = Localizations.localeOf(context);
+    final languageCode = locale.languageCode;
+    final displayName = doctor.getLocalizedName(languageCode);
+    final localizedSpecialties = doctor.getLocalizedSpecialties(languageCode);
+    final localizedQualifications = doctor.getLocalizedQualifications(languageCode);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -208,7 +212,7 @@ class DoctorCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 4,
-                      children: doctor.specialties
+                      children: localizedSpecialties
                           .take(2)
                           .map(
                             (spec) => Chip(
@@ -223,11 +227,11 @@ class DoctorCard extends StatelessWidget {
                           )
                           .toList(),
                     ),
-                    if (doctor.qualifications.isNotEmpty)
+                    if (localizedQualifications.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          doctor.qualifications.take(2).join(', '),
+                          localizedQualifications.take(2).join(', '),
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,

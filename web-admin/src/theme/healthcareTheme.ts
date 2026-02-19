@@ -10,101 +10,109 @@
  * - Professional, clinical aesthetic
  */
 
-// Core healthcare color palette
+// Core healthcare color palette - matching mobile app theme
 export const healthcareColors = {
-  // Primary colors - calming teals
+  // Primary colors - deep rich teal (matching mobile)
   primary: {
-    main: '#0891b2',
-    light: '#22d3ee',
-    dark: '#0e7490',
+    main: '#0F766E',      // Deep teal - matches mobile primaryColor
+    light: '#0D9488',     // Lighter teal - matches mobile primaryLight
+    dark: '#115E59',      // Darker teal - matches mobile primaryDark
+    surface: '#CCFBF1',   // Teal surface tint - matches mobile primarySurface
     contrastText: '#ffffff',
   },
-  // Secondary - healthcare green
+  // Secondary - matches primary for consistency
   secondary: {
-    main: '#0d9488',
-    light: '#2dd4bf',
-    dark: '#0f766e',
+    main: '#0D9488',
+    light: '#14B8A6',
+    dark: '#0F766E',
     contrastText: '#ffffff',
   },
-  // Accent - soft purple
+  // Accent - soft purple (matching mobile)
   accent: {
     main: '#6366f1',
     light: '#818cf8',
     dark: '#4f46e5',
     contrastText: '#ffffff',
   },
-  // Semantic colors
-  success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
+  // Semantic colors (matching mobile)
+  success: '#22C55E',
+  successLight: '#DCFCE7',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+  error: '#EF4444',
+  errorLight: '#FEE2E2',
   info: '#3b82f6',
 
-  // Neutral palette
+  // Neutral palette - warm beige tones (matching mobile)
   neutral: {
-    50: '#f8fafc',
-    100: '#f1f5f9',
-    200: '#e2e8f0',
-    300: '#cbd5e1',
-    400: '#94a3b8',
+    50: '#FFFDF9',        // cardBackground - warm off-white
+    100: '#F7F3EE',       // surfaceLight - warm beige
+    200: '#F0EBE3',       // surfaceMedium - slightly darker beige
+    300: '#E5DFD5',       // dividerColor - warm beige divider
+    400: '#94a3b8',       // textHint
     500: '#64748b',
-    600: '#475569',
+    600: '#475569',       // textSecondary
     700: '#334155',
     800: '#1e293b',
-    900: '#0f172a',
+    900: '#0f172a',       // textPrimary
   },
 
-  // Background colors
+  // Background colors - warm beige palette (matching mobile)
   background: {
-    default: '#f8fafc',
-    paper: 'rgba(255, 255, 255, 0.9)',
-    glass: 'rgba(255, 255, 255, 0.85)',
+    default: '#F7F3EE',   // surfaceLight - warm beige background
+    paper: '#FFFDF9',     // cardBackground - warm off-white
+    glass: 'rgba(255, 253, 249, 0.92)',
+    surface: '#F0EBE3',   // surfaceMedium
   },
 };
 
-// Gradient presets
+// Gradient presets - matching mobile app theme
 export const gradients = {
-  primary: 'linear-gradient(135deg, #0891b2 0%, #0d9488 100%)',
+  primary: 'linear-gradient(135deg, #0D9488 0%, #115E59 100%)',    // Deep teal gradient
+  header: 'linear-gradient(180deg, #0F766E 0%, #115E59 100%)',     // Header gradient (matching mobile)
   secondary: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-  success: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
-  warning: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
-  error: 'linear-gradient(135deg, #ef4444 0%, #f87171 100%)',
+  success: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
+  warning: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+  error: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
   info: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
   // Special gradients
-  tealToGreen: 'linear-gradient(135deg, #0891b2 0%, #10b981 100%)',
+  tealToGreen: 'linear-gradient(135deg, #0F766E 0%, #22C55E 100%)',
   purpleToBlue: 'linear-gradient(135deg, #6366f1 0%, #3b82f6 100%)',
-  sunsetWarm: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
+  sunsetWarm: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
   // Subtle background gradients
-  subtlePrimary: 'linear-gradient(135deg, rgba(8, 145, 178, 0.1) 0%, rgba(13, 148, 136, 0.05) 100%)',
+  subtlePrimary: 'linear-gradient(135deg, rgba(15, 118, 110, 0.1) 0%, rgba(17, 94, 89, 0.05) 100%)',
   subtleAccent: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%)',
+  // Warm beige background gradient
+  warmBeige: 'linear-gradient(180deg, #F7F3EE 0%, #F0EBE3 100%)',
 };
 
-// Glassmorphism styles
+// Glassmorphism styles - warm beige tones
 export const glassStyles = {
   card: {
-    background: 'rgba(255, 255, 255, 0.95)',
+    background: '#FFFDF9',                          // Warm off-white
     backdropFilter: 'blur(20px)',
-    border: '1px solid rgba(0, 0, 0, 0.08)',
-    borderRadius: 8,
+    border: '1px solid #E5DFD5',                    // Warm beige border
+    borderRadius: 16,
   },
   cardHover: {
     transform: 'translateY(-4px)',
-    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 20px 40px rgba(15, 118, 110, 0.08)',  // Teal-tinted shadow
   },
   panel: {
-    background: 'rgba(255, 255, 255, 0.85)',
+    background: 'rgba(255, 253, 249, 0.92)',
     backdropFilter: 'blur(16px)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
+    border: '1px solid #E5DFD5',
+    borderRadius: 16,
   },
   overlay: {
-    background: 'rgba(0, 0, 0, 0.4)',
+    background: 'rgba(15, 23, 42, 0.4)',
     backdropFilter: 'blur(8px)',
   },
-  // Modern dialog styling - smaller radius to prevent cropping
+  // Modern dialog styling
   dialog: {
-    background: '#ffffff',
-    borderRadius: '8px',
-    boxShadow: '0 24px 48px -12px rgba(0, 0, 0, 0.18)',
+    background: '#FFFDF9',
+    borderRadius: '16px',
+    boxShadow: '0 24px 48px -12px rgba(0, 0, 0, 0.15)',
     border: 'none',
   },
 };
@@ -167,32 +175,32 @@ export const animations = {
   },
 };
 
-// Status colors for appointments/medical records
+// Status colors for appointments/medical records (matching mobile)
 export const statusColors = {
   scheduled: {
-    color: '#3b82f6',
-    bg: 'rgba(59, 130, 246, 0.1)',
-    gradient: gradients.info,
+    color: '#0F766E',                               // Primary teal
+    bg: '#CCFBF1',                                  // Primary surface
+    gradient: gradients.primary,
   },
   completed: {
-    color: '#10b981',
-    bg: 'rgba(16, 185, 129, 0.1)',
+    color: '#22C55E',                               // Success green
+    bg: '#DCFCE7',                                  // Success light
     gradient: gradients.success,
   },
   pending: {
-    color: '#f59e0b',
-    bg: 'rgba(245, 158, 11, 0.1)',
+    color: '#F59E0B',                               // Warning amber
+    bg: '#FEF3C7',                                  // Warning light
     gradient: gradients.warning,
   },
   cancelled: {
-    color: '#ef4444',
-    bg: 'rgba(239, 68, 68, 0.1)',
+    color: '#EF4444',                               // Error red
+    bg: '#FEE2E2',                                  // Error light
     gradient: gradients.error,
   },
   'no-show': {
-    color: '#64748b',
-    bg: 'rgba(100, 116, 139, 0.1)',
-    gradient: 'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)',
+    color: '#475569',                               // Text secondary
+    bg: '#F0EBE3',                                  // Surface medium
+    gradient: 'linear-gradient(135deg, #475569 0%, #94a3b8 100%)',
   },
 };
 
@@ -234,13 +242,14 @@ export const spacing = {
   '3xl': 64,
 };
 
-// Border radius scale
+// Border radius scale (matching mobile app)
 export const borderRadius = {
-  sm: 6,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  full: 9999,
+  xs: 4,      // radiusXS
+  sm: 8,      // radiusS
+  md: 12,     // radiusM
+  lg: 16,     // radiusL
+  xl: 24,     // radiusXL
+  full: 100,  // radiusRound
 };
 
 // Helper function to get status styles
