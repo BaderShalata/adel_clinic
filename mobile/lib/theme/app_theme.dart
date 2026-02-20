@@ -145,11 +145,14 @@ class AppTheme {
   static const Duration animMedium = Duration(milliseconds: 300);
   static const Duration animSlow = Duration(milliseconds: 500);
 
+  // Font fallbacks for RTL languages
+  static const List<String> _fontFallback = ['Cairo', 'Noto Sans Arabic', 'Noto Sans Hebrew'];
+
   static ThemeData get lightTheme {
-    // Use Outfit for headings - clean, modern, professional medical feel
-    final headingFont = GoogleFonts.outfit();
-    // Use Source Sans 3 for body - highly readable, scientific/medical aesthetic
-    final bodyFont = GoogleFonts.sourceSans3();
+    // Rubik - modern, geometric, supports Hebrew + Latin (designed in Israel)
+    // Cairo fallback for Arabic script
+    final headingFont = GoogleFonts.rubik();
+    final bodyFont = GoogleFonts.rubik();
 
     return ThemeData(
       useMaterial3: true,
@@ -165,83 +168,95 @@ class AppTheme {
       textTheme: TextTheme(
         headlineLarge: headingFont.copyWith(
           fontSize: 32,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           color: textPrimary,
-          letterSpacing: -0.8,
-          height: 1.15,
+          letterSpacing: -1.0,
+          height: 1.1,
+          fontFamilyFallback: _fontFallback,
         ),
         headlineMedium: headingFont.copyWith(
           fontSize: 26,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: textPrimary,
-          letterSpacing: -0.5,
-          height: 1.2,
+          letterSpacing: -0.6,
+          height: 1.15,
+          fontFamilyFallback: _fontFallback,
         ),
         headlineSmall: headingFont.copyWith(
           fontSize: 22,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: textPrimary,
-          letterSpacing: -0.3,
-          height: 1.25,
+          letterSpacing: -0.4,
+          height: 1.2,
+          fontFamilyFallback: _fontFallback,
         ),
         titleLarge: headingFont.copyWith(
           fontSize: 19,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: textPrimary,
-          letterSpacing: -0.2,
-          height: 1.3,
+          letterSpacing: -0.3,
+          height: 1.25,
+          fontFamilyFallback: _fontFallback,
         ),
         titleMedium: headingFont.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: textPrimary,
-          letterSpacing: 0,
-          height: 1.35,
+          letterSpacing: -0.1,
+          height: 1.3,
+          fontFamilyFallback: _fontFallback,
         ),
         titleSmall: headingFont.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: textPrimary,
-          letterSpacing: 0.1,
+          letterSpacing: 0,
+          fontFamilyFallback: _fontFallback,
         ),
         bodyLarge: bodyFont.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: textPrimary,
-          height: 1.6,
-          letterSpacing: 0.15,
+          height: 1.55,
+          letterSpacing: 0.1,
+          fontFamilyFallback: _fontFallback,
         ),
         bodyMedium: bodyFont.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: textSecondary,
           height: 1.5,
-          letterSpacing: 0.1,
+          letterSpacing: 0.05,
+          fontFamilyFallback: _fontFallback,
         ),
         bodySmall: bodyFont.copyWith(
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: textHint,
-          height: 1.45,
-          letterSpacing: 0.2,
+          height: 1.4,
+          letterSpacing: 0.1,
+          fontFamilyFallback: _fontFallback,
         ),
         labelLarge: bodyFont.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: textPrimary,
-          letterSpacing: 0.3,
+          letterSpacing: 0.1,
+          fontFamilyFallback: _fontFallback,
         ),
         labelMedium: bodyFont.copyWith(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: textSecondary,
-          letterSpacing: 0.4,
+          letterSpacing: 0.2,
+          fontFamilyFallback: _fontFallback,
         ),
         labelSmall: bodyFont.copyWith(
           fontSize: 11,
           fontWeight: FontWeight.w500,
           color: textHint,
-          letterSpacing: 0.5,
+          letterSpacing: 0.2,
+          fontFamilyFallback: _fontFallback,
         ),
       ),
 
@@ -254,11 +269,12 @@ class AppTheme {
         foregroundColor: textPrimary,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.black.withOpacity(0.05),
-        titleTextStyle: bodyFont.copyWith(
+        titleTextStyle: headingFont.copyWith(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: textPrimary,
-          letterSpacing: 0.15,
+          letterSpacing: -0.1,
+          fontFamilyFallback: _fontFallback,
         ),
       ),
 
@@ -290,7 +306,8 @@ class AppTheme {
           textStyle: bodyFont.copyWith(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.3,
+            letterSpacing: 0.1,
+            fontFamilyFallback: _fontFallback,
           ),
         ),
       ),
@@ -310,7 +327,8 @@ class AppTheme {
           textStyle: bodyFont.copyWith(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.3,
+            letterSpacing: 0.1,
+            fontFamilyFallback: _fontFallback,
           ),
         ),
       ),
@@ -322,6 +340,7 @@ class AppTheme {
           textStyle: bodyFont.copyWith(
             fontSize: 14,
             fontWeight: FontWeight.w600,
+            fontFamilyFallback: _fontFallback,
           ),
         ),
       ),
@@ -357,16 +376,19 @@ class AppTheme {
         hintStyle: bodyFont.copyWith(
           color: textHint,
           fontSize: 14,
+          fontFamilyFallback: _fontFallback,
         ),
         labelStyle: bodyFont.copyWith(
           color: textSecondary,
           fontSize: 14,
           fontWeight: FontWeight.w500,
+          fontFamilyFallback: _fontFallback,
         ),
         floatingLabelStyle: bodyFont.copyWith(
           color: primaryColor,
           fontSize: 14,
           fontWeight: FontWeight.w600,
+          fontFamilyFallback: _fontFallback,
         ),
       ),
 
@@ -383,12 +405,14 @@ class AppTheme {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: primaryColor,
+              fontFamilyFallback: _fontFallback,
             );
           }
           return bodyFont.copyWith(
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: textSecondary,
+            fontFamilyFallback: _fontFallback,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
@@ -408,10 +432,12 @@ class AppTheme {
         labelStyle: bodyFont.copyWith(
           fontWeight: FontWeight.w600,
           fontSize: 14,
+          fontFamilyFallback: _fontFallback,
         ),
         unselectedLabelStyle: bodyFont.copyWith(
           fontWeight: FontWeight.w500,
           fontSize: 14,
+          fontFamilyFallback: _fontFallback,
         ),
       ),
 
@@ -422,6 +448,7 @@ class AppTheme {
           color: primaryDark,
           fontSize: 12,
           fontWeight: FontWeight.w600,
+          fontFamilyFallback: _fontFallback,
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: spacingM,

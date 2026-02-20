@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/doctor.dart';
 import '../../providers/booking_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
 import 'slot_selection_screen.dart';
 
@@ -10,9 +11,11 @@ class DoctorSelectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Doctor'),
+        title: Text(lang.t('selectDoctor')),
       ),
       body: Consumer<BookingProvider>(
         builder: (context, bookingProvider, child) {
@@ -32,7 +35,7 @@ class DoctorSelectionScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppTheme.spacingM),
                   Text(
-                    'Error loading doctors',
+                    lang.t('errorLoadingDoctors'),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppTheme.spacingS),
@@ -43,7 +46,7 @@ class DoctorSelectionScreen extends StatelessWidget {
                             .loadDoctorsForService(bookingProvider.selectedService!);
                       }
                     },
-                    child: const Text('Retry'),
+                    child: Text(lang.t('retry')),
                   ),
                 ],
               ),
@@ -64,7 +67,7 @@ class DoctorSelectionScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppTheme.spacingM),
                   Text(
-                    'No doctors available for this service',
+                    lang.t('noDoctorsForService'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Colors.grey[600],
                         ),
@@ -83,12 +86,12 @@ class DoctorSelectionScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Select Doctor',
+                      lang.t('selectDoctor'),
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: AppTheme.spacingXS),
                     Text(
-                      'Service: ${bookingProvider.selectedService}',
+                      '${lang.t('service')}: ${bookingProvider.selectedService}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.w500,

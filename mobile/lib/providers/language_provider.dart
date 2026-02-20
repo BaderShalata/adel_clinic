@@ -121,6 +121,7 @@ class LanguageProvider extends ChangeNotifier {
     // Appointments status
     'pending': {'en': 'Pending', 'ar': 'قيد الانتظار', 'he': 'ממתין'},
     'confirmed': {'en': 'Confirmed', 'ar': 'مؤكد', 'he': 'מאושר'},
+    'scheduled': {'en': 'Scheduled', 'ar': 'مجدول', 'he': 'מתוכנן'},
     'completed': {'en': 'Completed', 'ar': 'مكتمل', 'he': 'הושלם'},
     'cancelled': {'en': 'Cancelled', 'ar': 'ملغى', 'he': 'בוטל'},
     'noShow': {'en': 'No Show', 'ar': 'لم يحضر', 'he': 'לא הגיע'},
@@ -221,5 +222,65 @@ class LanguageProvider extends ChangeNotifier {
     'ok': {'en': 'OK', 'ar': 'حسناً', 'he': 'אישור'},
     'close': {'en': 'Close', 'ar': 'إغلاق', 'he': 'סגור'},
     'patient': {'en': 'Patient', 'ar': 'مريض', 'he': 'מטופל'},
+
+    // Dialogs & Confirmations
+    'signOutConfirmation': {'en': 'Are you sure you want to sign out?', 'ar': 'هل أنت متأكد أنك تريد تسجيل الخروج؟', 'he': 'האם אתה בטוח שברצונך להתנתק?'},
+    'keepAppointment': {'en': 'Keep Appointment', 'ar': 'الاحتفاظ بالموعد', 'he': 'שמור תור'},
+    'deleteHistory': {'en': 'Delete History', 'ar': 'حذف السجل', 'he': 'מחק היסטוריה'},
+    'deleteAppointmentHistory': {'en': 'Delete Appointment History?', 'ar': 'حذف سجل المواعيد؟', 'he': 'למחוק היסטוריית תורים?'},
+    'deleteHistoryWarning': {'en': 'This will permanently delete all past appointments. This action cannot be undone.', 'ar': 'سيؤدي هذا إلى حذف جميع المواعيد السابقة نهائياً. لا يمكن التراجع عن هذا الإجراء.', 'he': 'פעולה זו תמחק לצמיתות את כל התורים הקודמים. לא ניתן לבטל פעולה זו.'},
+    'deletingHistory': {'en': 'Deleting history...', 'ar': 'جاري حذف السجل...', 'he': 'מוחק היסטוריה...'},
+    'appointmentsDeleted': {'en': 'appointment(s) deleted', 'ar': 'موعد/مواعيد محذوفة', 'he': 'תורים נמחקו'},
+    'noAppointmentsToDelete': {'en': 'No appointments to delete', 'ar': 'لا توجد مواعيد للحذف', 'he': 'אין תורים למחיקה'},
+    'cancelAppointmentQuestion': {'en': 'Cancel Appointment?', 'ar': 'إلغاء الموعد؟', 'he': 'לבטל את התור?'},
+    'cancelAppointmentWarning': {'en': 'This action cannot be undone. You will need to book a new appointment if you change your mind.', 'ar': 'لا يمكن التراجع عن هذا الإجراء. ستحتاج إلى حجز موعد جديد إذا غيرت رأيك.', 'he': 'לא ניתן לבטל פעולה זו. תצטרך לקבוע תור חדש אם תשנה את דעתך.'},
+    'awaitingConfirmation': {'en': 'Awaiting clinic confirmation', 'ar': 'في انتظار تأكيد العيادة', 'he': 'ממתין לאישור המרפאה'},
+    'failedToCancel': {'en': 'Failed to cancel', 'ar': 'فشل في الإلغاء', 'he': 'הביטול נכשל'},
+
+    // Appointments screen
+    'upcoming': {'en': 'Upcoming', 'ar': 'القادمة', 'he': 'קרובים'},
+    'past': {'en': 'Past', 'ar': 'السابقة', 'he': 'קודמים'},
+    'book': {'en': 'Book', 'ar': 'حجز', 'he': 'הזמן'},
+    'signInToViewAppointments': {'en': 'Sign in to view your appointments', 'ar': 'سجل دخولك لعرض مواعيدك', 'he': 'התחבר כדי לצפות בתורים שלך'},
+    'trackAppointments': {'en': 'Track your upcoming appointments and view your medical history', 'ar': 'تتبع مواعيدك القادمة وعرض تاريخك الطبي', 'he': 'עקוב אחר התורים הקרובים שלך וצפה בהיסטוריה הרפואית'},
+    'loadingAppointments': {'en': 'Loading appointments...', 'ar': 'جاري تحميل المواعيد...', 'he': 'טוען תורים...'},
+    'clearHistory': {'en': 'Clear History', 'ar': 'مسح السجل', 'he': 'נקה היסטוריה'},
+    'noPastAppointments': {'en': 'No past appointments', 'ar': 'لا توجد مواعيد سابقة', 'he': 'אין תורים קודמים'},
+
+    // Profile screen
+    'editProfileComingSoon': {'en': 'Edit Profile coming soon!', 'ar': 'تعديل الملف قريباً!', 'he': 'עריכת פרופיל בקרוב!'},
+
+    // Calendar days
+    'sunday': {'en': 'Sunday', 'ar': 'الأحد', 'he': 'יום ראשון'},
+    'monday': {'en': 'Monday', 'ar': 'الاثنين', 'he': 'יום שני'},
+    'tuesday': {'en': 'Tuesday', 'ar': 'الثلاثاء', 'he': 'יום שלישי'},
+    'wednesday': {'en': 'Wednesday', 'ar': 'الأربعاء', 'he': 'יום רביעי'},
+    'thursday': {'en': 'Thursday', 'ar': 'الخميس', 'he': 'יום חמישי'},
+    'friday': {'en': 'Friday', 'ar': 'الجمعة', 'he': 'יום שישי'},
+    'saturday': {'en': 'Saturday', 'ar': 'السبت', 'he': 'יום שבת'},
+    'schedule': {'en': 'Schedule', 'ar': 'الجدول', 'he': 'לוח זמנים'},
+    'minSlots': {'en': 'min slots', 'ar': 'دقيقة للموعد', 'he': 'דקות לתור'},
+
+    // Booking flow
+    'step': {'en': 'Step', 'ar': 'الخطوة', 'he': 'שלב'},
+    'of': {'en': 'of', 'ar': 'من', 'he': 'מתוך'},
+    'tapToSelect': {'en': 'Tap to select', 'ar': 'انقر للاختيار', 'he': 'לחץ לבחירה'},
+    'noServicesAvailable': {'en': 'No services available', 'ar': 'لا توجد خدمات متاحة', 'he': 'אין שירותים זמינים'},
+    'chooseConsultationNeeded': {'en': 'Choose the type of consultation you need', 'ar': 'اختر نوع الاستشارة التي تحتاجها', 'he': 'בחר את סוג הייעוץ שאתה צריך'},
+    'notesOptional': {'en': 'Notes (optional)', 'ar': 'ملاحظات (اختياري)', 'he': 'הערות (אופציונלי)'},
+    'anySpecificRequirements': {'en': 'Any specific requirements...', 'ar': 'أي متطلبات خاصة...', 'he': 'דרישות מיוחדות...'},
+    'willBeAddedToWaitingList': {'en': 'You will be added to the waiting list for:', 'ar': 'سيتم إضافتك لقائمة الانتظار لـ:', 'he': 'תתווסף לרשימת ההמתנה עבור:'},
+    'pleaseLoginToJoinWaitingList': {'en': 'Please log in to join the waiting list', 'ar': 'يرجى تسجيل الدخول للانضمام لقائمة الانتظار', 'he': 'אנא התחבר כדי להצטרף לרשימת ההמתנה'},
+    'noSlotInformation': {'en': 'No slot information available', 'ar': 'لا تتوفر معلومات عن المواعيد', 'he': 'אין מידע על תורים זמינים'},
+    'editDoctor': {'en': 'Edit Doctor', 'ar': 'تعديل الطبيب', 'he': 'ערוך רופא'},
+
+    // Short day names
+    'sun': {'en': 'Sun', 'ar': 'أحد', 'he': 'א\''},
+    'mon': {'en': 'Mon', 'ar': 'اثن', 'he': 'ב\''},
+    'tue': {'en': 'Tue', 'ar': 'ثلا', 'he': 'ג\''},
+    'wed': {'en': 'Wed', 'ar': 'أرب', 'he': 'ד\''},
+    'thu': {'en': 'Thu', 'ar': 'خمي', 'he': 'ה\''},
+    'fri': {'en': 'Fri', 'ar': 'جمع', 'he': 'ו\''},
+    'sat': {'en': 'Sat', 'ar': 'سبت', 'he': 'ש\''},
   };
 }

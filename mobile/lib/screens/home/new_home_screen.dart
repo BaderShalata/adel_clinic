@@ -86,18 +86,18 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                   ),
                 )
               else if (newsProvider.news.isEmpty)
-                const SliverFillRemaining(
+                SliverFillRemaining(
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.article_outlined,
                           size: 64,
                           color: AppTheme.textHint,
                         ),
-                        SizedBox(height: AppTheme.spacingM),
-                        Text('No news available'),
+                        const SizedBox(height: AppTheme.spacingM),
+                        Text(languageProvider.t('noNews')),
                       ],
                     ),
                   ),
@@ -471,7 +471,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not open $platform')),
+            SnackBar(content: Text('${context.read<LanguageProvider>().t('couldNotOpen')} $platform')),
           );
         }
       }
@@ -663,7 +663,7 @@ class _MiniSocialButton extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppTheme.surfaceLight.withValues(alpha: 0.9),
+          color: AppTheme.cardBackground,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(

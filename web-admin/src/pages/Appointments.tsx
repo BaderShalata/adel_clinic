@@ -52,6 +52,7 @@ import {
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAppointmentNotification } from '../hooks/useAppointmentNotification';
 import dayjs from 'dayjs';
 
 interface Appointment {
@@ -152,7 +153,13 @@ export const Appointments: React.FC = () => {
       const response = await apiClient.get('/appointments');
       return response.data;
     },
+    // Poll every 30 seconds to check for new appointments
+    refetchInterval: 500000,
+    refetchIntervalInBackground: true,
   });
+
+  // Play notification sound when new pending appointments are detected
+  useAppointmentNotification(appointments, true);
 
   const { data: doctors } = useQuery<Doctor[]>({
     queryKey: ['doctors'],
@@ -851,7 +858,7 @@ export const Appointments: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={appointment.status}
+                            label={t(appointment.status === 'no-show' ? 'noShow' : appointment.status)}
                             color={getStatusColor(appointment.status)}
                             size="small"
                           />
@@ -1450,12 +1457,12 @@ export const Appointments: React.FC = () => {
                                     {apt.patientName}
                                   </Typography>
                                   <Typography variant="caption" color="text.secondary">
-                                    {apt.doctorName} • {apt.serviceType || 'General'}
+                                    {apt.doctorName} • {apt.serviceType || t('general')}
                                   </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
                                   <Chip
-                                    label={apt.status}
+                                    label={t(apt.status === 'no-show' ? 'noShow' : apt.status)}
                                     color={getStatusColor(apt.status)}
                                     size="small"
                                     sx={{ height: 20, fontSize: '0.65rem' }}

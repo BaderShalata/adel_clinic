@@ -467,7 +467,8 @@ export class DoctorController {
           }
           const aptDateStr = appointmentDate.toISOString().split('T')[0];
           // Only count active appointments on this date as booked
-          if (aptDateStr === dateStr && data.appointmentTime && ['scheduled', 'completed'].includes(data.status)) {
+          // Include 'pending' to lock slots while awaiting approval
+          if (aptDateStr === dateStr && data.appointmentTime && ['pending', 'scheduled', 'completed'].includes(data.status)) {
             bookedSlots.add(data.appointmentTime);
           }
         }

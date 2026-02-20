@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/booking_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/appointment_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 
@@ -41,25 +42,26 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
     return days;
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime date, LanguageProvider lang) {
     final months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    final days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return '${days[date.weekday % 7]}\n${date.day} ${months[date.month - 1]}';
+    final dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    final dayName = lang.t(dayKeys[date.weekday % 7]);
+    return '$dayName\n${date.day} ${months[date.month - 1]}';
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  Future<void> _showJoinWaitingListDialog(BookingProvider bookingProvider) async {
+  Future<void> _showJoinWaitingListDialog(BookingProvider bookingProvider, LanguageProvider lang) async {
     final authProvider = context.read<AuthProvider>();
     if (!authProvider.isLoggedIn) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in to join the waiting list'),
+        SnackBar(
+          content: Text(lang.t('pleaseLoginToJoinWaitingList')),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -70,15 +72,15 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Join Waiting List'),
+      builder: (ctx) => AlertDialog(
+        title: Text(lang.t('joinWaitingList')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'You will be added to the waiting list for:',
-              style: Theme.of(context).textTheme.bodyMedium,
+              lang.t('willBeAddedToWaitingList'),
+              style: Theme.of(ctx).textTheme.bodyMedium,
             ),
             const SizedBox(height: AppTheme.spacingM),
             Container(
@@ -96,7 +98,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          bookingProvider.selectedDoctor?.fullName ?? 'Doctor',
+                          bookingProvider.selectedDoctor?.fullName ?? lang.t('doctor'),
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -128,10 +130,10 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             const SizedBox(height: AppTheme.spacingM),
             TextField(
               controller: waitingListNotesController,
-              decoration: const InputDecoration(
-                labelText: 'Notes (optional)',
-                hintText: 'Any specific requirements...',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: lang.t('notesOptional'),
+                hintText: lang.t('anySpecificRequirements'),
+                border: const OutlineInputBorder(),
               ),
               maxLines: 2,
             ),
@@ -139,12 +141,12 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(lang.t('cancel')),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Join Waiting List'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(lang.t('joinWaitingList')),
           ),
         ],
       ),
@@ -165,8 +167,8 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Added to waiting list! We\'ll notify you when a slot opens.'),
+        SnackBar(
+          content: Text(lang.t('addedToWaitingList')),
           backgroundColor: AppTheme.successColor,
         ),
       );
@@ -176,22 +178,21 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to join waiting list: ${e.toString().replaceAll('Exception: ', '')}'),
+          content: Text('${lang.t('failedToJoinWaitingList')}: ${e.toString().replaceAll('Exception: ', '')}'),
           backgroundColor: AppTheme.errorColor,
         ),
       );
     }
   }
 
-  Future<void> _confirmBooking() async {
+  Future<void> _confirmBooking(LanguageProvider lang) async {
     final bookingProvider = context.read<BookingProvider>();
     final authProvider = context.read<AuthProvider>();
-    final appointmentProvider = context.read<AppointmentProvider>();
 
     if (bookingProvider.selectedTimeSlot == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a time slot'),
+        SnackBar(
+          content: Text(lang.t('pleaseSelectTimeSlot')),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -201,8 +202,8 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
     final patientId = authProvider.user?.id;
     if (patientId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in to book an appointment'),
+        SnackBar(
+          content: Text(lang.t('pleaseLoginToBook')),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -212,31 +213,31 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
     // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Booking'),
+      builder: (ctx) => AlertDialog(
+        title: Text(lang.t('confirmBooking')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Service: ${bookingProvider.selectedService}'),
+            Text('${lang.t('service')}: ${bookingProvider.selectedService}'),
             const SizedBox(height: 8),
-            Text('Doctor: ${bookingProvider.selectedDoctor?.fullName}'),
+            Text('${lang.t('doctor')}: ${bookingProvider.selectedDoctor?.fullName}'),
             const SizedBox(height: 8),
             Text(
-              'Date: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+              '${lang.t('date')}: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
             ),
             const SizedBox(height: 8),
-            Text('Time: ${bookingProvider.selectedTimeSlot}'),
+            Text('${lang.t('time')}: ${bookingProvider.selectedTimeSlot}'),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(lang.t('cancel')),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Confirm'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(lang.t('confirm')),
           ),
         ],
       ),
@@ -256,10 +257,10 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
       context.read<AppointmentProvider>().loadAppointments();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Appointment request submitted! Awaiting clinic confirmation.'),
+        SnackBar(
+          content: Text(lang.t('appointmentBooked')),
           backgroundColor: AppTheme.successColor,
-          duration: Duration(seconds: 4),
+          duration: const Duration(seconds: 4),
         ),
       );
       // Pop all booking screens and go back to main
@@ -267,14 +268,14 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(bookingProvider.errorMessage ?? 'Failed to book appointment'),
+          content: Text(bookingProvider.errorMessage ?? lang.t('failedToBook')),
           backgroundColor: AppTheme.errorColor,
         ),
       );
     }
   }
 
-  Widget _buildSlotsContent(BuildContext context, BookingProvider bookingProvider) {
+  Widget _buildSlotsContent(BuildContext context, BookingProvider bookingProvider, LanguageProvider lang) {
     final slots = bookingProvider.availableSlots;
 
     // Check if doctor is working on this day (has total slots)
@@ -297,7 +298,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             ),
             const SizedBox(height: AppTheme.spacingM),
             Text(
-              'Doctor is not available on this day',
+              lang.t('doctorNotAvailable'),
               style: Theme.of(context)
                   .textTheme
                   .titleMedium
@@ -321,7 +322,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             ),
             const SizedBox(height: AppTheme.spacingM),
             Text(
-              'All slots are booked for this day',
+              lang.t('allSlotsBooked'),
               style: Theme.of(context)
                   .textTheme
                   .titleMedium
@@ -329,9 +330,9 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             ),
             const SizedBox(height: AppTheme.spacingL),
             OutlinedButton.icon(
-              onPressed: () => _showJoinWaitingListDialog(bookingProvider),
+              onPressed: () => _showJoinWaitingListDialog(bookingProvider, lang),
               icon: const Icon(Icons.schedule),
-              label: const Text('Join Waiting List'),
+              label: Text(lang.t('joinWaitingList')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.primaryColor,
                 side: const BorderSide(color: AppTheme.primaryColor),
@@ -343,7 +344,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             ),
             const SizedBox(height: AppTheme.spacingS),
             Text(
-              'Get notified when a slot opens up',
+              lang.t('getNotified'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.grey[500],
                   ),
@@ -363,7 +364,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
               horizontal: AppTheme.spacingM,
             ),
             child: Text(
-              '${slots.availableSlots} slots available',
+              '${slots.availableSlots} ${lang.t('slotsAvailable')}',
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
@@ -445,7 +446,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
           ),
           const SizedBox(height: AppTheme.spacingM),
           Text(
-            'No slot information available',
+            lang.t('noSlotInformation'),
             style: Theme.of(context)
                 .textTheme
                 .titleMedium
@@ -459,10 +460,11 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final days = _getNext14Days();
+    final lang = context.watch<LanguageProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Time'),
+        title: Text(lang.t('selectTime')),
       ),
       body: Consumer<BookingProvider>(
         builder: (context, bookingProvider, child) {
@@ -476,7 +478,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      bookingProvider.selectedDoctor?.fullName ?? 'Doctor',
+                      bookingProvider.selectedDoctor?.fullName ?? lang.t('doctor'),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -527,7 +529,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            _formatDate(date),
+                            _formatDate(date, lang),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: isSelected ? Colors.white : Colors.black87,
@@ -549,7 +551,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
               Expanded(
                 child: bookingProvider.isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : _buildSlotsContent(context, bookingProvider),
+                    : _buildSlotsContent(context, bookingProvider, lang),
               ),
 
               // Notes and Book button
@@ -570,10 +572,10 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                     children: [
                       TextField(
                         controller: _notesController,
-                        decoration: const InputDecoration(
-                          hintText: 'Add notes (optional)',
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(
+                        decoration: InputDecoration(
+                          hintText: lang.t('addNotes'),
+                          border: const OutlineInputBorder(),
+                          contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 8,
                           ),
@@ -587,7 +589,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                         child: ElevatedButton(
                           onPressed: bookingProvider.selectedTimeSlot != null &&
                                   !bookingProvider.isLoading
-                              ? _confirmBooking
+                              ? () => _confirmBooking(lang)
                               : null,
                           child: bookingProvider.isLoading
                               ? const SizedBox(
@@ -598,9 +600,9 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text(
-                                  'Book Appointment',
-                                  style: TextStyle(
+                              : Text(
+                                  lang.t('bookAppointment'),
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),

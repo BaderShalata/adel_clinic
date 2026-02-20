@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/booking_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
 import '../../widgets/common/loading_indicator.dart';
@@ -94,9 +95,11 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>();
+
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Book Appointment')),
+        appBar: AppBar(title: Text(lang.t('bookAppointment'))),
         body: const Padding(
           padding: EdgeInsets.all(AppTheme.spacingM),
           child: ShimmerList(itemCount: 4, itemHeight: 100),
@@ -106,7 +109,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
 
     if (_services.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Book Appointment')),
+        appBar: AppBar(title: Text(lang.t('bookAppointment'))),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -126,7 +129,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
               ),
               const SizedBox(height: AppTheme.spacingM),
               Text(
-                'No services available',
+                lang.t('noServicesAvailable'),
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
@@ -176,7 +179,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
               ),
               const SizedBox(width: AppTheme.spacingS),
               Text(
-                'Step 1 of 4',
+                '${lang.t('step')} 1 ${lang.t('of')} 4',
                 style: Theme.of(context)
                     .textTheme
                     .labelMedium
@@ -189,7 +192,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
           ),
           const SizedBox(height: AppTheme.spacingM),
           Text(
-            'Select Service',
+            lang.t('selectService'),
             style: Theme.of(context)
                 .textTheme
                 .headlineSmall
@@ -199,7 +202,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
           ),
           const SizedBox(height: AppTheme.spacingXS),
           Text(
-            'Choose the type of consultation you need',
+            lang.t('chooseConsultationNeeded'),
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -212,7 +215,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Book Appointment')),
+      appBar: AppBar(title: Text(lang.t('bookAppointment'))),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -288,7 +291,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                             const SizedBox(
                                 height: 4),
                             Text(
-                              'Tap to select',
+                              lang.t('tapToSelect'),
                               style: Theme.of(
                                       context)
                                   .textTheme

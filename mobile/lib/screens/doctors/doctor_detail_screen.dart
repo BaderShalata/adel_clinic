@@ -340,7 +340,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
               if (context.watch<AuthProvider>().isAdmin)
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.white),
-                  tooltip: 'Edit Doctor',
+                  tooltip: lang.t('editDoctor'),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -593,8 +593,15 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   }
 
   List<Widget> _buildWeeklySchedule(List weeklySchedule) {
-    final dayAbbr = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    final dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    final lang = context.read<LanguageProvider>();
+    final dayAbbr = [
+      lang.t('sun'), lang.t('mon'), lang.t('tue'),
+      lang.t('wed'), lang.t('thu'), lang.t('fri'), lang.t('sat')
+    ];
+    final dayNames = [
+      lang.t('sunday'), lang.t('monday'), lang.t('tuesday'),
+      lang.t('wednesday'), lang.t('thursday'), lang.t('friday'), lang.t('saturday')
+    ];
 
     // Build a map of day -> schedules and collect all service types
     final Map<int, List<Map<String, dynamic>>> daySchedules = {};
@@ -832,6 +839,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
   }
 
   void _showDayScheduleDetail(int dayOfWeek, List<Map<String, dynamic>> schedules, String dayName) {
+    final lang = context.read<LanguageProvider>();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -868,7 +876,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                 ),
                 const SizedBox(width: AppTheme.spacingM),
                 Text(
-                  '$dayName Schedule',
+                  '$dayName - ${lang.t('schedule')}',
                   style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -942,7 +950,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                             borderRadius: BorderRadius.circular(AppTheme.radiusS),
                           ),
                           child: Text(
-                            '$slotDuration min slots',
+                            '$slotDuration ${lang.t('minSlots')}',
                             style: const TextStyle(
                               fontSize: 12,
                               color: AppTheme.successColor,

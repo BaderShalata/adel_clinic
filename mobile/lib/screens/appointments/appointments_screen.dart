@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/appointment_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/doctor_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../models/appointment.dart';
 import '../../models/doctor.dart';
 import '../../theme/app_theme.dart';
@@ -58,12 +59,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final appointmentProvider = context.watch<AppointmentProvider>();
+    final lang = context.watch<LanguageProvider>();
 
     // If not logged in, show login prompt
     if (!authProvider.isLoggedIn) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('My Appointments'),
+          title: Text(lang.t('myAppointments')),
         ),
         body: Center(
           child: Padding(
@@ -85,13 +87,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                 ),
                 const SizedBox(height: AppTheme.spacingL),
                 Text(
-                  'Sign in to view your appointments',
+                  lang.t('signInToViewAppointments'),
                   style: Theme.of(context).textTheme.titleLarge,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppTheme.spacingS),
                 Text(
-                  'Track your upcoming appointments and view your medical history',
+                  lang.t('trackAppointments'),
                   style: Theme.of(context).textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -103,7 +105,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );
                   },
-                  child: const Text('Sign In'),
+                  child: Text(lang.t('signIn')),
                 ),
               ],
             ),
@@ -114,12 +116,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Appointments'),
+        title: Text(lang.t('myAppointments')),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Past'),
+          tabs: [
+            Tab(text: lang.t('upcoming')),
+            Tab(text: lang.t('past')),
           ],
         ),
       ),
@@ -133,12 +135,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
             );
           },
           icon: const Icon(Icons.add),
-          label: const Text('Book'),
+          label: Text(lang.t('book')),
           backgroundColor: AppTheme.primaryColor,
         ),
       ),
       body: appointmentProvider.isLoading
-          ? const LoadingIndicator(message: 'Loading appointments...')
+          ? LoadingIndicator(message: lang.t('loadingAppointments'))
           : appointmentProvider.errorMessage != null
               ? ErrorView(
                   message: appointmentProvider.errorMessage!,
@@ -149,7 +151,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                   children: [
                     _AppointmentList(
                       appointments: appointmentProvider.upcomingAppointments,
-                      emptyMessage: 'No upcoming appointments',
+                      emptyMessage: lang.t('noUpcomingAppointments'),
                       emptyIcon: Icons.event_available,
                       showCancelButton: true,
                       isPastTab: false,
@@ -245,7 +247,7 @@ class _PastAppointmentList extends StatelessWidget {
     required this.appointments,
   });
 
-  void _showClearHistoryDialog(BuildContext context) {
+  void _showClearHistoryDialog(BuildContext context, LanguageProvider lang) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -283,14 +285,14 @@ class _PastAppointmentList extends StatelessWidget {
             ),
             const SizedBox(height: AppTheme.spacingM),
             Text(
-              'Delete Appointment History?',
+              lang.t('deleteAppointmentHistory'),
               style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
             const SizedBox(height: AppTheme.spacingS),
             Text(
-              'This will permanently delete ${appointments.length} past appointment${appointments.length == 1 ? '' : 's'}. This action cannot be undone.',
+              lang.t('deleteHistoryWarning'),
               textAlign: TextAlign.center,
               style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.textSecondary,
@@ -305,7 +307,7 @@ class _PastAppointmentList extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(lang.t('cancel')),
                   ),
                 ),
                 const SizedBox(width: AppTheme.spacingM),
@@ -315,10 +317,10 @@ class _PastAppointmentList extends StatelessWidget {
                       Navigator.pop(ctx);
                       // Show loading indicator
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Row(
                             children: [
-                              SizedBox(
+                              const SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
@@ -326,12 +328,12 @@ class _PastAppointmentList extends StatelessWidget {
                                   color: Colors.white,
                                 ),
                               ),
-                              SizedBox(width: 12),
-                              Text('Deleting history...'),
+                              const SizedBox(width: 12),
+                              Text(lang.t('deletingHistory')),
                             ],
                           ),
                           backgroundColor: AppTheme.primaryColor,
-                          duration: Duration(seconds: 10),
+                          duration: const Duration(seconds: 10),
                         ),
                       );
 
@@ -347,7 +349,7 @@ class _PastAppointmentList extends StatelessWidget {
                               children: [
                                 const Icon(Icons.check_circle, color: Colors.white, size: 20),
                                 const SizedBox(width: 8),
-                                Text('$deletedCount appointment(s) deleted'),
+                                Text('$deletedCount ${lang.t('appointmentsDeleted')}'),
                               ],
                             ),
                             backgroundColor: AppTheme.successColor,
@@ -356,12 +358,12 @@ class _PastAppointmentList extends StatelessWidget {
                         );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Row(
                               children: [
-                                Icon(Icons.info_outline, color: Colors.white, size: 20),
-                                SizedBox(width: 8),
-                                Text('No appointments to delete'),
+                                const Icon(Icons.info_outline, color: Colors.white, size: 20),
+                                const SizedBox(width: 8),
+                                Text(lang.t('noAppointmentsToDelete')),
                               ],
                             ),
                             backgroundColor: AppTheme.warningColor,
@@ -374,7 +376,7 @@ class _PastAppointmentList extends StatelessWidget {
                       backgroundColor: AppTheme.errorColor,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: const Text('Delete History'),
+                    child: Text(lang.t('deleteHistory')),
                   ),
                 ),
               ],
@@ -388,6 +390,8 @@ class _PastAppointmentList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>();
+
     if (appointments.isEmpty) {
       return Center(
         child: Column(
@@ -407,7 +411,7 @@ class _PastAppointmentList extends StatelessWidget {
             ),
             const SizedBox(height: AppTheme.spacingM),
             Text(
-              'No past appointments',
+              lang.t('noPastAppointments'),
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppTheme.textSecondary,
                   ),
@@ -434,15 +438,15 @@ class _PastAppointmentList extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${appointments.length} appointment${appointments.length == 1 ? '' : 's'}',
+                    '${appointments.length} ${lang.t('appointments').toLowerCase()}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppTheme.textSecondary,
                         ),
                   ),
                   TextButton.icon(
-                    onPressed: () => _showClearHistoryDialog(context),
+                    onPressed: () => _showClearHistoryDialog(context, lang),
                     icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text('Clear History'),
+                    label: Text(lang.t('clearHistory')),
                     style: TextButton.styleFrom(
                       foregroundColor: AppTheme.textSecondary,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -550,6 +554,7 @@ class AppointmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('EEE, MMM d, yyyy');
     final doctorProvider = context.watch<DoctorProvider>();
+    final lang = context.watch<LanguageProvider>();
     final statusColor = _getStatusColor();
     final doctorName = _getLocalizedDoctorName(context, doctorProvider);
     final doctor = _getDoctor(doctorProvider);
@@ -742,7 +747,7 @@ class AppointmentCard extends StatelessWidget {
                         const SizedBox(width: AppTheme.spacingXS),
                         Expanded(
                           child: Text(
-                            'Awaiting clinic confirmation',
+                            lang.t('awaitingConfirmation'),
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: StatusColors.pending,
                                   fontWeight: FontWeight.w500,
@@ -794,7 +799,7 @@ class AppointmentCard extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () => _showCancelBottomSheet(context),
                       icon: const Icon(Icons.event_busy_rounded, size: 18),
-                      label: const Text('Cancel Appointment'),
+                      label: Text(lang.t('cancelAppointment')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: StatusColors.cancelled.withValues(alpha: 0.1),
                         foregroundColor: StatusColors.cancelled,
@@ -826,6 +831,7 @@ class AppointmentCard extends StatelessWidget {
 
   void _showCancelBottomSheet(BuildContext context) {
     final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
+    final lang = context.read<LanguageProvider>();
 
     showModalBottomSheet(
       context: context,
@@ -870,7 +876,7 @@ class AppointmentCard extends StatelessWidget {
 
             // Title
             Text(
-              'Cancel Appointment?',
+              lang.t('cancelAppointmentQuestion'),
               style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -928,7 +934,7 @@ class AppointmentCard extends StatelessWidget {
             ),
 
             Text(
-              'This action cannot be undone. You will need to book a new appointment if you change your mind.',
+              lang.t('cancelAppointmentWarning'),
               textAlign: TextAlign.center,
               style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                     color: AppTheme.textSecondary,
@@ -948,7 +954,7 @@ class AppointmentCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppTheme.radiusM),
                       ),
                     ),
-                    child: const Text('Keep Appointment'),
+                    child: Text(lang.t('keepAppointment')),
                   ),
                 ),
                 const SizedBox(width: AppTheme.spacingM),
@@ -963,12 +969,12 @@ class AppointmentCard extends StatelessWidget {
                       if (context.mounted) {
                         if (success) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Row(
                                 children: [
-                                  Icon(Icons.check_circle, color: Colors.white, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Appointment cancelled'),
+                                  const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(lang.t('appointmentCancelled')),
                                 ],
                               ),
                               backgroundColor: StatusColors.confirmed,
@@ -984,7 +990,7 @@ class AppointmentCard extends StatelessWidget {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      appointmentProvider.errorMessage ?? 'Failed to cancel',
+                                      appointmentProvider.errorMessage ?? lang.t('failedToCancel'),
                                     ),
                                   ),
                                 ],
@@ -1003,7 +1009,7 @@ class AppointmentCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppTheme.radiusM),
                       ),
                     ),
-                    child: const Text('Cancel Appointment'),
+                    child: Text(lang.t('cancelAppointment')),
                   ),
                 ),
               ],
@@ -1075,7 +1081,7 @@ class _StatusBadge extends StatelessWidget {
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 4),
           Text(
-            _formatStatus(status),
+            _getTranslatedStatus(context, status),
             style: TextStyle(
               color: color,
               fontSize: 11,
@@ -1087,10 +1093,24 @@ class _StatusBadge extends StatelessWidget {
     );
   }
 
-  String _formatStatus(String status) {
-    return status
-        .split('-')
-        .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
-        .join(' ');
+  String _getTranslatedStatus(BuildContext context, String status) {
+    final lang = context.read<LanguageProvider>();
+    // Map status to translation key (e.g., 'no-show' -> 'noShow')
+    switch (status.toLowerCase()) {
+      case 'no-show':
+        return lang.t('noShow');
+      case 'confirmed':
+        return lang.t('confirmed');
+      case 'scheduled':
+        return lang.t('scheduled');
+      case 'pending':
+        return lang.t('pending');
+      case 'cancelled':
+        return lang.t('cancelled');
+      case 'completed':
+        return lang.t('completed');
+      default:
+        return status;
+    }
   }
 }

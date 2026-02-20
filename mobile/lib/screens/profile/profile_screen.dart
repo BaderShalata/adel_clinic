@@ -272,7 +272,7 @@ class ProfileScreen extends StatelessWidget {
                   title: languageProvider.t('editProfile'),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Edit Profile coming soon!')),
+                      SnackBar(content: Text(languageProvider.t('editProfileComingSoon'))),
                     );
                   },
                 ),
@@ -286,7 +286,7 @@ class ProfileScreen extends StatelessWidget {
                 const Divider(height: 1),
                 _ProfileMenuItem(
                   icon: Icons.info_outline,
-                  title: 'About',
+                  title: languageProvider.t('about'),
                   onTap: () {
                     showAboutDialog(
                       context: context,
@@ -313,16 +313,16 @@ class ProfileScreen extends StatelessWidget {
               onTap: () async {
                 final confirm = await showDialog<bool>(
                   context: context,
-                  builder: (context) => AlertDialog(
+                  builder: (ctx) => AlertDialog(
                     title: Text(languageProvider.t('logout')),
-                    content: const Text('Are you sure you want to sign out?'),
+                    content: Text(languageProvider.t('signOutConfirmation')),
                     actions: [
                       TextButton(
-                        onPressed: () => Navigator.pop(context, false),
+                        onPressed: () => Navigator.pop(ctx, false),
                         child: Text(languageProvider.t('cancel')),
                       ),
                       TextButton(
-                        onPressed: () => Navigator.pop(context, true),
+                        onPressed: () => Navigator.pop(ctx, true),
                         child: Text(languageProvider.t('logout')),
                       ),
                     ],

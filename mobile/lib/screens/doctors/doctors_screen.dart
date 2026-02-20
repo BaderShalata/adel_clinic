@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/doctor_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../models/doctor.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
@@ -51,16 +52,17 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
   Widget build(BuildContext context) {
     final doctorProvider = context.watch<DoctorProvider>();
     final authProvider = context.watch<AuthProvider>();
+    final lang = context.watch<LanguageProvider>();
     final filteredDoctors = _filterDoctors(doctorProvider.doctors);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Our Doctors'),
+        title: Text(lang.t('ourDoctors')),
         actions: [
           if (authProvider.isAdmin)
             IconButton(
               icon: const Icon(Icons.person_add),
-              tooltip: 'Add Doctor',
+              tooltip: lang.t('addDoctor'),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -81,7 +83,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                   );
                 },
                 icon: const Icon(Icons.add),
-                label: const Text('Add Doctor'),
+                label: Text(lang.t('addDoctor')),
                 backgroundColor: AppTheme.primaryColor,
               ),
             )
@@ -94,7 +96,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search doctors or specialties...',
+                hintText: lang.t('searchDoctors'),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
@@ -137,7 +139,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(AppTheme.spacingL),
-                                    decoration: BoxDecoration(
+                                    decoration: const BoxDecoration(
                                       color: AppTheme.surfaceMedium,
                                       shape: BoxShape.circle,
                                     ),
@@ -150,8 +152,8 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                                   const SizedBox(height: AppTheme.spacingM),
                                   Text(
                                     _searchQuery.isEmpty
-                                        ? 'No doctors available'
-                                        : 'No doctors found for "$_searchQuery"',
+                                        ? lang.t('noDoctorsAvailable')
+                                        : '${lang.t('noDoctorsFound')} "$_searchQuery"',
                                     style: Theme.of(context).textTheme.bodyLarge,
                                   ),
                                 ],
