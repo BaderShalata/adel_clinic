@@ -111,8 +111,37 @@ export const WaitingList: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('');
 
   const { getToken } = useAuth();
-  const { t } = useLanguage();
+  const { t, direction } = useLanguage();
+  const isRtl = direction === 'rtl';
   const queryClient = useQueryClient();
+
+  // RTL-aware styles for Autocomplete
+  const autocompleteRtlSx = {
+    ...(isRtl && {
+      '& .MuiAutocomplete-endAdornment': {
+        right: 'auto',
+        left: 9,
+      },
+      '& .MuiOutlinedInput-root': {
+        paddingRight: '14px !important',
+        paddingLeft: '65px !important',
+      },
+    }),
+  };
+
+  // RTL-aware styles for select dropdowns
+  const selectRtlSx = {
+    ...(isRtl && {
+      '& .MuiSelect-icon': {
+        right: 'auto',
+        left: 7,
+      },
+      '& .MuiOutlinedInput-input': {
+        paddingRight: '14px !important',
+        paddingLeft: '32px !important',
+      },
+    }),
+  };
 
   const { data: waitingList, isLoading } = useQuery<WaitingListEntry[]>({
     queryKey: ['waitingList', filterDoctor, filterStatus],
@@ -382,6 +411,7 @@ export const WaitingList: React.FC = () => {
             onClick={handleOpen}
             sx={{
               background: gradients.warning,
+              color: 'white',
               boxShadow: `0 4px 14px ${alpha(healthcareColors.warning, 0.4)}`,
               '&:hover': {
                 background: gradients.warning,
@@ -421,7 +451,7 @@ export const WaitingList: React.FC = () => {
               fontWeight: 600,
               fontSize: '0.85rem',
               py: 2,
-              '& .MuiChip-icon': { color: 'inherit' },
+              '& .MuiChip-icon': { color: healthcareColors.success, marginRight: '-2px' },
             }}
           />
         </Stack>
@@ -483,7 +513,7 @@ export const WaitingList: React.FC = () => {
           </FormControl>
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
             <Chip
-              icon={<FilterIcon />}
+              icon={<FilterIcon sx={{color: healthcareColors.neutral[600]}} />}
               label={t('all')}
               onClick={() => setFilterStatus('')}
               variant={!filterStatus ? 'filled' : 'outlined'}
@@ -567,7 +597,7 @@ export const WaitingList: React.FC = () => {
                 {searchQuery || filterDoctor || filterStatus ? t('tryAdjustingFiltersWaitingList') : t('addPatientsToGetStarted')}
               </Typography>
               {!searchQuery && !filterDoctor && !filterStatus && (
-                <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen}>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen} sx={{ color: 'white' }}>
                   {t('addToWaitingList')}
                 </Button>
               )}
@@ -679,6 +709,7 @@ export const WaitingList: React.FC = () => {
                             onClick={() => handleBookClick(entry)}
                             sx={{
                               background: gradients.success,
+                              color: 'white',
                               '&:hover': { filter: 'brightness(0.95)' },
                             }}
                           >
@@ -787,6 +818,7 @@ export const WaitingList: React.FC = () => {
                   renderInput={(params) => (
                     <TextField {...params} label={t('selectPatient')} size="small" required fullWidth />
                   )}
+                  sx={autocompleteRtlSx}
                 />
               ) : (
                 <Stack spacing={1.5}>
@@ -836,6 +868,7 @@ export const WaitingList: React.FC = () => {
                   renderInput={(params) => (
                     <TextField {...params} label={t('doctor')} size="small" required fullWidth />
                   )}
+                  sx={autocompleteRtlSx}
                 />
                 <Stack direction="row" spacing={1.5}>
                   <TextField
@@ -847,6 +880,7 @@ export const WaitingList: React.FC = () => {
                     onChange={(e) => setSelectedService(e.target.value)}
                     required
                     disabled={!selectedDoctor}
+                    sx={selectRtlSx}
                   >
                     {selectedDoctor?.specialties.map((specialty) => (
                       <MenuItem key={specialty} value={specialty}>
@@ -907,6 +941,7 @@ export const WaitingList: React.FC = () => {
             }
             sx={{
               background: gradients.warning,
+              color: '#fff',
               borderRadius: 1.5,
               px: 3,
               boxShadow: 'none',
@@ -987,6 +1022,7 @@ export const WaitingList: React.FC = () => {
                       renderInput={(params) => (
                         <TextField {...params} label={t('doctor')} size="small" required fullWidth />
                       )}
+                      sx={autocompleteRtlSx}
                     />
                     <Stack direction="row" spacing={1.5}>
                       <TextField
@@ -1001,6 +1037,7 @@ export const WaitingList: React.FC = () => {
                         }}
                         required
                         disabled={!bookingDoctor}
+                        sx={selectRtlSx}
                       >
                         {bookingDoctor?.specialties.map((specialty) => (
                           <MenuItem key={specialty} value={specialty}>
@@ -1099,6 +1136,7 @@ export const WaitingList: React.FC = () => {
             disabled={!bookingDoctor || !bookingService || !bookingDate || !bookingTime || bookMutation.isPending}
             sx={{
               background: gradients.success,
+              color: 'white',
               borderRadius: 1.5,
               px: 3,
               boxShadow: 'none',

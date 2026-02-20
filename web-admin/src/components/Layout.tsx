@@ -51,10 +51,10 @@ export const Layout: React.FC = () => {
     { text: t('dashboard'), icon: <DashboardIcon />, path: '/', color: healthcareColors.primary.main },
     { text: t('appointments'), icon: <AppointmentIcon />, path: '/appointments', color: healthcareColors.info },
     { text: t('waitingList'), icon: <WaitingIcon />, path: '/waiting-list', color: healthcareColors.warning },
-    { text: t('patients'), icon: <PatientsIcon />, path: '/patients', color: healthcareColors.primary.main },
-    { text: t('doctors'), icon: <DoctorsIcon />, path: '/doctors', color: healthcareColors.secondary.main },
-    { text: t('news'), icon: <NewsIcon />, path: '/news', color: healthcareColors.accent.main },
-    { text: t('users'), icon: <UsersIcon />, path: '/users', color: healthcareColors.neutral[600] },
+    { text: t('patients'), icon: <PatientsIcon />, path: '/patients', color: healthcareColors.success },
+    { text: t('doctors'), icon: <DoctorsIcon />, path: '/doctors', color: healthcareColors.accent.main },
+    { text: t('news'), icon: <NewsIcon />, path: '/news', color: healthcareColors.info },
+    { text: t('users'), icon: <UsersIcon />, path: '/users', color: healthcareColors.primary.main },
   ];
 
   const handleDrawerToggle = () => {

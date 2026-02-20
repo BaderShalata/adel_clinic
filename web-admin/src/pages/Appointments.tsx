@@ -37,7 +37,7 @@ import {
   TableSortLabel,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
-import { healthcareColors, glassStyles, shadows } from '../theme/healthcareTheme';
+import { healthcareColors, glassStyles, shadows, gradients } from '../theme/healthcareTheme';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -156,28 +156,32 @@ export const Appointments: React.FC = () => {
   const isRtl = direction === 'rtl';
 
   // RTL-aware styles for select dropdowns
-  const selectRtlSx = isRtl ? {
-    '& .MuiSelect-icon': {
-      right: 'auto',
-      left: 7,
-    },
-    '& .MuiOutlinedInput-input': {
-      paddingRight: '14px !important',
-      paddingLeft: '32px !important',
-    },
-  } : {};
+  const selectRtlSx = {
+    ...(isRtl && {
+      '& .MuiSelect-icon': {
+        right: 'auto',
+        left: 7,
+      },
+      '& .MuiOutlinedInput-input': {
+        paddingRight: '14px !important',
+        paddingLeft: '32px !important',
+      },
+    }),
+  };
 
   // RTL-aware styles for Autocomplete
-  const autocompleteRtlSx = isRtl ? {
-    '& .MuiAutocomplete-endAdornment': {
-      right: 'auto',
-      left: 9,
-    },
-    '& .MuiOutlinedInput-root': {
-      paddingRight: '14px !important',
-      paddingLeft: '65px !important',
-    },
-  } : undefined;
+  const autocompleteRtlSx = {
+    ...(isRtl && {
+      '& .MuiAutocomplete-endAdornment': {
+        right: 'auto',
+        left: 9,
+      },
+      '& .MuiOutlinedInput-root': {
+        paddingRight: '14px !important',
+        paddingLeft: '65px !important',
+      },
+    }),
+  };
   const queryClient = useQueryClient();
 
   const { data: appointments, isLoading } = useQuery<Appointment[]>({
@@ -809,7 +813,30 @@ export const Appointments: React.FC = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">{t('appointments')}</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              background: gradients.info,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: `0 4px 14px ${alpha(healthcareColors.info, 0.4)}`,
+            }}
+          >
+            <CalendarIcon sx={{ color: 'white', fontSize: 24 }} />
+          </Box>
+          <Box>
+            <Typography variant="h5" fontWeight={700} color="text.primary">
+              {t('appointments')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t('manageAppointments')}
+            </Typography>
+          </Box>
+        </Box>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <ToggleButtonGroup
             value={viewMode}
@@ -833,7 +860,25 @@ export const Appointments: React.FC = () => {
               </Tooltip>
             </ToggleButton>
           </ToggleButtonGroup>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpen()}
+            sx={{
+              background: gradients.info,
+              color: 'white',
+              boxShadow: `0 4px 14px ${alpha(healthcareColors.info, 0.4)}`,
+              '&:hover': {
+                background: gradients.info,
+                filter: 'brightness(0.95)',
+                boxShadow: `0 6px 20px ${alpha(healthcareColors.info, 0.5)}`,
+              },
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+            }}
+          >
             {t('addAppointment')}
           </Button>
         </Box>
@@ -1269,10 +1314,16 @@ export const Appointments: React.FC = () => {
                         size="small"
                         sx={{
                           height: 20,
+                          minWidth: 20,
                           fontSize: '0.7rem',
                           bgcolor: getStatusBgColor(status),
                           color: getStatusBorderColor(status),
                           fontWeight: 600,
+                          '& .MuiChip-label': {
+                            px: 0.5,
+                            display: 'flex',
+                            justifyContent: 'center',
+                          },
                         }}
                       />
                     </Box>
@@ -2220,6 +2271,7 @@ export const Appointments: React.FC = () => {
               updateMutation.isPending ||
               createPatientMutation.isPending
             }
+            sx={{ color: 'white' }}
           >
             {createPatientMutation.isPending ? t('creating') : editingId ? t('update') : t('createAppointment')}
           </Button>
@@ -2394,6 +2446,7 @@ export const Appointments: React.FC = () => {
               !scheduleTime ||
               scheduleAppointmentMutation.isPending
             }
+            sx={{ color: 'white' }}
           >
             {scheduleAppointmentMutation.isPending ? t('scheduling') : t('scheduleAppointment')}
           </Button>

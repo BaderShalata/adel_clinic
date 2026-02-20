@@ -3,9 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Button, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Typography, Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions, TextField, Chip, MenuItem, Tooltip, Stack,
+  DialogContentText, DialogActions, TextField, Chip, MenuItem, Tooltip, Stack, alpha,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Block, CheckCircle } from '@mui/icons-material';
+import { healthcareColors, gradients } from '../theme/healthcareTheme';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -145,7 +146,25 @@ export const Users: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h4">{t('users')}</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => handleOpen()}
+          sx={{
+            background: gradients.primary,
+            color: 'white',
+            boxShadow: `0 4px 14px ${alpha(healthcareColors.primary.main, 0.4)}`,
+            '&:hover': {
+              background: gradients.primary,
+              filter: 'brightness(0.95)',
+              boxShadow: `0 6px 20px ${alpha(healthcareColors.primary.main, 0.5)}`,
+            },
+            fontWeight: 600,
+            px: 3,
+            py: 1,
+            borderRadius: 2,
+          }}
+        >
           {t('addUser')}
         </Button>
       </Box>

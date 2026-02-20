@@ -216,12 +216,13 @@ export const Patients: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => handleOpen()}
             sx={{
-              background: gradients.primary,
-              boxShadow: `0 4px 14px ${alpha(healthcareColors.primary.main, 0.4)}`,
+              background: gradients.tealToGreen,
+              color: 'white',
+              boxShadow: `0 4px 14px ${alpha(healthcareColors.success, 0.4)}`,
               '&:hover': {
-                background: gradients.primary,
+                background: gradients.tealToGreen,
                 filter: 'brightness(0.95)',
-                boxShadow: `0 6px 20px ${alpha(healthcareColors.primary.main, 0.5)}`,
+                boxShadow: `0 6px 20px ${alpha(healthcareColors.success, 0.5)}`,
               },
               fontWeight: 600,
               px: 3,
@@ -737,8 +738,10 @@ export const Patients: React.FC = () => {
           <Button
             onClick={handleSubmit}
             variant="contained"
+            disabled={!formData.fullName || createMutation.isPending || updateMutation.isPending}
             sx={{
               background: gradients.primary,
+              color: 'white',
               borderRadius: 1.5,
               px: 3,
               boxShadow: 'none',

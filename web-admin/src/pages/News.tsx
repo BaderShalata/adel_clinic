@@ -825,6 +825,7 @@ export const News: React.FC = () => {
             startIcon={uploadingImage ? <CircularProgress size={16} /> : undefined}
             sx={{
               background: gradients.purpleToBlue,
+              color: 'white',
               borderRadius: 1.5,
               px: 3,
               boxShadow: 'none',

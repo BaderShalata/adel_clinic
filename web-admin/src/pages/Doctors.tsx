@@ -1236,6 +1236,7 @@ export const Doctors: React.FC = () => {
             startIcon={uploadingImage ? <CircularProgress size={16} /> : undefined}
             sx={{
               background: gradients.secondary,
+              color: 'white',
               borderRadius: 1.5,
               px: 3,
               boxShadow: 'none',
