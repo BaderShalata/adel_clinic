@@ -7,6 +7,17 @@ import '../models/news.dart';
 import '../models/slot_info.dart';
 import '../models/waiting_list.dart';
 
+/// Custom exception for API errors with a translation key
+class ApiException implements Exception {
+  final String translationKey;
+  final String? details;
+
+  ApiException(this.translationKey, [this.details]);
+
+  @override
+  String toString() => translationKey;
+}
+
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
@@ -330,8 +341,50 @@ class ApiService {
       if (e is DioException && e.response != null) {
         print('DEBUG: Response status: ${e.response?.statusCode}');
         print('DEBUG: Response data: ${e.response?.data}');
+        final errorData = e.response!.data;
+        if (errorData is Map) {
+          // Check for ID number already exists error
+          if (errorData['errorKey'] == 'idNumberAlreadyExists' ||
+              errorData['error'] == 'ID_NUMBER_EXISTS') {
+            throw ApiException('idNumberAlreadyExists');
+          }
+        }
       }
       throw Exception('Failed to register: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    String? displayName,
+    String? phoneNumber,
+    String? idNumber,
+    String? gender,
+    String? photoUrl,
+  }) async {
+    try {
+      final response = await _dio.put(
+        '/auth/profile',
+        data: {
+          if (displayName != null) 'displayName': displayName,
+          if (phoneNumber != null) 'phoneNumber': phoneNumber,
+          if (idNumber != null) 'idNumber': idNumber,
+          if (gender != null) 'gender': gender,
+          if (photoUrl != null) 'photoUrl': photoUrl,
+        },
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map) {
+          // Check for ID number already exists error
+          if (errorData['errorKey'] == 'idNumberAlreadyExists' ||
+              errorData['error'] == 'ID_NUMBER_EXISTS') {
+            throw ApiException('idNumberAlreadyExists');
+          }
+        }
+      }
+      throw Exception('Failed to update profile: $e');
     }
   }
 

@@ -11,5 +11,7 @@ router.post('/login', authController_1.authController.login.bind(authController_
 router.post('/set-admin-claims', authController_1.authController.setAdminClaims.bind(authController_1.authController));
 // Protected endpoint to get current user
 router.get('/me', auth_1.authenticate, authController_1.authController.getMe.bind(authController_1.authController));
+// Protected endpoint to update user profile
+router.put('/profile', auth_1.authenticate, authController_1.authController.updateProfile.bind(authController_1.authController));
 exports.default = router;
 //# sourceMappingURL=authRoutes.js.map

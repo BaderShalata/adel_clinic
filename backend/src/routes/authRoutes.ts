@@ -14,4 +14,7 @@ router.post('/set-admin-claims', authController.setAdminClaims.bind(authControll
 // Protected endpoint to get current user
 router.get('/me', authenticate, authController.getMe.bind(authController));
 
+// Protected endpoint to update user profile
+router.put('/profile', authenticate, authController.updateProfile.bind(authController));
+
 export default router;

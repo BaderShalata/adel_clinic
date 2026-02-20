@@ -394,7 +394,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _CompactIconButton(
-                    icon: Icons.directions_rounded,
+                    icon: Icons.place,
                     color: AppTheme.primaryColor,
                     onTap: _openMap,
                   ),

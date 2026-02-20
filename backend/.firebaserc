@@ -1,5 +1,11 @@
 {
   "projects": {
     "default": "adelclinic-35393"
+  },
+  "targets": {},
+  "etags": {
+    "adelclinic-35393": {
+      "extensionInstances": {}
+    }
   }
 }

@@ -14,8 +14,18 @@ export interface RegisterInput {
   role?: 'patient' | 'doctor' | 'admin';
 }
 
+export interface UpdateProfileInput {
+  displayName?: string;
+  phoneNumber?: string;
+  idNumber?: string;
+  gender?: 'male' | 'female' | 'other';
+  photoUrl?: string;
+}
+
 export interface AuthUser extends User {
   patientId?: string;
+  idNumber?: string;
+  gender?: string;
 }
 
 export class AuthService {
@@ -40,6 +50,14 @@ export class AuthService {
           ...userDataNoUid,
           patientId: patient?.id,
         };
+      }
+
+      // Check if ID number is already taken by another user
+      if (data.idNumber) {
+        const isIdTaken = await patientService.isIdNumberTaken(data.idNumber);
+        if (isIdTaken) {
+          throw new Error('ID_NUMBER_EXISTS');
+        }
       }
 
       const role = data.role || 'patient';
@@ -141,6 +159,87 @@ export class AuthService {
       return await auth.verifyIdToken(idToken);
     } catch (error: any) {
       throw new Error(`Invalid token: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update user profile
+   */
+  async updateProfile(uid: string, data: UpdateProfileInput): Promise<AuthUser> {
+    try {
+      const userDoc = await this.usersCollection.doc(uid).get();
+      if (!userDoc.exists) {
+        throw new Error('User not found');
+      }
+
+      // Check if ID number is already taken by another user
+      if (data.idNumber) {
+        const isIdTaken = await patientService.isIdNumberTaken(data.idNumber, uid);
+        if (isIdTaken) {
+          throw new Error('ID_NUMBER_EXISTS');
+        }
+      }
+
+      const userData = userDoc.data() as User;
+      const updateData: Record<string, any> = {
+        updatedAt: admin.firestore.Timestamp.now(),
+      };
+
+      // Update fields if provided
+      if (data.displayName !== undefined) {
+        updateData.fullName = data.displayName;
+      }
+      if (data.phoneNumber !== undefined) {
+        updateData.phoneNumber = data.phoneNumber;
+      }
+      if (data.photoUrl !== undefined) {
+        updateData.photoUrl = data.photoUrl;
+      }
+
+      // Update Firestore user document
+      await this.usersCollection.doc(uid).update(updateData);
+
+      // If user is a patient, also update the patient record
+      if (userData.role === 'patient') {
+        const patient = await patientService.getPatientByUserId(uid);
+        if (patient) {
+          const patientUpdate: Record<string, any> = {};
+          if (data.displayName !== undefined) {
+            patientUpdate.fullName = data.displayName;
+          }
+          if (data.phoneNumber !== undefined) {
+            patientUpdate.phoneNumber = data.phoneNumber;
+          }
+          if (data.idNumber !== undefined) {
+            patientUpdate.idNumber = data.idNumber;
+          }
+          if (data.gender !== undefined) {
+            patientUpdate.gender = data.gender;
+          }
+
+          if (Object.keys(patientUpdate).length > 0) {
+            await patientService.updatePatient(patient.id, patientUpdate);
+          }
+        }
+      }
+
+      // Return updated user data
+      const updatedDoc = await this.usersCollection.doc(uid).get();
+      const updatedUserData = updatedDoc.data() as User;
+      const patient = await patientService.getPatientByUserId(uid);
+
+      // Remove uid from userData to avoid duplication warning
+      const { uid: _existingUid, ...userDataWithoutUid } = updatedUserData as any;
+
+      return {
+        uid,
+        ...userDataWithoutUid,
+        patientId: patient?.id,
+        idNumber: patient?.idNumber,
+        gender: patient?.gender,
+      } as AuthUser;
+    } catch (error: any) {
+      throw new Error(`Failed to update profile: ${error.message}`);
     }
   }
 }

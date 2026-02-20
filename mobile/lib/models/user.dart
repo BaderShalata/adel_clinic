@@ -4,6 +4,8 @@ class AppUser {
   final String? displayName;
   final String? phoneNumber;
   final String? idNumber;
+  final String? gender;
+  final String? photoUrl;
   final String role;
 
   AppUser({
@@ -12,6 +14,8 @@ class AppUser {
     this.displayName,
     this.phoneNumber,
     this.idNumber,
+    this.gender,
+    this.photoUrl,
     this.role = 'patient',
   });
 
@@ -22,6 +26,8 @@ class AppUser {
       displayName: json['displayName'] as String?,
       phoneNumber: json['phoneNumber'] as String?,
       idNumber: json['idNumber'] as String?,
+      gender: json['gender'] as String?,
+      photoUrl: json['photoUrl'] as String?,
       role: json['role'] as String? ?? 'patient',
     );
   }
@@ -33,6 +39,8 @@ class AppUser {
       if (displayName != null) 'displayName': displayName,
       if (phoneNumber != null) 'phoneNumber': phoneNumber,
       if (idNumber != null) 'idNumber': idNumber,
+      if (gender != null) 'gender': gender,
+      if (photoUrl != null) 'photoUrl': photoUrl,
       'role': role,
     };
   }

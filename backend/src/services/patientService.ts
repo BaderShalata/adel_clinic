@@ -84,6 +84,35 @@ export class PatientService {
     }
   }
 
+  async getPatientByIdNumber(idNumber: string): Promise<Patient | null> {
+    try {
+      const snapshot = await this.patientsCollection.where('idNumber', '==', idNumber).limit(1).get();
+      if (snapshot.empty) {
+        return null;
+      }
+      const doc = snapshot.docs[0];
+      return { id: doc.id, ...doc.data() } as Patient;
+    } catch (error: any) {
+      throw new Error(`Failed to get patient by ID number: ${error.message}`);
+    }
+  }
+
+  async isIdNumberTaken(idNumber: string, excludeUserId?: string): Promise<boolean> {
+    try {
+      const snapshot = await this.patientsCollection.where('idNumber', '==', idNumber).get();
+      if (snapshot.empty) {
+        return false;
+      }
+      // If excludeUserId is provided, check if the found patient is the same user (for updates)
+      if (excludeUserId) {
+        return snapshot.docs.some(doc => doc.id !== excludeUserId && doc.data().userId !== excludeUserId);
+      }
+      return true;
+    } catch (error: any) {
+      throw new Error(`Failed to check ID number: ${error.message}`);
+    }
+  }
+
   async getAllPatients(search?: string): Promise<Patient[]> {
     try {
       let query: FirebaseFirestore.Query = this.patientsCollection.orderBy('createdAt', 'desc');

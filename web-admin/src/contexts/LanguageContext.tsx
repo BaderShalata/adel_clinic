@@ -236,6 +236,8 @@ const translations: Translations = {
 
   // Appointments Page - Additional
   listView: { en: 'List View', ar: 'عرض القائمة', he: 'תצוגת רשימה' },
+  tableView: { en: 'Table View', ar: 'عرض الجدول', he: 'תצוגת טבלה' },
+  kanbanView: { en: 'Kanban View', ar: 'عرض كانبان', he: 'תצוגת קנבן' },
   calendarView: { en: 'Calendar View', ar: 'عرض التقويم', he: 'תצוגת יומן' },
   archive: { en: 'Archive', ar: 'الأرشيف', he: 'ארכיון' },
   noArchivedAppointments: { en: 'No archived appointments', ar: 'لا توجد مواعيد مؤرشفة', he: 'אין פגישות בארכיון' },
@@ -319,6 +321,9 @@ const translations: Translations = {
   activateUser: { en: 'Activate User', ar: 'تفعيل المستخدم', he: 'הפעל משתמש' },
   deleteUser: { en: 'Delete User', ar: 'حذف المستخدم', he: 'מחק משתמש' },
   confirmDeleteUser: { en: 'Are you sure you want to delete', ar: 'هل أنت متأكد من حذف', he: 'האם אתה בטוח שברצונך למחוק את' },
+
+  // Error messages
+  idNumberAlreadyExists: { en: 'An account with this ID number already exists.', ar: 'يوجد حساب بهذا الرقم الهوية بالفعل.', he: 'כבר קיים חשבון עם מספר תעודת זהות זה.' },
 };
 
 interface LanguageContextType {

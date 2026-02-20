@@ -33,7 +33,10 @@ import {
   Tabs,
   Tab,
   alpha,
+  Select,
+  TableSortLabel,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import { healthcareColors, glassStyles, shadows } from '../theme/healthcareTheme';
 import {
   Add as AddIcon,
@@ -41,7 +44,8 @@ import {
   Delete as DeleteIcon,
   HourglassEmpty as WaitingListIcon,
   PersonAdd as PersonAddIcon,
-  ViewList as ViewListIcon,
+  ViewKanban as ViewKanbanIcon,
+  TableRows as TableRowsIcon,
   CalendarMonth as CalendarIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
@@ -59,6 +63,7 @@ interface Appointment {
   id: string;
   patientId: string;
   patientName: string;
+  patientIdNumber?: string;
   doctorId: string;
   doctorName: string;
   appointmentDate: { _seconds: number } | string;
@@ -80,6 +85,7 @@ interface Patient {
   fullName: string;
   email?: string;
   phoneNumber?: string;
+  idNumber?: string;
 }
 
 interface SlotInfo {
@@ -96,10 +102,10 @@ interface AvailableSlotsResponse {
   totalSlots: number;
 }
 
-type ViewMode = 'list' | 'calendar' | 'day';
+type ViewMode = 'list' | 'kanban' | 'calendar' | 'day';
 
 export const Appointments: React.FC = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [listTab, setListTab] = useState<'active' | 'archive'>('active');
   const [calendarDate, setCalendarDate] = useState(dayjs());
   const [selectedDay, setSelectedDay] = useState<dayjs.Dayjs>(dayjs());
@@ -131,6 +137,10 @@ export const Appointments: React.FC = () => {
     notes: '',
   });
 
+  // Sorting state for list view
+  const [sortField, setSortField] = useState<'dateTime' | 'status'>('dateTime');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
   // Scheduling dialog state (for pending -> scheduled drag)
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [appointmentToSchedule, setAppointmentToSchedule] = useState<Appointment | null>(null);
@@ -142,7 +152,32 @@ export const Appointments: React.FC = () => {
   const [loadingScheduleSlots, setLoadingScheduleSlots] = useState(false);
 
   const { getToken } = useAuth();
-  const { t } = useLanguage();
+  const { t, direction } = useLanguage();
+  const isRtl = direction === 'rtl';
+
+  // RTL-aware styles for select dropdowns
+  const selectRtlSx = isRtl ? {
+    '& .MuiSelect-icon': {
+      right: 'auto',
+      left: 7,
+    },
+    '& .MuiOutlinedInput-input': {
+      paddingRight: '14px !important',
+      paddingLeft: '32px !important',
+    },
+  } : {};
+
+  // RTL-aware styles for Autocomplete
+  const autocompleteRtlSx = isRtl ? {
+    '& .MuiAutocomplete-endAdornment': {
+      right: 'auto',
+      left: 9,
+    },
+    '& .MuiOutlinedInput-root': {
+      paddingRight: '14px !important',
+      paddingLeft: '65px !important',
+    },
+  } : undefined;
   const queryClient = useQueryClient();
 
   const { data: appointments, isLoading } = useQuery<Appointment[]>({
@@ -698,23 +733,34 @@ export const Appointments: React.FC = () => {
 
   const getStatusBgColor = (status: string) => {
     switch (status) {
-      case 'pending': return '#fff3e0';
-      case 'scheduled': return '#e3f2fd';
-      case 'completed': return '#e8f5e9';
-      case 'cancelled': return '#ffebee';
-      case 'no-show': return '#f5f5f5';
-      default: return '#f5f5f5';
+      case 'pending': return '#FEF3C7';      // Warm amber background
+      case 'scheduled': return '#CCFBF1';    // Teal surface (primary)
+      case 'completed': return '#DCFCE7';    // Fresh green background
+      case 'cancelled': return '#FEE2E2';    // Soft red background
+      case 'no-show': return '#F1F5F9';      // Neutral gray background
+      default: return '#F1F5F9';
     }
   };
 
   const getStatusBorderColor = (status: string) => {
     switch (status) {
-      case 'pending': return '#ff9800';
-      case 'scheduled': return '#1976d2';
-      case 'completed': return '#4caf50';
-      case 'cancelled': return '#f44336';
-      case 'no-show': return '#9e9e9e';
-      default: return '#9e9e9e';
+      case 'pending': return '#F59E0B';      // Vibrant amber
+      case 'scheduled': return '#0D9488';    // Teal (matches primary)
+      case 'completed': return '#22C55E';    // Fresh green
+      case 'cancelled': return '#EF4444';    // Vibrant red
+      case 'no-show': return '#64748B';      // Slate gray
+      default: return '#64748B';
+    }
+  };
+
+  const getStatusTextColor = (status: string) => {
+    switch (status) {
+      case 'pending': return '#B45309';      // Darker amber for text
+      case 'scheduled': return '#0F766E';    // Darker teal for text
+      case 'completed': return '#16A34A';    // Darker green for text
+      case 'cancelled': return '#DC2626';    // Darker red for text
+      case 'no-show': return '#475569';      // Darker gray for text
+      default: return '#475569';
     }
   };
 
@@ -772,8 +818,13 @@ export const Appointments: React.FC = () => {
             size="small"
           >
             <ToggleButton value="list">
-              <Tooltip title={t('listView')}>
-                <ViewListIcon />
+              <Tooltip title={t('tableView')}>
+                <TableRowsIcon />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="kanban">
+              <Tooltip title={t('kanbanView')}>
+                <ViewKanbanIcon />
               </Tooltip>
             </ToggleButton>
             <ToggleButton value="calendar">
@@ -789,6 +840,240 @@ export const Appointments: React.FC = () => {
       </Box>
 
       {viewMode === 'list' ? (
+        /* Table List View */
+        <Box>
+          {/* Active/Archive Tabs */}
+          <Paper sx={{ mb: 2 }}>
+            <Tabs
+              value={listTab}
+              onChange={(_, newTab) => setListTab(newTab)}
+              sx={{ px: 2 }}
+            >
+              <Tab
+                value="active"
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ActiveIcon fontSize="small" />
+                    {t('active')} ({activeAppointments.length})
+                  </Box>
+                }
+              />
+              <Tab
+                value="archive"
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ArchiveIcon fontSize="small" />
+                    {t('archive')} ({archivedAppointments.length})
+                  </Box>
+                }
+              />
+            </Tabs>
+          </Paper>
+
+          {isLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t('patient')}</TableCell>
+                    <TableCell>{t('idNumber')}</TableCell>
+                    <TableCell>{t('doctor')}</TableCell>
+                    <TableCell>{t('service')}</TableCell>
+                    <TableCell>
+                      <TableSortLabel
+                        active={sortField === 'dateTime'}
+                        direction={sortField === 'dateTime' ? sortDirection : 'asc'}
+                        onClick={() => {
+                          if (sortField === 'dateTime') {
+                            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortField('dateTime');
+                            setSortDirection('asc');
+                          }
+                        }}
+                      >
+                        {t('dateTime')}
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell>
+                      <TableSortLabel
+                        active={sortField === 'status'}
+                        direction={sortField === 'status' ? sortDirection : 'asc'}
+                        onClick={() => {
+                          if (sortField === 'status') {
+                            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortField('status');
+                            setSortDirection('asc');
+                          }
+                        }}
+                      >
+                        {t('status')}
+                      </TableSortLabel>
+                    </TableCell>
+                    <TableCell align="right">{t('actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(listTab === 'active' ? activeAppointments : archivedAppointments).length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">
+                        {listTab === 'active' ? t('noAppointments') : t('noArchivedAppointments')}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    (listTab === 'active' ? activeAppointments : archivedAppointments)
+                      .sort((a, b) => {
+                        if (sortField === 'dateTime') {
+                          const dateA = typeof a.appointmentDate === 'string'
+                            ? dayjs(a.appointmentDate)
+                            : dayjs(a.appointmentDate._seconds * 1000);
+                          const dateB = typeof b.appointmentDate === 'string'
+                            ? dayjs(b.appointmentDate)
+                            : dayjs(b.appointmentDate._seconds * 1000);
+                          let dateCompare = dateA.valueOf() - dateB.valueOf();
+                          if (dateCompare === 0) {
+                            dateCompare = (a.appointmentTime || '').localeCompare(b.appointmentTime || '');
+                          }
+                          return sortDirection === 'asc' ? dateCompare : -dateCompare;
+                        } else {
+                          // Sort by status
+                          const statusOrder = ['pending', 'scheduled', 'completed', 'cancelled', 'no-show'];
+                          const statusCompare = statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+                          return sortDirection === 'asc' ? statusCompare : -statusCompare;
+                        }
+                      })
+                      .map((appointment) => {
+                        // Get patient idNumber from patients list
+                        const patient = patients?.find(p => p.id === appointment.patientId);
+                        const patientIdNumber = appointment.patientIdNumber || patient?.idNumber || '-';
+
+                        return (
+                          <TableRow key={appointment.id} hover>
+                            <TableCell>{appointment.patientName}</TableCell>
+                            <TableCell>{patientIdNumber}</TableCell>
+                            <TableCell>{appointment.doctorName}</TableCell>
+                            <TableCell>{appointment.serviceType || '-'}</TableCell>
+                            <TableCell>
+                              {typeof appointment.appointmentDate === 'string'
+                                ? dayjs(appointment.appointmentDate).format('MMM DD, YYYY')
+                                : dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD, YYYY')}
+                              {appointment.appointmentTime && ` at ${appointment.appointmentTime}`}
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                size="small"
+                                value={appointment.status}
+                                onChange={(e: SelectChangeEvent) => {
+                                  const newStatus = e.target.value as Appointment['status'];
+                                  if (newStatus !== appointment.status) {
+                                    updateStatusMutation.mutate({ id: appointment.id, status: newStatus });
+                                  }
+                                }}
+                                sx={{
+                                  minWidth: 140,
+                                  borderRadius: '20px',
+                                  backgroundColor: getStatusBgColor(appointment.status),
+                                  fontWeight: 600,
+                                  fontSize: '0.8125rem',
+                                  transition: 'all 0.2s ease',
+                                  '& .MuiSelect-select': {
+                                    py: 0.75,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.75,
+                                  },
+                                  '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: getStatusBorderColor(appointment.status),
+                                    borderWidth: '1.5px',
+                                  },
+                                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: getStatusBorderColor(appointment.status),
+                                    borderWidth: '2px',
+                                  },
+                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: getStatusBorderColor(appointment.status),
+                                    borderWidth: '2px',
+                                  },
+                                  '&:hover': {
+                                    boxShadow: `0 2px 8px ${alpha(getStatusBorderColor(appointment.status), 0.25)}`,
+                                  },
+                                  ...selectRtlSx,
+                                }}
+                                renderValue={(value) => (
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Box
+                                      sx={{
+                                        width: 8,
+                                        height: 8,
+                                        borderRadius: '50%',
+                                        bgcolor: getStatusBorderColor(value as string),
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                    <Typography
+                                      component="span"
+                                      sx={{
+                                        color: getStatusTextColor(value as string),
+                                        fontWeight: 600,
+                                        fontSize: '0.8125rem',
+                                      }}
+                                    >
+                                      {t(value === 'no-show' ? 'noShow' : value as string)}
+                                    </Typography>
+                                  </Box>
+                                )}
+                              >
+                                <MenuItem value="pending" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderRadius: 1, mx: 0.5, my: 0.25, '&:hover': { backgroundColor: '#FEF3C7' } }}>
+                                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#F59E0B' }} />
+                                  <Typography sx={{ color: '#B45309', fontWeight: 600 }}>{t('pending')}</Typography>
+                                </MenuItem>
+                                <MenuItem value="scheduled" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderRadius: 1, mx: 0.5, my: 0.25, '&:hover': { backgroundColor: '#CCFBF1' } }}>
+                                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#0D9488' }} />
+                                  <Typography sx={{ color: '#0F766E', fontWeight: 600 }}>{t('scheduled')}</Typography>
+                                </MenuItem>
+                                <MenuItem value="completed" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderRadius: 1, mx: 0.5, my: 0.25, '&:hover': { backgroundColor: '#DCFCE7' } }}>
+                                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#22C55E' }} />
+                                  <Typography sx={{ color: '#16A34A', fontWeight: 600 }}>{t('completed')}</Typography>
+                                </MenuItem>
+                                <MenuItem value="cancelled" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderRadius: 1, mx: 0.5, my: 0.25, '&:hover': { backgroundColor: '#FEE2E2' } }}>
+                                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#EF4444' }} />
+                                  <Typography sx={{ color: '#DC2626', fontWeight: 600 }}>{t('cancelled')}</Typography>
+                                </MenuItem>
+                                <MenuItem value="no-show" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderRadius: 1, mx: 0.5, my: 0.25, '&:hover': { backgroundColor: '#F1F5F9' } }}>
+                                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#64748B' }} />
+                                  <Typography sx={{ color: '#475569', fontWeight: 600 }}>{t('noShow')}</Typography>
+                                </MenuItem>
+                              </Select>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                                <Tooltip title={t('edit')}>
+                                  <IconButton size="small" onClick={() => handleOpen(appointment)}>
+                                    <EditIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title={t('delete')}>
+                                  <IconButton size="small" color="error" onClick={() => handleDeleteClick(appointment)}>
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Stack>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Box>
+      ) : viewMode === 'kanban' ? (
         /* Kanban Board View */
         <Box>
           {/* Active/Archive Tabs */}
@@ -830,6 +1115,7 @@ export const Appointments: React.FC = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>{t('patient')}</TableCell>
+                    <TableCell>{t('idNumber')}</TableCell>
                     <TableCell>{t('doctor')}</TableCell>
                     <TableCell>{t('service')}</TableCell>
                     <TableCell>{t('dateTime')}</TableCell>
@@ -840,45 +1126,76 @@ export const Appointments: React.FC = () => {
                 <TableBody>
                   {archivedAppointments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} align="center">
+                      <TableCell colSpan={7} align="center">
                         {t('noArchivedAppointments')}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    archivedAppointments.map((appointment) => (
-                      <TableRow key={appointment.id} hover>
-                        <TableCell>{appointment.patientName}</TableCell>
-                        <TableCell>{appointment.doctorName}</TableCell>
-                        <TableCell>{appointment.serviceType || '-'}</TableCell>
-                        <TableCell>
-                          {typeof appointment.appointmentDate === 'string'
-                            ? dayjs(appointment.appointmentDate).format('MMM DD, YYYY')
-                            : dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD, YYYY')}
-                          {appointment.appointmentTime && ` at ${appointment.appointmentTime}`}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={t(appointment.status === 'no-show' ? 'noShow' : appointment.status)}
-                            color={getStatusColor(appointment.status)}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                            <Tooltip title={t('edit')}>
-                              <IconButton size="small" onClick={() => handleOpen(appointment)}>
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title={t('delete')}>
-                              <IconButton size="small" color="error" onClick={() => handleDeleteClick(appointment)}>
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    archivedAppointments.map((appointment) => {
+                      const patient = patients?.find(p => p.id === appointment.patientId);
+                      const patientIdNumber = appointment.patientIdNumber || patient?.idNumber || '-';
+
+                      return (
+                        <TableRow key={appointment.id} hover>
+                          <TableCell>{appointment.patientName}</TableCell>
+                          <TableCell>{patientIdNumber}</TableCell>
+                          <TableCell>{appointment.doctorName}</TableCell>
+                          <TableCell>{appointment.serviceType || '-'}</TableCell>
+                          <TableCell>
+                            {typeof appointment.appointmentDate === 'string'
+                              ? dayjs(appointment.appointmentDate).format('MMM DD, YYYY')
+                              : dayjs(appointment.appointmentDate._seconds * 1000).format('MMM DD, YYYY')}
+                            {appointment.appointmentTime && ` at ${appointment.appointmentTime}`}
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              size="small"
+                              value={appointment.status}
+                              onChange={(e: SelectChangeEvent) => {
+                                const newStatus = e.target.value as Appointment['status'];
+                                if (newStatus !== appointment.status) {
+                                  updateStatusMutation.mutate({ id: appointment.id, status: newStatus });
+                                }
+                              }}
+                              sx={{
+                                minWidth: 130,
+                                backgroundColor: getStatusBgColor(appointment.status),
+                                borderColor: getStatusBorderColor(appointment.status),
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: getStatusBorderColor(appointment.status),
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: getStatusBorderColor(appointment.status),
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: getStatusBorderColor(appointment.status),
+                                },
+                              }}
+                            >
+                              <MenuItem value="pending" sx={{ backgroundColor: '#FEF3C7', color: '#B45309', fontWeight: 600, '&:hover': { backgroundColor: '#FDE68A' } }}>{t('pending')}</MenuItem>
+                              <MenuItem value="scheduled" sx={{ backgroundColor: '#CCFBF1', color: '#0F766E', fontWeight: 600, '&:hover': { backgroundColor: '#99F6E4' } }}>{t('scheduled')}</MenuItem>
+                              <MenuItem value="completed" sx={{ backgroundColor: '#DCFCE7', color: '#16A34A', fontWeight: 600, '&:hover': { backgroundColor: '#BBF7D0' } }}>{t('completed')}</MenuItem>
+                              <MenuItem value="cancelled" sx={{ backgroundColor: '#FEE2E2', color: '#DC2626', fontWeight: 600, '&:hover': { backgroundColor: '#FECACA' } }}>{t('cancelled')}</MenuItem>
+                              <MenuItem value="no-show" sx={{ backgroundColor: '#F1F5F9', color: '#475569', fontWeight: 600, '&:hover': { backgroundColor: '#E2E8F0' } }}>{t('noShow')}</MenuItem>
+                            </Select>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                              <Tooltip title={t('edit')}>
+                                <IconButton size="small" onClick={() => handleOpen(appointment)}>
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={t('delete')}>
+                                <IconButton size="small" color="error" onClick={() => handleDeleteClick(appointment)}>
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
@@ -1589,12 +1906,38 @@ export const Appointments: React.FC = () => {
               {!isNewPatient ? (
                 <Autocomplete
                   options={patients || []}
-                  getOptionLabel={(option) => `${option.fullName}${option.phoneNumber ? ` (${option.phoneNumber})` : ''}`}
+                  getOptionLabel={(option) => {
+                    const parts = [option.fullName];
+                    if (option.idNumber) parts.push(option.idNumber);
+                    else if (option.phoneNumber) parts.push(option.phoneNumber);
+                    return parts.length > 1 ? `${parts[0]} (${parts[1]})` : parts[0];
+                  }}
+                  filterOptions={(options, { inputValue }) => {
+                    const searchTerm = inputValue.toLowerCase();
+                    return options.filter((option) =>
+                      option.fullName.toLowerCase().includes(searchTerm) ||
+                      (option.phoneNumber && option.phoneNumber.includes(searchTerm)) ||
+                      (option.idNumber && option.idNumber.includes(searchTerm))
+                    );
+                  }}
                   value={selectedPatient}
                   onChange={(_, newValue) => setSelectedPatient(newValue)}
                   renderInput={(params) => (
                     <TextField {...params} label={t('selectPatient')} size="small" required fullWidth />
                   )}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.id}>
+                      <Box>
+                        <Typography variant="body2">{option.fullName}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {option.idNumber && `${t('idNumber')}: ${option.idNumber}`}
+                          {option.idNumber && option.phoneNumber && ' | '}
+                          {option.phoneNumber && `${t('phone')}: ${option.phoneNumber}`}
+                        </Typography>
+                      </Box>
+                    </li>
+                  )}
+                  sx={autocompleteRtlSx}
                 />
               ) : (
                 <Stack spacing={1.5}>
@@ -1646,6 +1989,7 @@ export const Appointments: React.FC = () => {
                   renderInput={(params) => (
                     <TextField {...params} label={t('doctor')} size="small" required fullWidth />
                   )}
+                  sx={autocompleteRtlSx}
                 />
                 <Stack direction="row" spacing={1.5}>
                   <TextField
@@ -1660,6 +2004,7 @@ export const Appointments: React.FC = () => {
                     }}
                     required
                     disabled={!selectedDoctor}
+                    sx={selectRtlSx}
                   >
                     {selectedDoctor?.specialties.map((specialty) => (
                       <MenuItem key={specialty} value={specialty}>
@@ -1745,19 +2090,85 @@ export const Appointments: React.FC = () => {
                   <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
                     {t('status')}
                   </Typography>
-                  <TextField
+                  <Select
                     fullWidth
                     size="small"
-                    select
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                    onChange={(e: SelectChangeEvent) => setFormData({ ...formData, status: e.target.value as any })}
+                    sx={{
+                      borderRadius: '20px',
+                      backgroundColor: getStatusBgColor(formData.status),
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      transition: 'all 0.2s ease',
+                      '& .MuiSelect-select': {
+                        py: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: getStatusBorderColor(formData.status),
+                        borderWidth: '1.5px',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: getStatusBorderColor(formData.status),
+                        borderWidth: '2px',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: getStatusBorderColor(formData.status),
+                        borderWidth: '2px',
+                      },
+                      '&:hover': {
+                        boxShadow: `0 2px 8px ${alpha(getStatusBorderColor(formData.status), 0.25)}`,
+                      },
+                      ...selectRtlSx,
+                    }}
+                    renderValue={(value) => (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            bgcolor: getStatusBorderColor(value as string),
+                            flexShrink: 0,
+                          }}
+                        />
+                        <Typography
+                          component="span"
+                          sx={{
+                            color: getStatusTextColor(value as string),
+                            fontWeight: 600,
+                            fontSize: '0.875rem',
+                          }}
+                        >
+                          {t(value === 'no-show' ? 'noShow' : value as string)}
+                        </Typography>
+                      </Box>
+                    )}
                   >
-                    <MenuItem value="pending">{t('pending')}</MenuItem>
-                    <MenuItem value="scheduled">{t('scheduled')}</MenuItem>
-                    <MenuItem value="completed">{t('completed')}</MenuItem>
-                    <MenuItem value="cancelled">{t('cancelled')}</MenuItem>
-                    <MenuItem value="no-show">{t('noShow')}</MenuItem>
-                  </TextField>
+                    <MenuItem value="pending" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderRadius: 1, mx: 0.5, my: 0.25, '&:hover': { backgroundColor: '#FEF3C7' } }}>
+                      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#F59E0B' }} />
+                      <Typography sx={{ color: '#B45309', fontWeight: 600 }}>{t('pending')}</Typography>
+                    </MenuItem>
+                    <MenuItem value="scheduled" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderRadius: 1, mx: 0.5, my: 0.25, '&:hover': { backgroundColor: '#CCFBF1' } }}>
+                      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#0D9488' }} />
+                      <Typography sx={{ color: '#0F766E', fontWeight: 600 }}>{t('scheduled')}</Typography>
+                    </MenuItem>
+                    <MenuItem value="completed" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderRadius: 1, mx: 0.5, my: 0.25, '&:hover': { backgroundColor: '#DCFCE7' } }}>
+                      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#22C55E' }} />
+                      <Typography sx={{ color: '#16A34A', fontWeight: 600 }}>{t('completed')}</Typography>
+                    </MenuItem>
+                    <MenuItem value="cancelled" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderRadius: 1, mx: 0.5, my: 0.25, '&:hover': { backgroundColor: '#FEE2E2' } }}>
+                      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#EF4444' }} />
+                      <Typography sx={{ color: '#DC2626', fontWeight: 600 }}>{t('cancelled')}</Typography>
+                    </MenuItem>
+                    <MenuItem value="no-show" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderRadius: 1, mx: 0.5, my: 0.25, '&:hover': { backgroundColor: '#F1F5F9' } }}>
+                      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#64748B' }} />
+                      <Typography sx={{ color: '#475569', fontWeight: 600 }}>{t('noShow')}</Typography>
+                    </MenuItem>
+                  </Select>
                 </Box>
               </>
             )}
@@ -1880,6 +2291,7 @@ export const Appointments: React.FC = () => {
                   renderInput={(params) => (
                     <TextField {...params} label={t('doctor')} size="small" required fullWidth />
                   )}
+                  sx={autocompleteRtlSx}
                 />
                 <Stack direction="row" spacing={1.5}>
                   <TextField
@@ -1894,6 +2306,7 @@ export const Appointments: React.FC = () => {
                     }}
                     required
                     disabled={!scheduleDoctor}
+                    sx={selectRtlSx}
                   >
                     {scheduleDoctor?.specialties.map((specialty) => (
                       <MenuItem key={specialty} value={specialty}>

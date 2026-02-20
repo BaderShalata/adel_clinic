@@ -162,6 +162,44 @@ class AuthController {
         }
     }
     /**
+     * Update user profile
+     * PUT /api/auth/profile
+     * Expects Firebase ID token in Authorization header
+     */
+    async updateProfile(req, res) {
+        try {
+            const authHeader = req.headers.authorization;
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                res.status(401).json({ error: 'No authorization token provided' });
+                return;
+            }
+            const idToken = authHeader.split('Bearer ')[1];
+            const decodedToken = await authService_1.authService.verifyToken(idToken);
+            const uid = decodedToken.uid;
+            const { displayName, phoneNumber, idNumber, gender } = req.body;
+            const updatedUser = await authService_1.authService.updateProfile(uid, {
+                displayName,
+                phoneNumber,
+                idNumber,
+                gender,
+            });
+            res.status(200).json({
+                id: updatedUser.uid,
+                email: updatedUser.email,
+                displayName: updatedUser.fullName,
+                phoneNumber: updatedUser.phoneNumber,
+                idNumber: updatedUser.idNumber,
+                gender: updatedUser.gender,
+                role: updatedUser.role,
+                patientId: updatedUser.patientId,
+            });
+        }
+        catch (error) {
+            console.error('Update profile error:', error);
+            res.status(400).json({ error: error.message });
+        }
+    }
+    /**
      * Set admin claims for web admin users
      * POST /api/auth/set-admin-claims
      * Called after signup to set the admin role in Firebase Auth custom claims

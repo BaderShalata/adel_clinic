@@ -6,6 +6,9 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
+import 'edit_profile_screen.dart';
+import 'about_screen.dart';
+import 'privacy_policy_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -18,10 +21,118 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(languageProvider.t('profile')),
+        actions: [
+          _buildLanguageDropdown(context, languageProvider),
+        ],
       ),
       body: authProvider.isLoggedIn
           ? _buildLoggedInProfile(context, authProvider, languageProvider)
           : _buildGuestProfile(context, languageProvider),
+    );
+  }
+
+  Widget _buildLanguageDropdown(BuildContext context, LanguageProvider languageProvider) {
+    String currentLabel;
+    switch (languageProvider.languageCode) {
+      case 'ar':
+        currentLabel = 'عربي';
+        break;
+      case 'he':
+        currentLabel = 'עברית';
+        break;
+      default:
+        currentLabel = 'EN';
+    }
+
+    return PopupMenuButton<String>(
+      offset: const Offset(0, 45),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+      ),
+      onSelected: (String langCode) {
+        languageProvider.setLanguage(langCode);
+      },
+      itemBuilder: (BuildContext context) => [
+        PopupMenuItem<String>(
+          value: 'en',
+          child: Row(
+            children: [
+              Text(
+                'English',
+                style: TextStyle(
+                  fontWeight: languageProvider.languageCode == 'en' ? FontWeight.w600 : FontWeight.normal,
+                  color: languageProvider.languageCode == 'en' ? AppTheme.primaryColor : null,
+                ),
+              ),
+              if (languageProvider.languageCode == 'en') ...[
+                const Spacer(),
+                const Icon(Icons.check, color: AppTheme.primaryColor, size: 18),
+              ],
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'ar',
+          child: Row(
+            children: [
+              Text(
+                'العربية',
+                style: TextStyle(
+                  fontWeight: languageProvider.languageCode == 'ar' ? FontWeight.w600 : FontWeight.normal,
+                  color: languageProvider.languageCode == 'ar' ? AppTheme.primaryColor : null,
+                ),
+              ),
+              if (languageProvider.languageCode == 'ar') ...[
+                const Spacer(),
+                const Icon(Icons.check, color: AppTheme.primaryColor, size: 18),
+              ],
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'he',
+          child: Row(
+            children: [
+              Text(
+                'עברית',
+                style: TextStyle(
+                  fontWeight: languageProvider.languageCode == 'he' ? FontWeight.w600 : FontWeight.normal,
+                  color: languageProvider.languageCode == 'he' ? AppTheme.primaryColor : null,
+                ),
+              ),
+              if (languageProvider.languageCode == 'he') ...[
+                const Spacer(),
+                const Icon(Icons.check, color: AppTheme.primaryColor, size: 18),
+              ],
+            ],
+          ),
+        ),
+      ],
+      child: Container(
+        margin: const EdgeInsetsDirectional.only(end: AppTheme.spacingM),
+        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.language, color: AppTheme.primaryColor, size: 18),
+            const SizedBox(width: 4),
+            Text(
+              currentLabel,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+            const SizedBox(width: 2),
+            const Icon(Icons.arrow_drop_down, color: AppTheme.primaryColor, size: 20),
+          ],
+        ),
+      ),
     );
   }
 
@@ -34,20 +145,32 @@ class ProfileScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(AppTheme.spacingXL),
+                width: 140,
+                height: 140,
                 decoration: BoxDecoration(
                   color: AppTheme.primaryColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.person_outline,
-                  size: 80,
-                  color: AppTheme.primaryColor,
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/ClinicLogo.jpeg',
+                    fit: BoxFit.cover,
+                    width: 140,
+                    height: 140,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback to icon if image not found
+                      return const Icon(
+                        Icons.local_hospital,
+                        size: 80,
+                        color: AppTheme.primaryColor,
+                      );
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: AppTheme.spacingXL),
               Text(
-                '${languageProvider.t('welcome')} ${languageProvider.t('appName')}',
+                '${languageProvider.t('appName')}',
                 style: Theme.of(context).textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),
@@ -80,9 +203,6 @@ class ProfileScreen extends StatelessWidget {
                 },
                 child: Text("${languageProvider.t('dontHaveAccount')} ${languageProvider.t('register')}"),
               ),
-              const SizedBox(height: AppTheme.spacingXL),
-              // Language selector for guests
-              _buildLanguageSelector(context, languageProvider),
               const SizedBox(height: 120), // Space for floating nav bar
             ],
           ),
@@ -91,120 +211,8 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showLanguageDialog(BuildContext context, LanguageProvider languageProvider) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXL)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppTheme.spacingM),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-                decoration: BoxDecoration(
-                  color: AppTheme.dividerColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Text(
-                languageProvider.t('language'),
-                style: Theme.of(ctx).textTheme.titleLarge,
-              ),
-              const SizedBox(height: AppTheme.spacingM),
-              _LanguageOption(
-                label: 'English',
-                locale: const Locale('en'),
-                isSelected: languageProvider.languageCode == 'en',
-                onTap: () {
-                  languageProvider.setLanguage('en');
-                  Navigator.pop(ctx);
-                },
-              ),
-              _LanguageOption(
-                label: 'العربية',
-                locale: const Locale('ar'),
-                isSelected: languageProvider.languageCode == 'ar',
-                onTap: () {
-                  languageProvider.setLanguage('ar');
-                  Navigator.pop(ctx);
-                },
-              ),
-              _LanguageOption(
-                label: 'עברית',
-                locale: const Locale('he'),
-                isSelected: languageProvider.languageCode == 'he',
-                onTap: () {
-                  languageProvider.setLanguage('he');
-                  Navigator.pop(ctx);
-                },
-              ),
-              const SizedBox(height: AppTheme.spacingM),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLanguageSelector(BuildContext context, LanguageProvider languageProvider) {
-    String currentLanguage;
-    switch (languageProvider.languageCode) {
-      case 'ar':
-        currentLanguage = 'العربية';
-        break;
-      case 'he':
-        currentLanguage = 'עברית';
-        break;
-      default:
-        currentLanguage = 'English';
-    }
-
-    return ModernCard(
-      onTap: () => _showLanguageDialog(context, languageProvider),
-      child: Row(
-        children: [
-          const Icon(Icons.language, color: AppTheme.primaryColor),
-          const SizedBox(width: AppTheme.spacingM),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                languageProvider.t('language'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              Text(
-                currentLanguage,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-          ),
-          const Spacer(),
-          const Icon(Icons.chevron_right, color: AppTheme.textHint),
-        ],
-      ),
-    );
-  }
-
   Widget _buildLoggedInProfile(BuildContext context, AuthProvider authProvider, LanguageProvider languageProvider) {
     final user = authProvider.user;
-
-    String currentLanguage;
-    switch (languageProvider.languageCode) {
-      case 'ar':
-        currentLanguage = 'العربية';
-        break;
-      case 'he':
-        currentLanguage = 'עברית';
-        break;
-      default:
-        currentLanguage = 'English';
-    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -271,28 +279,31 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.edit,
                   title: languageProvider.t('editProfile'),
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(languageProvider.t('editProfileComingSoon'))),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
                     );
                   },
-                ),
-                const Divider(height: 1),
-                _ProfileMenuItem(
-                  icon: Icons.language,
-                  title: languageProvider.t('language'),
-                  subtitle: currentLanguage,
-                  onTap: () => _showLanguageDialog(context, languageProvider),
                 ),
                 const Divider(height: 1),
                 _ProfileMenuItem(
                   icon: Icons.info_outline,
                   title: languageProvider.t('about'),
                   onTap: () {
-                    showAboutDialog(
-                      context: context,
-                      applicationName: languageProvider.t('appName'),
-                      applicationVersion: '1.0.0',
-                      applicationLegalese: '2024 Adel Clinic. All rights reserved.',
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AboutScreen()),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                _ProfileMenuItem(
+                  icon: Icons.privacy_tip_outlined,
+                  title: languageProvider.t('privacyPolicy'),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
                     );
                   },
                 ),
@@ -339,37 +350,6 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 120), // Space for floating nav bar
         ],
       ),
-    );
-  }
-}
-
-class _LanguageOption extends StatelessWidget {
-  final String label;
-  final Locale locale;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _LanguageOption({
-    required this.label,
-    required this.locale,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      title: Text(
-        label,
-        style: TextStyle(
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          color: isSelected ? AppTheme.primaryColor : null,
-        ),
-      ),
-      trailing: isSelected
-          ? const Icon(Icons.check_circle, color: AppTheme.primaryColor)
-          : null,
     );
   }
 }

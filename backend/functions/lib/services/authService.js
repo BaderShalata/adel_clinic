@@ -153,6 +153,68 @@ class AuthService {
             throw new Error(`Invalid token: ${error.message}`);
         }
     }
+    /**
+     * Update user profile
+     */
+    async updateProfile(uid, data) {
+        try {
+            const userDoc = await this.usersCollection.doc(uid).get();
+            if (!userDoc.exists) {
+                throw new Error('User not found');
+            }
+            const userData = userDoc.data();
+            const updateData = {
+                updatedAt: admin.firestore.Timestamp.now(),
+            };
+            // Update fields if provided
+            if (data.displayName !== undefined) {
+                updateData.fullName = data.displayName;
+            }
+            if (data.phoneNumber !== undefined) {
+                updateData.phoneNumber = data.phoneNumber;
+            }
+            // Update Firestore user document
+            await this.usersCollection.doc(uid).update(updateData);
+            // If user is a patient, also update the patient record
+            if (userData.role === 'patient') {
+                const patient = await patientService_1.patientService.getPatientByUserId(uid);
+                if (patient) {
+                    const patientUpdate = {};
+                    if (data.displayName !== undefined) {
+                        patientUpdate.fullName = data.displayName;
+                    }
+                    if (data.phoneNumber !== undefined) {
+                        patientUpdate.phoneNumber = data.phoneNumber;
+                    }
+                    if (data.idNumber !== undefined) {
+                        patientUpdate.idNumber = data.idNumber;
+                    }
+                    if (data.gender !== undefined) {
+                        patientUpdate.gender = data.gender;
+                    }
+                    if (Object.keys(patientUpdate).length > 0) {
+                        await patientService_1.patientService.updatePatient(patient.id, patientUpdate);
+                    }
+                }
+            }
+            // Return updated user data
+            const updatedDoc = await this.usersCollection.doc(uid).get();
+            const updatedUserData = updatedDoc.data();
+            const patient = await patientService_1.patientService.getPatientByUserId(uid);
+            // Remove uid from userData to avoid duplication warning
+            const { uid: _existingUid, ...userDataWithoutUid } = updatedUserData;
+            return {
+                uid,
+                ...userDataWithoutUid,
+                patientId: patient?.id,
+                idNumber: patient?.idNumber,
+                gender: patient?.gender,
+            };
+        }
+        catch (error) {
+            throw new Error(`Failed to update profile: ${error.message}`);
+        }
+    }
 }
 exports.AuthService = AuthService;
 exports.authService = new AuthService();

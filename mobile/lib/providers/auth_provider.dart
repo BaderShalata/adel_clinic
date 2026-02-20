@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user.dart';
-import '../services/auth_service.dart';
+import '../services/auth_service.dart' show AuthService, AuthException;
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -85,6 +85,41 @@ class AuthProvider with ChangeNotifier {
     await _authService.signOut();
     _user = null;
     notifyListeners();
+  }
+
+  Future<bool> updateProfile({
+    String? displayName,
+    String? phoneNumber,
+    String? idNumber,
+    String? gender,
+    String? photoUrl,
+  }) async {
+    _isLoading = true;
+    _errorKey = null;
+    notifyListeners();
+
+    try {
+      _user = await _authService.updateProfile(
+        displayName: displayName,
+        phoneNumber: phoneNumber,
+        idNumber: idNumber,
+        gender: gender,
+        photoUrl: photoUrl,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _errorKey = e.translationKey;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorKey = 'failedToUpdateProfile';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   void clearError() {

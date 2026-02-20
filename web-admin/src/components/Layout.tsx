@@ -29,7 +29,7 @@ import {
   Article as NewsIcon,
   Person as UsersIcon,
   Logout as LogoutIcon,
-  Language as LanguageIcon,
+  Public as LanguageIcon,
   MedicalServices as ClinicIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';

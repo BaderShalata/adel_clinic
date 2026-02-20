@@ -51,7 +51,18 @@ export class AuthController {
     } catch (error: any) {
       console.error('Registration error:', error);
       console.error('Full error stack:', error.stack);
-      res.status(400).json({ 
+
+      // Handle specific error codes
+      if (error.message === 'ID_NUMBER_EXISTS') {
+        res.status(409).json({
+          error: 'ID_NUMBER_EXISTS',
+          errorKey: 'idNumberAlreadyExists',
+          message: 'An account with this ID number already exists',
+        });
+        return;
+      }
+
+      res.status(400).json({
         error: error.message,
         details: error.toString(),
       });
@@ -138,6 +149,61 @@ export class AuthController {
       });
     } catch (error: any) {
       console.error('Get profile error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Update user profile
+   * PUT /api/auth/profile
+   * Expects Firebase ID token in Authorization header
+   */
+  async updateProfile(req: Request, res: Response): Promise<void> {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        res.status(401).json({ error: 'No authorization token provided' });
+        return;
+      }
+
+      const idToken = authHeader.split('Bearer ')[1];
+      const decodedToken = await authService.verifyToken(idToken);
+      const uid = decodedToken.uid;
+
+      const { displayName, phoneNumber, idNumber, gender, photoUrl } = req.body;
+
+      const updatedUser = await authService.updateProfile(uid, {
+        displayName,
+        phoneNumber,
+        idNumber,
+        gender,
+        photoUrl,
+      });
+
+      res.status(200).json({
+        id: updatedUser.uid,
+        email: updatedUser.email,
+        displayName: updatedUser.fullName,
+        phoneNumber: updatedUser.phoneNumber,
+        idNumber: updatedUser.idNumber,
+        gender: updatedUser.gender,
+        photoUrl: (updatedUser as any).photoUrl,
+        role: updatedUser.role,
+        patientId: updatedUser.patientId,
+      });
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+
+      // Handle specific error codes
+      if (error.message === 'ID_NUMBER_EXISTS') {
+        res.status(409).json({
+          error: 'ID_NUMBER_EXISTS',
+          errorKey: 'idNumberAlreadyExists',
+          message: 'An account with this ID number already exists',
+        });
+        return;
+      }
+
       res.status(400).json({ error: error.message });
     }
   }

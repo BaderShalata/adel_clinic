@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user.dart';
-import 'api_service.dart';
+import 'api_service.dart' show ApiService, ApiException;
 import 'storage_service.dart';
 
 /// Custom exception for authentication errors with a translation key
@@ -127,6 +127,9 @@ class AuthService {
       return AppUser.fromJson(response);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapFirebaseErrorToKey(e.code), e.message);
+    } on ApiException catch (e) {
+      // Handle API-specific errors (like ID number already exists)
+      throw AuthException(e.translationKey, e.details);
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException('registrationFailed', e.toString());
@@ -148,5 +151,47 @@ class AuthService {
 
   bool isLoggedIn() {
     return _firebaseAuth.currentUser != null;
+  }
+
+  Future<AppUser?> updateProfile({
+    String? displayName,
+    String? phoneNumber,
+    String? idNumber,
+    String? gender,
+    String? photoUrl,
+  }) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        throw AuthException('loginFailed');
+      }
+
+      // Update Firebase display name if provided
+      if (displayName != null && displayName.isNotEmpty) {
+        await user.updateDisplayName(displayName);
+      }
+
+      // Update Firebase photo URL if provided
+      if (photoUrl != null && photoUrl.isNotEmpty) {
+        await user.updatePhotoURL(photoUrl);
+      }
+
+      // Update profile in backend
+      final response = await _apiService.updateProfile(
+        displayName: displayName,
+        phoneNumber: phoneNumber,
+        idNumber: idNumber,
+        gender: gender,
+        photoUrl: photoUrl,
+      );
+
+      return AppUser.fromJson(response);
+    } on ApiException catch (e) {
+      // Handle API-specific errors (like ID number already exists)
+      throw AuthException(e.translationKey, e.details);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('failedToUpdateProfile', e.toString());
+    }
   }
 }

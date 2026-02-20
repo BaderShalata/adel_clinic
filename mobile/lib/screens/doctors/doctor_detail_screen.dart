@@ -740,8 +740,8 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                 child: Row(
                   children: [
                     Container(
-                      width: 36,
-                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      constraints: const BoxConstraints(minWidth: 60),
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
@@ -750,10 +750,11 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                         child: Text(
                           dayNames[day],
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primaryColor,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
@@ -791,16 +792,11 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                 ),
               );
             }),
-          ],
-        ),
-      ),
-      // Legend (only if there are different service types)
-      if (allServiceTypes.length > 1)
-        ModernCard(
-          margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            // Services Legend - inside the weekly schedule card
+            if (allServiceTypes.isNotEmpty) ...[
+              const SizedBox(height: AppTheme.spacingM),
+              const Divider(height: 1, color: AppTheme.dividerColor),
+              const SizedBox(height: AppTheme.spacingM),
               Text(
                 context.read<LanguageProvider>().t('services'),
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -833,8 +829,9 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                 }).toList(),
               ),
             ],
-          ),
+          ],
         ),
+      ),
     ];
   }
 
