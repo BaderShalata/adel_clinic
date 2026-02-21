@@ -42,6 +42,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
 
     return Scaffold(
       body: SafeArea(
+        top: false, // Header extends behind status bar
         bottom: false, // Allow content to extend under floating nav bar
         child: RefreshIndicator(
           onRefresh: () => newsProvider.loadNews(),
@@ -131,8 +132,9 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
   Widget _buildHeader(BuildContext context, AuthProvider authProvider, LanguageProvider languageProvider) {
     final isRtl = languageProvider.isRTL;
 
+    final topPadding = MediaQuery.of(context).padding.top;
     return Container(
-      padding: const EdgeInsets.all(AppTheme.spacingL),
+      padding: EdgeInsets.fromLTRB(AppTheme.spacingL, topPadding + AppTheme.spacingM, AppTheme.spacingL, AppTheme.spacingL),
       decoration: BoxDecoration(
         gradient: AppTheme.headerGradient,
         borderRadius: const BorderRadius.only(
