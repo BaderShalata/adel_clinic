@@ -541,14 +541,14 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
               // Waze
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF33CCFF).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.asset(
+                    'assets/waze.jpg',
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.cover,
                   ),
-                  child: const Center(child: FaIcon(FontAwesomeIcons.waze, color: Color(0xFF33CCFF), size: 24)),
                 ),
                 title: Text(
                   languageProvider.t('waze'),
