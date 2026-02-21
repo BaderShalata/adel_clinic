@@ -144,6 +144,7 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
                           item: item,
                           isSelected: isSelected,
                           scale: _scaleAnimations[index].value,
+                          isRtl: languageProvider.languageCode == 'ar' || languageProvider.languageCode == 'he',
                         );
                       },
                     ),
@@ -170,11 +171,13 @@ class _NavBarItem extends StatelessWidget {
   final _NavItem item;
   final bool isSelected;
   final double scale;
+  final bool isRtl;
 
   const _NavBarItem({
     required this.item,
     required this.isSelected,
     required this.scale,
+    this.isRtl = false,
   });
 
   @override
@@ -188,7 +191,7 @@ class _NavBarItem extends StatelessWidget {
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
               color: isSelected
                   ? AppTheme.primaryColor.withValues(alpha: 0.12)
@@ -204,14 +207,16 @@ class _NavBarItem extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 200),
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              fontSize: isRtl ? 12.5 : 11.5,
+              fontWeight: isSelected
+                  ? (isRtl ? FontWeight.w900 : FontWeight.w700)
+                  : (isRtl ? FontWeight.w700 : FontWeight.w500),
               color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
-              letterSpacing: isSelected ? 0.2 : 0,
+              letterSpacing: isSelected ? 0.1 : 0,
             ),
             child: Text(
               item.label,

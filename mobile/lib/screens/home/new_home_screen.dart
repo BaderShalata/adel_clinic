@@ -485,33 +485,79 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     const lat = 32.8625292;
     const lng = 35.2958923;
 
-    // Show dialog to choose between Google Maps and Waze
+    // Show standard "Open with" bottom sheet
     final choice = await showModalBottomSheet<String>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.fromLTRB(0, 12, 0, 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                languageProvider.t('openWith'),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              // Drag handle
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
               const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    languageProvider.t('getDirections'),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Google Maps
               ListTile(
-                leading: const Icon(Icons.map, color: Colors.red),
-                title: Text(languageProvider.t('googleMaps')),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.asset(
+                    'assets/google-maps.png',
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                title: Text(
+                  languageProvider.t('googleMaps'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                trailing: const Icon(Icons.chevron_right, color: AppTheme.textHint),
                 onTap: () => Navigator.pop(ctx, 'google'),
               ),
+              const Divider(height: 1, indent: 76, endIndent: 20),
+              // Waze
               ListTile(
-                leading: const Icon(Icons.navigation, color: Colors.blue),
-                title: Text(languageProvider.t('waze')),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF33CCFF).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(child: FaIcon(FontAwesomeIcons.waze, color: Color(0xFF33CCFF), size: 24)),
+                ),
+                title: Text(
+                  languageProvider.t('waze'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                trailing: const Icon(Icons.chevron_right, color: AppTheme.textHint),
                 onTap: () => Navigator.pop(ctx, 'waze'),
               ),
+              const SizedBox(height: 8),
             ],
           ),
         ),

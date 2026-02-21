@@ -112,20 +112,20 @@ class ProfileScreen extends StatelessWidget {
         margin: const EdgeInsetsDirectional.only(end: AppTheme.spacingM),
         padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS, vertical: 6),
         decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+          color: Colors.white.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(AppTheme.radiusM),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.language, color: AppTheme.primaryColor, size: 18),
+            const Icon(Icons.language, color: AppTheme.surfaceLight, size: 18),
             const SizedBox(width: 4),
             Text(
               currentLabel,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor,
+                color: AppTheme.surfaceLight,
               ),
             ),
             const SizedBox(width: 2),
@@ -137,8 +137,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildGuestProfile(BuildContext context, LanguageProvider languageProvider) {
-    return SingleChildScrollView(
-      child: Center(
+    return Center(
+      child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(AppTheme.spacingL),
           child: Column(

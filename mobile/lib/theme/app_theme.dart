@@ -167,7 +167,7 @@ class AppTheme {
       scaffoldBackgroundColor: surfaceLight,
       textTheme: TextTheme(
         headlineLarge: headingFont.copyWith(
-          fontSize: 32,
+          fontSize: 34,
           fontWeight: FontWeight.w800,
           color: textPrimary,
           letterSpacing: -1.0,
@@ -175,7 +175,7 @@ class AppTheme {
           fontFamilyFallback: _fontFallback,
         ),
         headlineMedium: headingFont.copyWith(
-          fontSize: 26,
+          fontSize: 28,
           fontWeight: FontWeight.w700,
           color: textPrimary,
           letterSpacing: -0.6,
@@ -183,7 +183,7 @@ class AppTheme {
           fontFamilyFallback: _fontFallback,
         ),
         headlineSmall: headingFont.copyWith(
-          fontSize: 22,
+          fontSize: 24,
           fontWeight: FontWeight.w700,
           color: textPrimary,
           letterSpacing: -0.4,
@@ -191,7 +191,7 @@ class AppTheme {
           fontFamilyFallback: _fontFallback,
         ),
         titleLarge: headingFont.copyWith(
-          fontSize: 19,
+          fontSize: 21,
           fontWeight: FontWeight.w700,
           color: textPrimary,
           letterSpacing: -0.3,
@@ -199,7 +199,7 @@ class AppTheme {
           fontFamilyFallback: _fontFallback,
         ),
         titleMedium: headingFont.copyWith(
-          fontSize: 16,
+          fontSize: 17,
           fontWeight: FontWeight.w600,
           color: textPrimary,
           letterSpacing: -0.1,
@@ -207,14 +207,14 @@ class AppTheme {
           fontFamilyFallback: _fontFallback,
         ),
         titleSmall: headingFont.copyWith(
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
           color: textPrimary,
           letterSpacing: 0,
           fontFamilyFallback: _fontFallback,
         ),
         bodyLarge: bodyFont.copyWith(
-          fontSize: 16,
+          fontSize: 17,
           fontWeight: FontWeight.w400,
           color: textPrimary,
           height: 1.55,
@@ -222,7 +222,7 @@ class AppTheme {
           fontFamilyFallback: _fontFallback,
         ),
         bodyMedium: bodyFont.copyWith(
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: FontWeight.w400,
           color: textSecondary,
           height: 1.5,
@@ -230,7 +230,7 @@ class AppTheme {
           fontFamilyFallback: _fontFallback,
         ),
         bodySmall: bodyFont.copyWith(
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.w400,
           color: textHint,
           height: 1.4,
@@ -238,21 +238,21 @@ class AppTheme {
           fontFamilyFallback: _fontFallback,
         ),
         labelLarge: bodyFont.copyWith(
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
           color: textPrimary,
           letterSpacing: 0.1,
           fontFamilyFallback: _fontFallback,
         ),
         labelMedium: bodyFont.copyWith(
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.w500,
           color: textSecondary,
           letterSpacing: 0.2,
           fontFamilyFallback: _fontFallback,
         ),
         labelSmall: bodyFont.copyWith(
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w500,
           color: textHint,
           letterSpacing: 0.2,
@@ -265,14 +265,15 @@ class AppTheme {
         centerTitle: true,
         elevation: 0,
         scrolledUnderElevation: 1,
-        backgroundColor: cardBackground,
-        foregroundColor: textPrimary,
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.black.withOpacity(0.05),
+        iconTheme: const IconThemeData(color: Colors.white),
         titleTextStyle: headingFont.copyWith(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: textPrimary,
+          fontSize: 19,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
           letterSpacing: -0.1,
           fontFamilyFallback: _fontFallback,
         ),
@@ -396,38 +397,38 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: cardBackground,
         elevation: 0,
-        height: 70,
+        height: 72,
         indicatorColor: primarySurface,
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return bodyFont.copyWith(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
               color: primaryColor,
               fontFamilyFallback: _fontFallback,
             );
           }
           return bodyFont.copyWith(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
             color: textSecondary,
             fontFamilyFallback: _fontFallback,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: primaryColor, size: 26);
+            return const IconThemeData(color: primaryColor, size: 28);
           }
-          return const IconThemeData(color: textSecondary, size: 24);
+          return const IconThemeData(color: textSecondary, size: 25);
         }),
       ),
 
       // Tab bar theme
       tabBarTheme: TabBarThemeData(
-        labelColor: primaryColor,
-        unselectedLabelColor: textSecondary,
-        indicatorColor: primaryColor,
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white70,
+        indicatorColor: Colors.white,
         indicatorSize: TabBarIndicatorSize.label,
         labelStyle: bodyFont.copyWith(
           fontWeight: FontWeight.w600,

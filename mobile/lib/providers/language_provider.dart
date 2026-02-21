@@ -53,7 +53,7 @@ class LanguageProvider extends ChangeNotifier {
     'home': {'en': 'Home', 'ar': 'الرئيسية', 'he': 'בית'},
     'appointments': {'en': 'Appointments', 'ar': 'المواعيد', 'he': 'פגישות'},
     'doctors': {'en': 'Doctors', 'ar': 'الأطباء', 'he': 'רופאים'},
-    'profile': {'en': 'Profile', 'ar': 'الملف الشخصي', 'he': 'פרופיל'},
+    'profile': {'en': 'Me', 'ar': 'أنا', 'he': 'אני'},
 
     // Actions
     'findDoctor': {'en': 'Find Doctor', 'ar': 'البحث عن طبيب', 'he': 'מצא רופא'},

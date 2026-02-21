@@ -74,14 +74,14 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         title: Text(lang.t('signIn')),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.spacingM),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: AppTheme.spacingL),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppTheme.spacingM),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
 
               // Logo
               Center(
@@ -221,6 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
