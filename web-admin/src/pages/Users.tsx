@@ -3,10 +3,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Button, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Typography, Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions, TextField, Chip, MenuItem, Tooltip, Stack, alpha,
+  DialogContentText, DialogActions, TextField, Chip, MenuItem, Tooltip, Stack, alpha, IconButton,
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Block, CheckCircle } from '@mui/icons-material';
-import { healthcareColors, gradients } from '../theme/healthcareTheme';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Block,
+  CheckCircle,
+  Close as CloseIcon,
+  Person as PersonIcon,
+} from '@mui/icons-material';
+import { healthcareColors, gradients, glassStyles } from '../theme/healthcareTheme';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -244,79 +252,209 @@ export const Users: React.FC = () => {
       </TableContainer>
 
       {/* Edit/Create Dialog */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? t('editUser') : t('addUser')}</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label={t('fullName')}
-            value={formData.fullName}
-            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-            margin="normal"
-          />
-          <TextField
-            fullWidth
-            label={t('email')}
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            margin="normal"
-            disabled={!!editingId}
-          />
-          {!editingId && (
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              ...glassStyles.dialog,
+              overflow: 'hidden',
+            },
+          },
+        }}
+      >
+        {/* Modern Dialog Header */}
+        <Box
+          sx={{
+            background: gradients.primary,
+            px: 3,
+            py: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {editingId ? <EditIcon sx={{ color: 'white', fontSize: 20 }} /> : <AddIcon sx={{ color: 'white', fontSize: 20 }} />}
+            </Box>
+            <Typography variant="h5" fontWeight={700} color="white">
+              {editingId ? t('editUser') : t('addUser')}
+            </Typography>
+          </Box>
+          <IconButton onClick={handleClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ pt: 3, pb: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
               fullWidth
-              label={t('password')}
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              margin="normal"
+              label={t('fullName')}
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             />
-          )}
-          <TextField
-            fullWidth
-            label={t('phoneNumber')}
-            value={formData.phoneNumber}
-            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-            margin="normal"
-          />
-          <TextField
-            fullWidth
-            select
-            label={t('role')}
-            value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            margin="normal"
-          >
-            <MenuItem value="admin">{t('admin')}</MenuItem>
-            <MenuItem value="doctor">{t('doctor')}</MenuItem>
-            <MenuItem value="patient">{t('patient')}</MenuItem>
-          </TextField>
+            <TextField
+              fullWidth
+              label={t('email')}
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              disabled={!!editingId}
+            />
+            {!editingId && (
+              <TextField
+                fullWidth
+                label={t('password')}
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+            )}
+            <TextField
+              fullWidth
+              label={t('phoneNumber')}
+              value={formData.phoneNumber}
+              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+            />
+            <TextField
+              fullWidth
+              select
+              label={t('role')}
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            >
+              <MenuItem value="admin">{t('admin')}</MenuItem>
+              <MenuItem value="doctor">{t('doctor')}</MenuItem>
+              <MenuItem value="patient">{t('patient')}</MenuItem>
+            </TextField>
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>{t('cancel')}</Button>
-          <Button onClick={handleSubmit} variant="contained">
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
+          <Button
+            onClick={handleClose}
+            sx={{
+              color: healthcareColors.neutral[600],
+              borderRadius: 1.5,
+              px: 2.5,
+              '&:hover': { bgcolor: healthcareColors.neutral[100] },
+            }}
+          >
+            {t('cancel')}
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={!formData.fullName || !formData.email || createMutation.isPending || updateMutation.isPending}
+            sx={{
+              background: gradients.primary,
+              color: 'white',
+              borderRadius: 1.5,
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': {
+                background: gradients.primary,
+                filter: 'brightness(0.95)',
+                boxShadow: 'none',
+              },
+            }}
+          >
             {editingId ? t('update') : t('create')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
-        <DialogTitle>{t('deleteUser')}</DialogTitle>
-        <DialogContent>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        slotProps={{
+          paper: {
+            sx: {
+              ...glassStyles.dialog,
+              overflow: 'hidden',
+            },
+          },
+        }}
+      >
+        <Box
+          sx={{
+            background: gradients.error,
+            px: 3,
+            py: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteIcon sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+            <Typography variant="h5" fontWeight={700} color="white">
+              {t('deleteUser')}
+            </Typography>
+          </Box>
+          <IconButton onClick={handleDeleteCancel} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ pt: 3 }}>
           <DialogContentText>
             {t('confirmDeleteUser')} <strong>{userToDelete?.fullName}</strong> ({userToDelete?.email})?
             {t('actionCannotBeUndone')}
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel}>{t('cancel')}</Button>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
+          <Button
+            onClick={handleDeleteCancel}
+            sx={{
+              color: healthcareColors.neutral[600],
+              borderRadius: 1.5,
+              px: 2.5,
+              '&:hover': { bgcolor: healthcareColors.neutral[100] },
+            }}
+          >
+            {t('cancel')}
+          </Button>
           <Button
             onClick={handleDeleteConfirm}
-            color="error"
             variant="contained"
             disabled={deleteMutation.isPending}
+            sx={{
+              background: gradients.error,
+              borderRadius: 1.5,
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': {
+                background: gradients.error,
+                filter: 'brightness(0.95)',
+                boxShadow: 'none',
+              },
+            }}
           >
             {deleteMutation.isPending ? t('deleting') : t('delete')}
           </Button>

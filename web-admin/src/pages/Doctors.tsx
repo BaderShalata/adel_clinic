@@ -887,7 +887,7 @@ export const Doctors: React.FC = () => {
             >
               {editingId ? <EditIcon sx={{ color: 'white', fontSize: 20 }} /> : <AddIcon sx={{ color: 'white', fontSize: 20 }} />}
             </Box>
-            <Typography variant="h6" fontWeight={600} color="white">
+            <Typography variant="h5" fontWeight={700} color="white">
               {editingId ? t('editDoctor') : t('addNewDoctor')}
             </Typography>
           </Box>
@@ -898,7 +898,7 @@ export const Doctors: React.FC = () => {
         <DialogContent sx={{ pt: 3 }}>
           {/* Doctor Image */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+            <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
               {t('doctorPhoto')}
             </Typography>
             <input
@@ -956,7 +956,7 @@ export const Doctors: React.FC = () => {
           <Divider sx={{ mb: 2 }} />
 
           {/* Arabic Inputs */}
-          <Typography variant="subtitle2" sx={{ mt: 2, mb: 1, fontWeight: 'bold' }}>
+          <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mt: 2, mb: 1.5, fontSize: '1.05rem' }}>
             {t('arabicSection')}
           </Typography>
           <TextField
@@ -1011,7 +1011,7 @@ export const Doctors: React.FC = () => {
           <Divider sx={{ my: 2 }} />
 
           {/* English Inputs */}
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+          <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
             {t('englishSection')}
           </Typography>
           <TextField
@@ -1065,7 +1065,7 @@ export const Doctors: React.FC = () => {
           <Divider sx={{ my: 2 }} />
 
           {/* Hebrew Inputs */}
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+          <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
             {t('hebrewSection')}
           </Typography>
           <TextField

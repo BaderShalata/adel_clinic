@@ -304,6 +304,37 @@ const getTheme = (direction: 'ltr' | 'rtl') => createTheme({
         },
       },
     },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderRadius: 16,
+          boxShadow: '0 24px 48px -12px rgba(0, 0, 0, 0.2)',
+        },
+      },
+    },
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          fontSize: '1.35rem',
+          fontWeight: 700,
+          padding: '20px 24px 16px',
+        },
+      },
+    },
+    MuiDialogContent: {
+      styleOverrides: {
+        root: {
+          padding: '16px 24px',
+        },
+      },
+    },
+    MuiDialogActions: {
+      styleOverrides: {
+        root: {
+          padding: '16px 24px 20px',
+        },
+      },
+    },
   },
 });
 

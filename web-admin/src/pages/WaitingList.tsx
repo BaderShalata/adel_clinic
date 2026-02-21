@@ -772,7 +772,7 @@ export const WaitingList: React.FC = () => {
             >
               <AddIcon sx={{ color: 'white', fontSize: 20 }} />
             </Box>
-            <Typography variant="h6" fontWeight={600} color="white">
+            <Typography variant="h5" fontWeight={700} color="white">
               {t('addToWaitingList')}
             </Typography>
           </Box>
@@ -783,7 +783,7 @@ export const WaitingList: React.FC = () => {
         <DialogContent sx={{ pt: 3 }}>
           <Stack spacing={3}>
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
                 {t('patientInformation')}
               </Typography>
               <FormControlLabel
@@ -853,7 +853,7 @@ export const WaitingList: React.FC = () => {
             <Divider />
 
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
                 {t('waitingListDetails')}
               </Typography>
               <Stack spacing={1.5}>
@@ -986,7 +986,7 @@ export const WaitingList: React.FC = () => {
             >
               <BookIcon sx={{ color: 'white', fontSize: 20 }} />
             </Box>
-            <Typography variant="h6" fontWeight={600} color="white">
+            <Typography variant="h5" fontWeight={700} color="white">
               {t('convertToAppointment')}
             </Typography>
           </Box>
@@ -1006,7 +1006,7 @@ export const WaitingList: React.FC = () => {
                 </Alert>
 
                 <Box>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+                  <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
                     {t('appointmentDetails')}
                   </Typography>
                   <Stack spacing={2}>
@@ -1063,7 +1063,7 @@ export const WaitingList: React.FC = () => {
                 </Box>
 
                 <Box>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+                  <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
                     {t('selectTimeSlot')}
                   </Typography>
                   {loadingSlots ? (

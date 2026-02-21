@@ -135,24 +135,26 @@ export const Layout: React.FC = () => {
         </Box>
         <Box>
           <Typography
-            variant="h6"
+            variant="h5"
             sx={{
-              fontWeight: 700,
+              fontWeight: 800,
               background: gradients.primary,
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               letterSpacing: '-0.02em',
+              fontSize: '1.35rem',
             }}
           >
             Adel Clinic
           </Typography>
           <Typography
-            variant="caption"
+            variant="body2"
             sx={{
               color: healthcareColors.neutral[500],
-              fontWeight: 500,
+              fontWeight: 600,
               letterSpacing: '0.02em',
+              fontSize: '0.85rem',
             }}
           >
             {t('adminPanel')}
@@ -215,8 +217,8 @@ export const Layout: React.FC = () => {
                     ...(direction === 'rtl' ? { mr: 0, ml: 1 } : { ml: 0 }),
                   }}
                   primaryTypographyProps={{
-                    fontWeight: active ? 600 : 500,
-                    fontSize: '0.9rem',
+                    fontWeight: active ? 700 : 600,
+                    fontSize: '1rem',
                   }}
                 />
               </ListItemButton>

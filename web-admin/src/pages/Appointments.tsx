@@ -52,6 +52,8 @@ import {
   ArrowBack as ArrowBackIcon,
   Archive as ArchiveIcon,
   EventAvailable as ActiveIcon,
+  Close as CloseIcon,
+  Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -179,6 +181,9 @@ export const Appointments: React.FC = () => {
       '& .MuiOutlinedInput-root': {
         paddingRight: '14px !important',
         paddingLeft: '65px !important',
+      },
+      '& .MuiAutocomplete-input': {
+        textAlign: 'right',
       },
     }),
   };
@@ -1919,15 +1924,58 @@ export const Appointments: React.FC = () => {
         </Paper>
       )}
 
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>
-          {editingId ? t('editAppointment') : t('newAppointment')}
-        </DialogTitle>
-        <DialogContent>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              ...glassStyles.dialog,
+              overflow: 'hidden',
+            },
+          },
+        }}
+      >
+        {/* Modern Dialog Header */}
+        <Box
+          sx={{
+            background: gradients.info,
+            px: 3,
+            py: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {editingId ? <EditIcon sx={{ color: 'white', fontSize: 20 }} /> : <AddIcon sx={{ color: 'white', fontSize: 20 }} />}
+            </Box>
+            <Typography variant="h5" fontWeight={700} color="white">
+              {editingId ? t('editAppointment') : t('newAppointment')}
+            </Typography>
+          </Box>
+          <IconButton onClick={handleClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ px: 3, py: 3 }}>
           <Stack spacing={3} sx={{ mt: 1 }}>
             {/* Patient Section */}
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
                 {t('patientInformation')}
               </Typography>
               <FormControlLabel
@@ -2024,7 +2072,7 @@ export const Appointments: React.FC = () => {
 
             {/* Appointment Details Section */}
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
                 {t('appointmentDetails')}
               </Typography>
               <Stack spacing={1.5}>
@@ -2083,7 +2131,7 @@ export const Appointments: React.FC = () => {
 
             {/* Time Slots Section */}
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
                 {t('timeSlot')}
               </Typography>
               {loadingSlots ? (
@@ -2138,7 +2186,7 @@ export const Appointments: React.FC = () => {
               <>
                 <Divider />
                 <Box>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+                  <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
                     {t('status')}
                   </Typography>
                   <Select
@@ -2236,14 +2284,31 @@ export const Appointments: React.FC = () => {
             />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleClose} size="small">{t('cancel')}</Button>
+        <DialogActions sx={{
+          px: 3,
+          pb: 3,
+          pt: 2,
+          gap: 1.5,
+          borderTop: `1px solid ${alpha(healthcareColors.neutral[300], 0.5)}`,
+          background: alpha(healthcareColors.neutral[50], 0.5),
+        }}>
+          <Button
+            onClick={handleClose}
+            sx={{
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              color: healthcareColors.neutral[600],
+            }}
+          >
+            {t('cancel')}
+          </Button>
           {noSlotsAvailable && !editingId && (
             <Button
               onClick={handleAddToWaitingList}
               variant="outlined"
               color="warning"
-              size="small"
               startIcon={<WaitingListIcon />}
               disabled={
                 (!isNewPatient && !selectedPatient) ||
@@ -2252,6 +2317,14 @@ export const Appointments: React.FC = () => {
                 !selectedService ||
                 !selectedDate
               }
+              sx={{
+                fontWeight: 600,
+                px: 3,
+                py: 1,
+                borderRadius: 2,
+                borderWidth: 2,
+                '&:hover': { borderWidth: 2 },
+              }}
             >
               {t('addToWaitingList')}
             </Button>
@@ -2259,7 +2332,6 @@ export const Appointments: React.FC = () => {
           <Button
             onClick={handleSubmit}
             variant="contained"
-            size="small"
             disabled={
               (!isNewPatient && !selectedPatient) ||
               (isNewPatient && !newPatientData.fullName) ||
@@ -2271,7 +2343,20 @@ export const Appointments: React.FC = () => {
               updateMutation.isPending ||
               createPatientMutation.isPending
             }
-            sx={{ color: 'white' }}
+            sx={{
+              color: 'white',
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              background: gradients.info,
+              boxShadow: `0 4px 14px ${alpha(healthcareColors.info, 0.4)}`,
+              '&:hover': {
+                background: gradients.info,
+                filter: 'brightness(0.95)',
+                boxShadow: `0 6px 20px ${alpha(healthcareColors.info, 0.5)}`,
+              },
+            }}
           >
             {createPatientMutation.isPending ? t('creating') : editingId ? t('update') : t('createAppointment')}
           </Button>
@@ -2279,9 +2364,51 @@ export const Appointments: React.FC = () => {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
-        <DialogTitle>{t('deleteAppointment')}</DialogTitle>
-        <DialogContent>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        slotProps={{
+          paper: {
+            sx: {
+              ...glassStyles.dialog,
+              overflow: 'hidden',
+            },
+          },
+        }}
+      >
+        <Box
+          sx={{
+            background: gradients.error,
+            px: 3,
+            py: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteIcon sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+            <Typography variant="h5" fontWeight={700} color="white">
+              {t('deleteAppointment')}
+            </Typography>
+          </Box>
+          <IconButton onClick={handleDeleteCancel} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ pt: 3 }}>
           <DialogContentText>
             {t('confirmDeleteAppointment')}{' '}
             <strong>{appointmentToDelete?.patientName}</strong> {t('on')}{' '}
@@ -2294,13 +2421,33 @@ export const Appointments: React.FC = () => {
             {t('actionCannotBeUndone')}
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel}>{t('cancel')}</Button>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
+          <Button
+            onClick={handleDeleteCancel}
+            sx={{
+              color: healthcareColors.neutral[600],
+              borderRadius: 1.5,
+              px: 2.5,
+              '&:hover': { bgcolor: healthcareColors.neutral[100] },
+            }}
+          >
+            {t('cancel')}
+          </Button>
           <Button
             onClick={handleDeleteConfirm}
-            color="error"
             variant="contained"
             disabled={deleteMutation.isPending}
+            sx={{
+              background: gradients.error,
+              borderRadius: 1.5,
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': {
+                background: gradients.error,
+                filter: 'brightness(0.95)',
+                boxShadow: 'none',
+              },
+            }}
           >
             {deleteMutation.isPending ? t('deleting') : t('delete')}
           </Button>
@@ -2308,11 +2455,53 @@ export const Appointments: React.FC = () => {
       </Dialog>
 
       {/* Schedule Pending Appointment Dialog */}
-      <Dialog open={scheduleDialogOpen} onClose={handleScheduleDialogClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>
-          {t('scheduleAppointment')}
-        </DialogTitle>
-        <DialogContent>
+      <Dialog
+        open={scheduleDialogOpen}
+        onClose={handleScheduleDialogClose}
+        maxWidth="sm"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              ...glassStyles.dialog,
+              overflow: 'hidden',
+            },
+          },
+        }}
+      >
+        <Box
+          sx={{
+            background: gradients.success,
+            px: 3,
+            py: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ScheduleIcon sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+            <Typography variant="h5" fontWeight={700} color="white">
+              {t('scheduleAppointment')}
+            </Typography>
+          </Box>
+          <IconButton onClick={handleScheduleDialogClose} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ pt: 3 }}>
           <Stack spacing={3} sx={{ mt: 1 }}>
             {/* Patient Info */}
             {appointmentToSchedule && (
@@ -2327,7 +2516,7 @@ export const Appointments: React.FC = () => {
 
             {/* Doctor Selection */}
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
                 {t('appointmentDetails')}
               </Typography>
               <Stack spacing={2}>
@@ -2385,7 +2574,7 @@ export const Appointments: React.FC = () => {
 
             {/* Time Slots */}
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700} color="text.primary" sx={{ mb: 1.5, fontSize: '1.05rem' }}>
                 {t('selectTimeSlot')}
               </Typography>
               {loadingScheduleSlots ? (
@@ -2433,12 +2622,21 @@ export const Appointments: React.FC = () => {
             </Box>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleScheduleDialogClose} size="small">{t('cancel')}</Button>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
+          <Button
+            onClick={handleScheduleDialogClose}
+            sx={{
+              color: healthcareColors.neutral[600],
+              borderRadius: 1.5,
+              px: 2.5,
+              '&:hover': { bgcolor: healthcareColors.neutral[100] },
+            }}
+          >
+            {t('cancel')}
+          </Button>
           <Button
             onClick={handleScheduleSubmit}
             variant="contained"
-            size="small"
             disabled={
               !scheduleDoctor ||
               !scheduleService ||
@@ -2446,7 +2644,18 @@ export const Appointments: React.FC = () => {
               !scheduleTime ||
               scheduleAppointmentMutation.isPending
             }
-            sx={{ color: 'white' }}
+            sx={{
+              background: gradients.success,
+              color: 'white',
+              borderRadius: 1.5,
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': {
+                background: gradients.success,
+                filter: 'brightness(0.95)',
+                boxShadow: 'none',
+              },
+            }}
           >
             {scheduleAppointmentMutation.isPending ? t('scheduling') : t('scheduleAppointment')}
           </Button>

@@ -601,7 +601,7 @@ export const Patients: React.FC = () => {
             >
               {editingId ? <EditIcon sx={{ color: 'white', fontSize: 20 }} /> : <AddIcon sx={{ color: 'white', fontSize: 20 }} />}
             </Box>
-            <Typography variant="h6" fontWeight={600} color="white">
+            <Typography variant="h5" fontWeight={700} color="white">
               {editingId ? t('editPatient') : t('addNewPatient')}
             </Typography>
           </Box>
@@ -794,7 +794,7 @@ export const Patients: React.FC = () => {
             >
               <DeleteIcon sx={{ color: 'white', fontSize: 20 }} />
             </Box>
-            <Typography variant="h6" fontWeight={600} color="white">
+            <Typography variant="h5" fontWeight={700} color="white">
               {t('deletePatient')}
             </Typography>
           </Box>

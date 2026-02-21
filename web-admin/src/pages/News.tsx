@@ -665,7 +665,7 @@ export const News: React.FC = () => {
             >
               {editingId ? <EditIcon sx={{ color: 'white', fontSize: 20 }} /> : <AddIcon sx={{ color: 'white', fontSize: 20 }} />}
             </Box>
-            <Typography variant="h6" fontWeight={600} color="white">
+            <Typography variant="h5" fontWeight={700} color="white">
               {editingId ? t('editNews') : t('addNews')}
             </Typography>
           </Box>

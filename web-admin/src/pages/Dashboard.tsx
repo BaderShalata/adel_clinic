@@ -96,28 +96,29 @@ const StatCard: React.FC<{
             variant="overline"
             sx={{
               color: 'text.secondary',
-              fontWeight: 600,
-              letterSpacing: 1,
-              fontSize: '0.7rem',
+              fontWeight: 700,
+              letterSpacing: 1.2,
+              fontSize: '0.85rem',
             }}
           >
             {title}
           </Typography>
           <Typography
-            variant="h3"
+            variant="h2"
             sx={{
-              fontWeight: 700,
+              fontWeight: 800,
               background: gradient,
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              lineHeight: 1.2,
+              lineHeight: 1.1,
+              fontSize: '2.5rem',
             }}
           >
             {value.toLocaleString()}
           </Typography>
           {subtitle && (
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, display: 'block', fontWeight: 600, fontSize: '0.9rem' }}>
               {subtitle}
             </Typography>
           )}
@@ -127,9 +128,9 @@ const StatCard: React.FC<{
               label={`${trend >= 0 ? '+' : ''}${trend}%`}
               sx={{
                 mt: 1,
-                height: 22,
-                fontSize: '0.7rem',
-                fontWeight: 600,
+                height: 24,
+                fontSize: '0.8rem',
+                fontWeight: 700,
                 bgcolor: trend >= 0 ? alpha(healthcareColors.success, 0.1) : alpha(healthcareColors.error, 0.1),
                 color: trend >= 0 ? healthcareColors.success : healthcareColors.error,
               }}
@@ -138,8 +139,8 @@ const StatCard: React.FC<{
         </Box>
         <Avatar
           sx={{
-            width: 56,
-            height: 56,
+            width: 60,
+            height: 60,
             background: gradient,
             boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
           }}
@@ -164,14 +165,14 @@ const StatusItem: React.FC<{
     <Box sx={{ mb: 2.5 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(color, 0.1) }}>
-            {React.cloneElement(icon as React.ReactElement<{ style?: React.CSSProperties }>, { style: { fontSize: 18, color } })}
+          <Avatar sx={{ width: 36, height: 36, bgcolor: alpha(color, 0.1) }}>
+            {React.cloneElement(icon as React.ReactElement<{ style?: React.CSSProperties }>, { style: { fontSize: 20, color } })}
           </Avatar>
-          <Typography variant="body2" fontWeight={500}>
+          <Typography variant="body1" fontWeight={600} fontSize="1rem">
             {label}
           </Typography>
         </Box>
-        <Typography variant="h6" fontWeight={700} sx={{ color }}>
+        <Typography variant="h5" fontWeight={800} sx={{ color }}>
           {value}
         </Typography>
       </Box>
@@ -179,11 +180,11 @@ const StatusItem: React.FC<{
         variant="determinate"
         value={percentage}
         sx={{
-          height: 6,
-          borderRadius: 3,
+          height: 8,
+          borderRadius: 4,
           bgcolor: alpha(color, 0.1),
           '& .MuiLinearProgress-bar': {
-            borderRadius: 3,
+            borderRadius: 4,
             bgcolor: color,
           },
         }}
@@ -405,16 +406,22 @@ export const Dashboard: React.FC = () => {
               elevation={0}
               sx={{
                 p: 3,
-                borderRadius: 3,
-                background: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: 4,
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
+                border: `2px solid ${alpha(healthcareColors.primary.main, 0.15)}`,
+                boxShadow: `0 8px 32px ${alpha(healthcareColors.primary.main, 0.12)}, 0 2px 8px rgba(0, 0, 0, 0.06)`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: `0 12px 40px ${alpha(healthcareColors.primary.main, 0.18)}, 0 4px 12px rgba(0, 0, 0, 0.08)`,
+                  transform: 'translateY(-2px)',
+                },
               }}
             >
-              <Typography variant="h6" fontWeight={600} gutterBottom>
+              <Typography variant="h5" fontWeight={700} gutterBottom>
                 {t('appointmentTrends')}
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, display: 'block', fontWeight: 500 }}>
                 {t('last30Days')}
               </Typography>
               <ResponsiveContainer width="100%" height={280}>
@@ -461,16 +468,22 @@ export const Dashboard: React.FC = () => {
               elevation={0}
               sx={{
                 p: 3,
-                borderRadius: 3,
-                background: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: 4,
+                background: 'rgba(255, 255, 255, 0.95)',
                 backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
+                border: `2px solid ${alpha(healthcareColors.accent.main, 0.15)}`,
+                boxShadow: `0 8px 32px ${alpha(healthcareColors.accent.main, 0.12)}, 0 2px 8px rgba(0, 0, 0, 0.06)`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: `0 12px 40px ${alpha(healthcareColors.accent.main, 0.18)}, 0 4px 12px rgba(0, 0, 0, 0.08)`,
+                  transform: 'translateY(-2px)',
+                },
               }}
             >
-              <Typography variant="h6" fontWeight={600} gutterBottom>
+              <Typography variant="h5" fontWeight={700} gutterBottom>
                 {t('appointmentStatus')}
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 3, display: 'block' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3, display: 'block', fontWeight: 500 }}>
                 {t('allTimeBreakdown')}
               </Typography>
               <Box sx={{ mt: 2 }}>
