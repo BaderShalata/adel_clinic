@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Button, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Typography, Dialog, DialogTitle, DialogContent,
+  TableHead, TableRow, Typography, Dialog, DialogContent,
   DialogContentText, DialogActions, TextField, Chip, MenuItem, Tooltip, Stack, alpha, IconButton,
 } from '@mui/material';
 import {
@@ -12,7 +12,6 @@ import {
   Block,
   CheckCircle,
   Close as CloseIcon,
-  Person as PersonIcon,
 } from '@mui/icons-material';
 import { healthcareColors, gradients, glassStyles } from '../theme/healthcareTheme';
 import { apiClient } from '../lib/api';
