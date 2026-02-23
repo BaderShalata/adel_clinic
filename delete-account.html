@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account - SBA REHANA Medical Center</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #F7F3EE;
+            color: #0F172A;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #0D9488, #0F766E, #115E59);
+            color: white;
+            padding: 48px 24px;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+        .header p { font-size: 14px; opacity: 0.8; }
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px 16px 48px;
+        }
+        .card {
+            background: #FFFDF9;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .card h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-left: 12px;
+            border-left: 4px solid #0F766E;
+        }
+        .card p, .card li {
+            font-size: 15px;
+            color: #475569;
+            line-height: 1.7;
+        }
+        .card p + p { margin-top: 10px; }
+        .card ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .card ul li { margin-bottom: 6px; }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #0F172A;
+            margin-bottom: 6px;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #E5DFD5;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            background: #FFFDF9;
+            color: #0F172A;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #0F766E;
+        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #EF4444;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .submit-btn:hover { background: #DC2626; }
+        .success-msg {
+            display: none;
+            text-align: center;
+            padding: 24px;
+            background: #DCFCE7;
+            border-radius: 12px;
+            color: #166534;
+            font-weight: 600;
+        }
+        .footer {
+            text-align: center;
+            padding: 24px;
+            font-size: 13px;
+            color: #94A3B8;
+        }
+        .footer a { color: #0F766E; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Delete Your Account</h1>
+        <p>SBA REHANA Medical Center</p>
+    </div>
+    <div class="container">
+
+        <div class="card">
+            <h2>Account &amp; Data Deletion</h2>
+            <p>We respect your right to control your personal data. You can request the deletion of your account and all associated data by submitting the form below or by contacting us directly.</p>
+        </div>
+
+        <div class="card">
+            <h2>What Gets Deleted</h2>
+            <p>When you request account deletion, the following data will be permanently removed within 30 days:</p>
+            <ul>
+                <li>Your account profile (name, email, phone number, ID number, gender, photo)</li>
+                <li>Your appointment booking history</li>
+                <li>Your authentication credentials</li>
+                <li>Any other personal data associated with your account</li>
+            </ul>
+            <p><strong>Note:</strong> Certain data may be retained where required by law or for legitimate medical record-keeping purposes, in accordance with applicable regulations.</p>
+        </div>
+
+        <div class="card">
+            <h2>Submit Deletion Request</h2>
+            <div id="form-container">
+                <form id="delete-form" onsubmit="handleSubmit(event)">
+                    <div class="form-group">
+                        <label for="email">Email address associated with your account *</label>
+                        <input type="email" id="email" name="email" required placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="name">Full name *</label>
+                        <input type="text" id="name" name="name" required placeholder="Your full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="reason">Reason for deletion (optional)</label>
+                        <textarea id="reason" name="reason" placeholder="Let us know why you'd like to delete your account..."></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Request Account Deletion</button>
+                </form>
+            </div>
+            <div class="success-msg" id="success-msg">
+                Your account deletion request has been submitted successfully. We will process your request within 30 days. You will receive a confirmation email once your data has been deleted.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Other Ways to Request Deletion</h2>
+            <p>You can also request account deletion by contacting us directly:</p>
+            <ul>
+                <li><strong>Phone:</strong> 04-6740741</li>
+                <li><strong>WhatsApp:</strong> +972-41234567</li>
+                <li><strong>Email:</strong> contact@adelclinic.com</li>
+                <li><strong>In person:</strong> Visit SBA REHANA Medical Center, Main Street, Sakhnin</li>
+            </ul>
+        </div>
+
+    </div>
+    <div class="footer">
+        <p>&copy; 2026 SBA REHANA Medical Center. All rights reserved.</p>
+        <p style="margin-top: 8px;"><a href="privacy-policy.html">Privacy Policy</a></p>
+    </div>
+
+    <script>
+        function handleSubmit(e) {
+            e.preventDefault();
+            var email = document.getElementById('email').value;
+            var name = document.getElementById('name').value;
+            var reason = document.getElementById('reason').value;
+            var subject = encodeURIComponent('Account Deletion Request');
+            var body = encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\nReason: ' + (reason || 'Not specified') + '\n\nPlease delete my account and all associated data.');
+            window.location.href = 'mailto:contact@adelclinic.com?subject=' + subject + '&body=' + body;
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('success-msg').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
