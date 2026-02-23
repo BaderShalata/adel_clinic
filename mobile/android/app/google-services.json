@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "282914238575",
+    "project_id": "adelclinic-35393",
+    "storage_bucket": "adelclinic-35393.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:282914238575:android:8f8150632eb7af5fb25d9a",
+        "android_client_info": {
+          "package_name": "com.adelclinic.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZvnF_U-0mtjAaSW8x8gBmWClbti7bZIY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
