@@ -21,3 +21,12 @@ nul
 
 # Mac / Linux system files
 .DS_Store
+
+# Sensitive files - API keys and signing keys
+mobile/lib/firebase_options.dart
+mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist
+mobile/upload-keystore.jks
+**/*.jks
+**/*.keystore
+web-admin/src/lib/firebase.ts
