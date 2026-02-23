@@ -35,14 +35,22 @@
         .card h2 {
             font-size: 18px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             padding-left: 12px;
             border-left: 4px solid #0F766E;
         }
-        .card p {
+        .card p, .card li {
             font-size: 15px;
             color: #475569;
             line-height: 1.7;
+        }
+        .card p + p { margin-top: 10px; }
+        .card ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .card ul li {
+            margin-bottom: 6px;
         }
         .footer {
             text-align: center;
@@ -55,31 +63,117 @@
 <body>
     <div class="header">
         <h1>Privacy Policy</h1>
-        <p>SBA REHANA Medical Center &mdash; Last updated: January 2026</p>
+        <p>SBA REHANA Medical Center &mdash; Last updated: February 2026</p>
     </div>
     <div class="container">
+
+        <!-- Introduction -->
+        <div class="card">
+            <h2>Introduction</h2>
+            <p>SBA REHANA Medical Center ("we", "our", or "us") operates the SBA REHANA mobile application (the "App"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our App.</p>
+            <p>By downloading, installing, or using the App, you agree to the collection and use of information in accordance with this policy. If you do not agree with this policy, please do not use the App.</p>
+        </div>
+
+        <!-- Information We Collect -->
         <div class="card">
             <h2>Information We Collect</h2>
-            <p>We collect information you provide directly to us, such as your name, email address, phone number, and health-related information when you book appointments or use our services.</p>
+            <p><strong>Personal Information:</strong> When you create an account or use our services, we may collect the following:</p>
+            <ul>
+                <li>Full name</li>
+                <li>Email address</li>
+                <li>Phone number</li>
+                <li>National ID number</li>
+                <li>Gender</li>
+                <li>Profile photo (if provided)</li>
+            </ul>
+            <p><strong>Health-Related Information:</strong> When you book appointments, we may collect information about the medical services you request and your appointment history.</p>
+            <p><strong>Automatically Collected Information:</strong> We may automatically collect certain information when you use the App, including device type, operating system version, unique device identifiers, and usage data for analytics and service improvement.</p>
         </div>
+
+        <!-- How We Use Your Information -->
         <div class="card">
             <h2>How We Use Your Information</h2>
-            <p>We use the information we collect to provide, maintain, and improve our services, process appointments, communicate with you, and ensure the security of our platform.</p>
+            <p>We use the information we collect for the following purposes:</p>
+            <ul>
+                <li>To create and manage your account</li>
+                <li>To process and manage appointment bookings</li>
+                <li>To communicate with you about your appointments and our services</li>
+                <li>To provide customer support</li>
+                <li>To improve and personalize your experience with the App</li>
+                <li>To maintain the safety and security of our platform</li>
+                <li>To comply with legal obligations</li>
+            </ul>
         </div>
+
+        <!-- Third-Party Services -->
         <div class="card">
-            <h2>Data Security</h2>
-            <p>We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
+            <h2>Third-Party Services</h2>
+            <p>Our App uses the following third-party services that may collect information:</p>
+            <ul>
+                <li><strong>Google Firebase:</strong> We use Firebase for user authentication and backend services. Firebase may collect device identifiers and usage data. See <a href="https://firebase.google.com/support/privacy" style="color:#0F766E;">Firebase Privacy Policy</a>.</li>
+                <li><strong>Google Maps &amp; Waze:</strong> The App may link to Google Maps or Waze for navigation to our clinic. These services have their own privacy policies.</li>
+            </ul>
+            <p>We do not sell, trade, or rent your personal information to third parties. We do not share your personal data with third parties for marketing purposes.</p>
         </div>
+
+        <!-- Data Storage and Security -->
+        <div class="card">
+            <h2>Data Storage and Security</h2>
+            <p>Your data is stored securely using Google Firebase infrastructure. We implement appropriate technical and organizational security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction, including:</p>
+            <ul>
+                <li>Encrypted data transmission (SSL/TLS)</li>
+                <li>Secure authentication mechanisms</li>
+                <li>Access controls limiting data access to authorized personnel only</li>
+            </ul>
+            <p>While we strive to use commercially acceptable means to protect your personal information, no method of transmission over the Internet or method of electronic storage is 100% secure, and we cannot guarantee absolute security.</p>
+        </div>
+
+        <!-- Data Retention -->
+        <div class="card">
+            <h2>Data Retention</h2>
+            <p>We retain your personal information only for as long as is necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required or permitted by law. When your data is no longer needed, we will securely delete or anonymize it.</p>
+            <p>If you request account deletion, we will remove your personal data within 30 days, except where retention is required by law or for legitimate medical record-keeping purposes.</p>
+        </div>
+
+        <!-- Your Rights -->
         <div class="card">
             <h2>Your Rights</h2>
-            <p>You have the right to access, correct, or delete your personal information. You can also request a copy of your data or ask us to stop processing your information.</p>
+            <p>You have the following rights regarding your personal information:</p>
+            <ul>
+                <li><strong>Access:</strong> You can request a copy of the personal data we hold about you.</li>
+                <li><strong>Correction:</strong> You can update or correct inaccurate information through your profile settings or by contacting us.</li>
+                <li><strong>Deletion:</strong> You can request that we delete your account and personal data.</li>
+                <li><strong>Restriction:</strong> You can ask us to stop processing your information in certain circumstances.</li>
+                <li><strong>Portability:</strong> You can request a copy of your data in a structured, commonly used format.</li>
+            </ul>
+            <p>To exercise any of these rights, please contact us using the information provided below.</p>
         </div>
+
+        <!-- Children's Privacy -->
+        <div class="card">
+            <h2>Children's Privacy</h2>
+            <p>Our App is not intended for use by children under the age of 13. We do not knowingly collect personal information from children under 13. If we become aware that we have collected personal data from a child under 13 without parental consent, we will take steps to delete that information promptly. If you believe your child has provided us with personal information, please contact us.</p>
+        </div>
+
+        <!-- Changes to This Policy -->
+        <div class="card">
+            <h2>Changes to This Privacy Policy</h2>
+            <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date. You are advised to review this Privacy Policy periodically for any changes. Continued use of the App after changes are posted constitutes acceptance of those changes.</p>
+        </div>
+
+        <!-- Contact Us -->
         <div class="card">
             <h2>Contact Us</h2>
-            <p>If you have any questions about this Privacy Policy, please contact us at the clinic or through the app.</p>
-            <p style="margin-top: 8px;">Phone: 04-6740741</p>
-            <p>Address: Main Street, opposite the memorial, behind Massad Sweets, Sakhnin</p>
+            <p>If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:</p>
+            <ul>
+                <li><strong>Clinic:</strong> SBA REHANA Medical Center</li>
+                <li><strong>Address:</strong> Main Street, opposite the memorial, behind Massad Sweets, Sakhnin, Israel</li>
+                <li><strong>Phone:</strong> 04-6740741</li>
+                <li><strong>WhatsApp:</strong> +972-41234567</li>
+                <li><strong>Email:</strong> contact@adelclinic.com</li>
+            </ul>
         </div>
+
     </div>
     <div class="footer">
         &copy; 2026 SBA REHANA Medical Center. All rights reserved.
