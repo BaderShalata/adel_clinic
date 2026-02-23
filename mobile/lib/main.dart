@@ -12,7 +12,7 @@ import 'providers/booking_provider.dart';
 import 'providers/language_provider.dart';
 import 'services/api_service.dart';
 import 'services/storage_service.dart';
-import 'screens/shell/main_shell.dart';
+import 'screens/splash/splash_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -52,7 +52,7 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             title: 'Adel Clinic',
             theme: AppTheme.lightTheme,
-            home: const MainShell(),
+            home: const SplashScreen(),
             debugShowCheckedModeBanner: false,
             // Localization support
             locale: languageProvider.locale,
