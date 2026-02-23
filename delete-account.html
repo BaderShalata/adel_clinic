@@ -50,35 +50,8 @@
             padding-left: 20px;
         }
         .card ul li { margin-bottom: 6px; }
-        .form-group {
-            margin-bottom: 16px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #0F172A;
-            margin-bottom: 6px;
-        }
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1.5px solid #E5DFD5;
-            border-radius: 12px;
-            font-size: 15px;
-            font-family: inherit;
-            background: #FFFDF9;
-            color: #0F172A;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .form-group input:focus, .form-group textarea:focus {
-            border-color: #0F766E;
-        }
-        .form-group textarea { resize: vertical; min-height: 80px; }
         .submit-btn {
             display: block;
-            width: 100%;
             padding: 14px;
             background: #EF4444;
             color: white;
@@ -91,15 +64,6 @@
             transition: background 0.2s;
         }
         .submit-btn:hover { background: #DC2626; }
-        .success-msg {
-            display: none;
-            text-align: center;
-            padding: 24px;
-            background: #DCFCE7;
-            border-radius: 12px;
-            color: #166534;
-            font-weight: 600;
-        }
         .footer {
             text-align: center;
             padding: 24px;
@@ -134,35 +98,17 @@
         </div>
 
         <div class="card">
-            <h2>Submit Deletion Request</h2>
-            <div id="form-container">
-                <form id="delete-form" onsubmit="handleSubmit(event)">
-                    <div class="form-group">
-                        <label for="email">Email address associated with your account *</label>
-                        <input type="email" id="email" name="email" required placeholder="your@email.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="name">Full name *</label>
-                        <input type="text" id="name" name="name" required placeholder="Your full name">
-                    </div>
-                    <div class="form-group">
-                        <label for="reason">Reason for deletion (optional)</label>
-                        <textarea id="reason" name="reason" placeholder="Let us know why you'd like to delete your account..."></textarea>
-                    </div>
-                    <button type="submit" class="submit-btn">Request Account Deletion</button>
-                </form>
-            </div>
-            <div class="success-msg" id="success-msg">
-                Your account deletion request has been submitted successfully. We will process your request within 30 days. You will receive a confirmation email once your data has been deleted.
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>Other Ways to Request Deletion</h2>
-            <p>You can also request account deletion by contacting us directly:</p>
+            <h2>How to Request Deletion</h2>
+            <p>To request account deletion, please send an email to the address below with your full name and the email associated with your account. We will process your request within 30 days.</p>
+            <p style="margin-top: 16px; text-align: center;">
+                <a href="mailto:shalatab4@gmail.com?subject=Account%20Deletion%20Request&body=Please%20delete%20my%20account%20and%20all%20associated%20data.%0A%0AFull%20Name%3A%20%0AAccount%20Email%3A%20" class="submit-btn" style="display:inline-block;text-decoration:none;padding:14px 32px;">
+                    Send Deletion Request via Email
+                </a>
+            </p>
+            <p style="margin-top: 16px;">You can also contact us directly:</p>
             <ul>
-                <li><strong>Phone:</strong> 04-6740741</li>
                 <li><strong>Email:</strong> shalatab4@gmail.com</li>
+                <li><strong>Phone:</strong> 04-6740741</li>
                 <li><strong>In person:</strong> Visit SBA REHANA Medical Center, Main Street, Sakhnin</li>
             </ul>
         </div>
@@ -172,19 +118,5 @@
         <p>&copy; 2026 SBA REHANA Medical Center. All rights reserved.</p>
         <p style="margin-top: 8px;"><a href="privacy-policy.html">Privacy Policy</a></p>
     </div>
-
-    <script>
-        function handleSubmit(e) {
-            e.preventDefault();
-            var email = document.getElementById('email').value;
-            var name = document.getElementById('name').value;
-            var reason = document.getElementById('reason').value;
-            var subject = encodeURIComponent('Account Deletion Request');
-            var body = encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\nReason: ' + (reason || 'Not specified') + '\n\nPlease delete my account and all associated data.');
-            window.location.href = 'mailto:shalatab4@gmail.com?subject=' + subject + '&body=' + body;
-            document.getElementById('form-container').style.display = 'none';
-            document.getElementById('success-msg').style.display = 'block';
-        }
-    </script>
 </body>
 </html>
