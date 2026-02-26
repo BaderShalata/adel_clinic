@@ -308,42 +308,33 @@ export class AppointmentService {
 
       // Use transaction for atomic patient creation + appointment booking
       const result = await db.runTransaction(async (transaction) => {
-        // Check if patient exists
+        // === ALL READS FIRST ===
         const patientRef = this.patientsCollection.doc(userId);
         const patientDoc = await transaction.get(patientRef);
 
-        // Get doctor details
         const doctorDoc = await transaction.get(this.doctorsCollection.doc(data.doctorId));
         if (!doctorDoc.exists) {
           throw new Error('Doctor not found');
         }
         const doctor = doctorDoc.data();
 
-        // Create patient if not exists
-        let patientName = userName || 'Patient';
-        if (!patientDoc.exists) {
-          const patientData = {
-            userId,
-            email: userEmail || '',
-            fullName: userName || 'Patient',
-            role: 'patient',
-            isActive: true,
-            createdAt: admin.firestore.Timestamp.now(),
-            updatedAt: admin.firestore.Timestamp.now(),
-          };
-          transaction.set(patientRef, patientData);
-        } else {
-          patientName = patientDoc.data()?.fullName || userName || 'Patient';
-        }
-
-        // Check for double-booking within the transaction
+        // Read existing appointments for double-booking check
+        let existingAppointments: FirebaseFirestore.QuerySnapshot | null = null;
         if (data.appointmentTime) {
-          const existingAppointments = await transaction.get(
+          existingAppointments = await transaction.get(
             this.appointmentsCollection
               .where('doctorId', '==', data.doctorId)
               .where('appointmentTime', '==', data.appointmentTime)
           );
+        }
 
+        // === ALL VALIDATION (using read results) ===
+        let patientName = userName || 'Patient';
+        if (patientDoc.exists) {
+          patientName = patientDoc.data()?.fullName || userName || 'Patient';
+        }
+
+        if (existingAppointments) {
           for (const doc of existingAppointments.docs) {
             const aptData = doc.data();
             if (aptData.appointmentDate) {
@@ -364,12 +355,27 @@ export class AppointmentService {
           }
         }
 
+        // === ALL WRITES LAST ===
+        // Create patient if not exists
+        if (!patientDoc.exists) {
+          const patientData = {
+            userId,
+            email: userEmail || '',
+            fullName: userName || 'Patient',
+            role: 'patient',
+            isActive: true,
+            createdAt: admin.firestore.Timestamp.now(),
+            updatedAt: admin.firestore.Timestamp.now(),
+          };
+          transaction.set(patientRef, patientData);
+        }
+
         // Build appointment data
         const appointmentData: Record<string, any> = {
           patientId: userId,
           doctorId: data.doctorId,
           appointmentDate: admin.firestore.Timestamp.fromDate(appointmentDateObj),
-          status: 'pending', // User bookings start as pending
+          status: 'pending',
           createdAt: admin.firestore.Timestamp.now(),
           updatedAt: admin.firestore.Timestamp.now(),
           createdBy: userId,

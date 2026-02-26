@@ -120,6 +120,35 @@ class PatientService {
             throw new Error(`Failed to get patient by userId: ${error.message}`);
         }
     }
+    async getPatientByIdNumber(idNumber) {
+        try {
+            const snapshot = await this.patientsCollection.where('idNumber', '==', idNumber).limit(1).get();
+            if (snapshot.empty) {
+                return null;
+            }
+            const doc = snapshot.docs[0];
+            return { id: doc.id, ...doc.data() };
+        }
+        catch (error) {
+            throw new Error(`Failed to get patient by ID number: ${error.message}`);
+        }
+    }
+    async isIdNumberTaken(idNumber, excludeUserId) {
+        try {
+            const snapshot = await this.patientsCollection.where('idNumber', '==', idNumber).get();
+            if (snapshot.empty) {
+                return false;
+            }
+            // If excludeUserId is provided, check if the found patient is the same user (for updates)
+            if (excludeUserId) {
+                return snapshot.docs.some(doc => doc.id !== excludeUserId && doc.data().userId !== excludeUserId);
+            }
+            return true;
+        }
+        catch (error) {
+            throw new Error(`Failed to check ID number: ${error.message}`);
+        }
+    }
     async getAllPatients(search) {
         try {
             let query = this.patientsCollection.orderBy('createdAt', 'desc');

@@ -62,6 +62,13 @@ class AuthService {
                     patientId: patient?.id,
                 };
             }
+            // Check if ID number is already taken by another user
+            if (data.idNumber) {
+                const isIdTaken = await patientService_1.patientService.isIdNumberTaken(data.idNumber);
+                if (isIdTaken) {
+                    throw new Error('ID_NUMBER_EXISTS');
+                }
+            }
             const role = data.role || 'patient';
             // Set custom claims for role
             await auth.setCustomUserClaims(uid, { role });
@@ -162,6 +169,13 @@ class AuthService {
             if (!userDoc.exists) {
                 throw new Error('User not found');
             }
+            // Check if ID number is already taken by another user
+            if (data.idNumber) {
+                const isIdTaken = await patientService_1.patientService.isIdNumberTaken(data.idNumber, uid);
+                if (isIdTaken) {
+                    throw new Error('ID_NUMBER_EXISTS');
+                }
+            }
             const userData = userDoc.data();
             const updateData = {
                 updatedAt: admin.firestore.Timestamp.now(),
@@ -172,6 +186,9 @@ class AuthService {
             }
             if (data.phoneNumber !== undefined) {
                 updateData.phoneNumber = data.phoneNumber;
+            }
+            if (data.photoUrl !== undefined) {
+                updateData.photoUrl = data.photoUrl;
             }
             // Update Firestore user document
             await this.usersCollection.doc(uid).update(updateData);

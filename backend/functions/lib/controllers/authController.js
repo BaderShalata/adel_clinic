@@ -80,6 +80,15 @@ class AuthController {
         catch (error) {
             console.error('Registration error:', error);
             console.error('Full error stack:', error.stack);
+            // Handle specific error codes
+            if (error.message === 'ID_NUMBER_EXISTS') {
+                res.status(409).json({
+                    error: 'ID_NUMBER_EXISTS',
+                    errorKey: 'idNumberAlreadyExists',
+                    message: 'An account with this ID number already exists',
+                });
+                return;
+            }
             res.status(400).json({
                 error: error.message,
                 details: error.toString(),
@@ -176,12 +185,13 @@ class AuthController {
             const idToken = authHeader.split('Bearer ')[1];
             const decodedToken = await authService_1.authService.verifyToken(idToken);
             const uid = decodedToken.uid;
-            const { displayName, phoneNumber, idNumber, gender } = req.body;
+            const { displayName, phoneNumber, idNumber, gender, photoUrl } = req.body;
             const updatedUser = await authService_1.authService.updateProfile(uid, {
                 displayName,
                 phoneNumber,
                 idNumber,
                 gender,
+                photoUrl,
             });
             res.status(200).json({
                 id: updatedUser.uid,
@@ -190,12 +200,22 @@ class AuthController {
                 phoneNumber: updatedUser.phoneNumber,
                 idNumber: updatedUser.idNumber,
                 gender: updatedUser.gender,
+                photoUrl: updatedUser.photoUrl,
                 role: updatedUser.role,
                 patientId: updatedUser.patientId,
             });
         }
         catch (error) {
             console.error('Update profile error:', error);
+            // Handle specific error codes
+            if (error.message === 'ID_NUMBER_EXISTS') {
+                res.status(409).json({
+                    error: 'ID_NUMBER_EXISTS',
+                    errorKey: 'idNumberAlreadyExists',
+                    message: 'An account with this ID number already exists',
+                });
+                return;
+            }
             res.status(400).json({ error: error.message });
         }
     }
