@@ -1,0 +1,12 @@
+version 8.2
+(1) lockedslots should be disregarded after the date of the locked slot
+(2) sound should play without needing to refresh page
+(3) cancelled appointments should  stay it upcoming but show cancelled, when date is passed move to Past
+(4) screenshots rtemove battery and time
+(5) WhatsApp Talk with Dad
+(6) Appointments in anvigation bar doEsnt appear all of it
+(6.1) In Doctors page, if arabic or hebew show full name of the day. also, add Qualifications in that page such as MD PHD
+(6.2) In  appintment booking, show the date in arabic/hebrew if lang set that way
+(7) SMS Service
+(8) homepage logo make it bigger
+(9) Make default language Hebrew

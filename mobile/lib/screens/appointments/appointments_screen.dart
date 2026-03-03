@@ -550,9 +550,15 @@ class AppointmentCard extends StatelessWidget {
     return doctorProvider.doctors.where((d) => d.id == appointment.doctorId).firstOrNull;
   }
 
+  String _getLocalizedDate(BuildContext context, DateTime date) {
+    final lang = context.read<LanguageProvider>();
+    final locale = lang.locale;
+    final dateFormat = DateFormat('EEE, MMM d, yyyy', locale.toString());
+    return dateFormat.format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('EEE, MMM d, yyyy');
     final doctorProvider = context.watch<DoctorProvider>();
     final lang = context.watch<LanguageProvider>();
     final statusColor = _getStatusColor();
@@ -590,7 +596,7 @@ class AppointmentCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      dateFormat.format(appointment.appointmentDate),
+                      _getLocalizedDate(context, appointment.appointmentDate),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: statusColor,

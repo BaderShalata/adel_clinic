@@ -124,8 +124,8 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
                   // Add dividers between items (odd indices are dividers)
                   if (i.isOdd) {
                     return Container(
-                      width: 1.5,
-                      height: 32,
+                      width: 1,
+                      height: 28,
                       color: AppTheme.dividerColor,
                     );
                   }
@@ -134,19 +134,21 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
                   final item = navItems[index];
                   final isSelected = _currentIndex == index;
 
-                  return GestureDetector(
-                    onTap: () => _onItemTapped(index),
-                    behavior: HitTestBehavior.opaque,
-                    child: AnimatedBuilder(
-                      animation: _scaleAnimations[index],
-                      builder: (context, child) {
-                        return _NavBarItem(
-                          item: item,
-                          isSelected: isSelected,
-                          scale: _scaleAnimations[index].value,
-                          isRtl: languageProvider.languageCode == 'ar' || languageProvider.languageCode == 'he',
-                        );
-                      },
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => _onItemTapped(index),
+                      behavior: HitTestBehavior.opaque,
+                      child: AnimatedBuilder(
+                        animation: _scaleAnimations[index],
+                        builder: (context, child) {
+                          return _NavBarItem(
+                            item: item,
+                            isSelected: isSelected,
+                            scale: _scaleAnimations[index].value,
+                            isRtl: languageProvider.languageCode == 'ar' || languageProvider.languageCode == 'he',
+                          );
+                        },
+                      ),
                     ),
                   );
                 }),
@@ -182,16 +184,14 @@ class _NavBarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 70,
-      child: Column(
+    return Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: isSelected
                   ? AppTheme.primaryColor.withValues(alpha: 0.12)
@@ -203,7 +203,7 @@ class _NavBarItem extends StatelessWidget {
               child: Icon(
                 isSelected ? item.selectedIcon : item.icon,
                 color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
-                size: 26,
+                size: 24,
               ),
             ),
           ),
@@ -211,7 +211,7 @@ class _NavBarItem extends StatelessWidget {
           AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 200),
             style: TextStyle(
-              fontSize: isRtl ? 12.5 : 11.5,
+              fontSize: isRtl ? 11 : 10.5,
               fontWeight: isSelected
                   ? (isRtl ? FontWeight.w900 : FontWeight.w700)
                   : (isRtl ? FontWeight.w700 : FontWeight.w500),
@@ -221,12 +221,11 @@ class _NavBarItem extends StatelessWidget {
             child: Text(
               item.label,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              overflow: TextOverflow.visible,
               textAlign: TextAlign.center,
             ),
           ),
         ],
-      ),
     );
   }
 }

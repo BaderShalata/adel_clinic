@@ -64,8 +64,8 @@ class _SplashScreenState extends State<SplashScreen>
 
                 // Logo
                 Container(
-                  width: 140,
-                  height: 140,
+                  width: 200,
+                  height: 200,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white,
@@ -78,12 +78,11 @@ class _SplashScreenState extends State<SplashScreen>
                     ],
                   ),
                   child: ClipOval(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Image.asset(
-                        'assets/ClinicLogo.jpeg',
-                        fit: BoxFit.cover,
-                      ),
+                    child: Image.asset(
+                      'assets/ClinicLogo.jpeg',
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 )

@@ -174,8 +174,8 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
           const SizedBox(height: AppTheme.spacingS),
           // Clinic Logo - Large with animation
           Container(
-                width: 160,
-                height: 160,
+                width: 200,
+                height: 200,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
@@ -188,12 +188,11 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                   ],
                 ),
                 child: ClipOval(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Image.asset(
-                      'assets/ClinicLogo.jpeg',
-                      fit: BoxFit.contain,
-                    ),
+                  child: Image.asset(
+                    'assets/ClinicLogo.jpeg',
+                    width: 200,
+                    height: 200,
+                    fit: BoxFit.cover,
                   ),
                 ),
               )
@@ -402,8 +401,8 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                   ),
                   const SizedBox(width: 8),
                   _CompactIconButton(
-                    icon: Icons.phone_rounded,
-                    color: AppTheme.accentColor,
+                    icon: Icons.phone_in_talk_rounded,
+                    color: const Color(0xFF2196F3),
                     onTap: () => _makePhoneCall('tel:046740741'),
                   ),
                   const SizedBox(width: 8),
@@ -436,7 +435,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
 
   Future<void> _openWhatsApp() async {
     // Clinic WhatsApp number
-    final uri = Uri.parse('https://wa.me/97241234567');
+    final uri = Uri.parse('https://wa.me/972548888245');
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
@@ -459,7 +458,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
         break;
       case 'whatsapp':
         // Clinic WhatsApp number
-        uri = Uri.parse('https://wa.me/972XXXXXXXXX');
+        uri = Uri.parse('https://wa.me/972548888245');
         break;
       case 'phone':
         // Clinic phone number

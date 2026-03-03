@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Drawer,
@@ -18,6 +19,9 @@ import {
   Divider,
   Tooltip,
   alpha,
+  Snackbar,
+  Paper,
+  Slide,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -25,16 +29,21 @@ import {
   EventNote as AppointmentIcon,
   HourglassEmpty as WaitingIcon,
   People as PatientsIcon,
-  LocalHospital as DoctorsIcon,
+  Groups as DoctorsIcon,
   Article as NewsIcon,
   Person as UsersIcon,
   Logout as LogoutIcon,
   Public as LanguageIcon,
   MedicalServices as ClinicIcon,
+  Close as CloseIcon,
+  AccessTime as TimeIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage, type Language } from '../contexts/LanguageContext';
 import { healthcareColors, gradients, shadows } from '../theme/healthcareTheme';
+import { apiClient } from '../lib/api';
+import { useAppointmentNotification, type NotificationAppointment } from '../hooks/useAppointmentNotification';
 
 const drawerWidth = 260;
 
@@ -42,10 +51,25 @@ export const Layout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [langAnchorEl, setLangAnchorEl] = useState<null | HTMLElement>(null);
-  const { user, signOut } = useAuth();
+  const { user, signOut, getToken } = useAuth();
   const { language, setLanguage, t, direction } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Global appointment polling — shares cache with Appointments page via same query key
+  const { data: globalAppointments } = useQuery<NotificationAppointment[]>({
+    queryKey: ['appointments'],
+    queryFn: async () => {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      const response = await apiClient.get('/appointments');
+      return response.data;
+    },
+    refetchInterval: 30000,
+    refetchIntervalInBackground: true,
+  });
+
+  const { latestNewAppointments, dismissNotification } = useAppointmentNotification(globalAppointments, true);
 
   const menuItems = [
     { text: t('dashboard'), icon: <DashboardIcon />, path: '/', color: healthcareColors.primary.main },
@@ -472,6 +496,74 @@ export const Layout: React.FC = () => {
         <Toolbar />
         <Outlet />
       </Box>
+
+      {/* New appointment toast notification */}
+      <Snackbar
+        open={latestNewAppointments.length > 0}
+        onClose={dismissNotification}
+        anchorOrigin={{ vertical: 'bottom', horizontal: direction === 'rtl' ? 'left' : 'right' }}
+        slots={{ transition: Slide }}
+        sx={{ maxWidth: 380 }}
+      >
+        <Paper
+          elevation={8}
+          sx={{
+            p: 0,
+            borderRadius: 3,
+            overflow: 'hidden',
+            border: `1px solid ${alpha(healthcareColors.warning, 0.3)}`,
+            minWidth: 320,
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              px: 2,
+              py: 1.25,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: `linear-gradient(135deg, ${healthcareColors.warning}, #F59E0B)`,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AppointmentIcon sx={{ color: 'white', fontSize: 20 }} />
+              <Typography variant="subtitle2" sx={{ color: 'white', fontWeight: 700 }}>
+                {t('newAppointmentRequest')}
+              </Typography>
+            </Box>
+            <IconButton size="small" onClick={dismissNotification} sx={{ color: 'white', p: 0.5 }}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+          {/* Body */}
+          <Box sx={{ p: 2 }}>
+            {latestNewAppointments.map((apt) => (
+              <Box key={apt.id} sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PersonIcon sx={{ fontSize: 18, color: healthcareColors.neutral[500] }} />
+                  <Typography variant="body2" fontWeight={600}>
+                    {apt.patientName || '—'}
+                  </Typography>
+                </Box>
+                {apt.doctorName && (
+                  <Typography variant="caption" color="text.secondary" sx={{ ml: 3.5 }}>
+                    Dr. {apt.doctorName}
+                  </Typography>
+                )}
+                {(apt.appointmentTime || apt.serviceType) && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 3.5 }}>
+                    <TimeIcon sx={{ fontSize: 14, color: healthcareColors.neutral[400] }} />
+                    <Typography variant="caption" color="text.secondary">
+                      {[apt.appointmentTime, apt.serviceType].filter(Boolean).join(' • ')}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            ))}
+          </Box>
+        </Paper>
+      </Snackbar>
     </Box>
   );
 };

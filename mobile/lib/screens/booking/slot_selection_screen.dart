@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../providers/booking_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/appointment_provider.dart';
@@ -43,13 +44,14 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
   }
 
   String _formatDate(DateTime date, LanguageProvider lang) {
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    final monthKeys = [
+      'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+      'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
     ];
     final dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
     final dayName = lang.t(dayKeys[date.weekday % 7]);
-    return '$dayName\n${date.day} ${months[date.month - 1]}';
+    final monthName = lang.t(monthKeys[date.month - 1]);
+    return '$dayName\n${date.day} $monthName';
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
@@ -120,7 +122,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                       const Icon(Icons.calendar_today, size: 16, color: AppTheme.primaryColor),
                       const SizedBox(width: 8),
                       Text(
-                        '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                        DateFormat('d/M/yyyy', lang.locale.toString()).format(_selectedDate),
                       ),
                     ],
                   ),
@@ -224,7 +226,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             Text('${lang.t('doctor')}: ${bookingProvider.selectedDoctor?.fullName}'),
             const SizedBox(height: 8),
             Text(
-              '${lang.t('date')}: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+              '${lang.t('date')}: ${DateFormat('d/M/yyyy', lang.locale.toString()).format(_selectedDate)}',
             ),
             const SizedBox(height: 8),
             Text('${lang.t('time')}: ${bookingProvider.selectedTimeSlot}'),

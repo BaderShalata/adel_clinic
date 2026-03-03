@@ -594,10 +594,17 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
 
   List<Widget> _buildWeeklySchedule(List weeklySchedule) {
     final lang = context.read<LanguageProvider>();
-    final dayAbbr = [
-      lang.t('sun'), lang.t('mon'), lang.t('tue'),
-      lang.t('wed'), lang.t('thu'), lang.t('fri'), lang.t('sat')
-    ];
+    final isRtl = lang.isRTL;
+    // For Arabic/Hebrew, use full day names in the week grid too
+    final dayAbbr = isRtl
+        ? [
+            lang.t('sunday'), lang.t('monday'), lang.t('tuesday'),
+            lang.t('wednesday'), lang.t('thursday'), lang.t('friday'), lang.t('saturday')
+          ]
+        : [
+            lang.t('sun'), lang.t('mon'), lang.t('tue'),
+            lang.t('wed'), lang.t('thu'), lang.t('fri'), lang.t('sat')
+          ];
     final dayNames = [
       lang.t('sunday'), lang.t('monday'), lang.t('tuesday'),
       lang.t('wednesday'), lang.t('thursday'), lang.t('friday'), lang.t('saturday')
@@ -698,10 +705,13 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                           Text(
                             dayAbbr[index],
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: isRtl ? 9 : 12,
                               fontWeight: FontWeight.bold,
                               color: hasSchedule ? AppTheme.primaryColor : AppTheme.textHint,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 4),
                           if (hasSchedule) ...[

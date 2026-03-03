@@ -40,6 +40,7 @@ interface Doctor {
   fullName: string;
   fullNameEn?: string;
   fullNameHe?: string;
+  role?: string;
   specialties: string[];
   specialtiesEn?: string[];
   specialtiesHe?: string[];
@@ -99,8 +100,10 @@ export const Doctors: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
   const [formData, setFormData] = useState({
     userId: '',
+    role: 'doctor',
     fullName: '',
     fullNameEn: '',
     fullNameHe: '',
@@ -149,9 +152,10 @@ export const Doctors: React.FC = () => {
       const matchesStatus = statusFilter === 'all' ||
         (statusFilter === 'active' && doctor.isActive) ||
         (statusFilter === 'inactive' && !doctor.isActive);
-      return matchesSearch && matchesStatus;
+      const matchesRole = roleFilter === 'all' || (doctor.role || 'doctor') === roleFilter;
+      return matchesSearch && matchesStatus && matchesRole;
     });
-  }, [doctors, searchQuery, statusFilter]);
+  }, [doctors, searchQuery, statusFilter, roleFilter]);
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -227,6 +231,7 @@ export const Doctors: React.FC = () => {
       const defaultType = specialties.length === 1 ? specialties[0] : '';
       setFormData({
         userId: '',
+        role: doctor.role || 'doctor',
         fullName: doctor.fullName,
         fullNameEn: doctor.fullNameEn || '',
         fullNameHe: doctor.fullNameHe || '',
@@ -272,6 +277,7 @@ export const Doctors: React.FC = () => {
       setEditingId(null);
       setFormData({
         userId: '',
+        role: 'doctor',
         fullName: '',
         fullNameEn: '',
         fullNameHe: '',
@@ -566,7 +572,7 @@ export const Doctors: React.FC = () => {
               },
             }}
           />
-          <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
+          <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1 }}>
             <Chip
               icon={<FilterIcon />}
               label={t('all')}
@@ -609,6 +615,23 @@ export const Doctors: React.FC = () => {
                 px: 1,
               }}
             />
+            <Divider orientation="vertical" flexItem />
+            {['all', 'doctor', 'nurse', 'secretary'].map((role) => (
+              <Chip
+                key={role}
+                label={role === 'all' ? t('allRoles') : t(`role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
+                onClick={() => setRoleFilter(role)}
+                variant={roleFilter === role ? 'filled' : 'outlined'}
+                sx={{
+                  bgcolor: roleFilter === role ? healthcareColors.accent.main : 'transparent',
+                  color: roleFilter === role ? 'white' : healthcareColors.neutral[600],
+                  borderColor: healthcareColors.neutral[300],
+                  '&:hover': { bgcolor: roleFilter === role ? healthcareColors.accent.dark : healthcareColors.neutral[100] },
+                  minWidth: 'fit-content',
+                  px: 1,
+                }}
+              />
+            ))}
           </Stack>
         </Stack>
         {searchQuery && (
@@ -751,19 +774,29 @@ export const Doctors: React.FC = () => {
                     </Typography>
                   )}
 
-                  {/* Status Badge */}
-                  <Chip
-                    size="small"
-                    icon={doctor.isActive ? <ActiveIcon /> : <InactiveIcon />}
-                    label={doctor.isActive ? t('active') : t('inactive')}
-                    sx={{
-                      mb: 2,
-                      bgcolor: doctor.isActive ? alpha(healthcareColors.success, 0.1) : alpha(healthcareColors.neutral[400], 0.1),
-                      color: doctor.isActive ? healthcareColors.success : healthcareColors.neutral[500],
-                      fontWeight: 500,
-                      '& .MuiChip-icon': { color: 'inherit' },
-                    }}
-                  />
+                  {/* Status & Role Badges */}
+                  <Stack direction="row" spacing={0.5} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}>
+                    <Chip
+                      size="small"
+                      icon={doctor.isActive ? <ActiveIcon /> : <InactiveIcon />}
+                      label={doctor.isActive ? t('active') : t('inactive')}
+                      sx={{
+                        bgcolor: doctor.isActive ? alpha(healthcareColors.success, 0.1) : alpha(healthcareColors.neutral[400], 0.1),
+                        color: doctor.isActive ? healthcareColors.success : healthcareColors.neutral[500],
+                        fontWeight: 500,
+                        '& .MuiChip-icon': { color: 'inherit' },
+                      }}
+                    />
+                    <Chip
+                      size="small"
+                      label={t(`role${(doctor.role || 'doctor').charAt(0).toUpperCase() + (doctor.role || 'doctor').slice(1)}`)}
+                      sx={{
+                        bgcolor: alpha(healthcareColors.info, 0.1),
+                        color: healthcareColors.info,
+                        fontWeight: 500,
+                      }}
+                    />
+                  </Stack>
 
                   {/* Specialties */}
                   <Box sx={{ mb: 2 }}>
@@ -952,6 +985,22 @@ export const Doctors: React.FC = () => {
               </Alert>
             )}
           </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
+          {/* Role Selection */}
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>{t('selectRole')}</InputLabel>
+            <Select
+              value={formData.role}
+              label={t('selectRole')}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            >
+              <MenuItem value="doctor">{t('roleDoctor')}</MenuItem>
+              <MenuItem value="nurse">{t('roleNurse')}</MenuItem>
+              <MenuItem value="secretary">{t('roleSecretary')}</MenuItem>
+            </Select>
+          </FormControl>
 
           <Divider sx={{ mb: 2 }} />
 

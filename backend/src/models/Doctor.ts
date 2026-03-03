@@ -29,6 +29,7 @@ export interface Doctor {
   bioEn?: string;             // English
   bioHe?: string;             // Hebrew
 
+  role?: string;              // 'doctor' | 'nurse' | 'secretary' (defaults to 'doctor')
   imageUrl?: string;          // Doctor profile photo URL
   schedule: DoctorSchedule[];
   isActive: boolean;
@@ -49,6 +50,7 @@ export interface CreateDoctorInput {
   bio?: string;
   bioEn?: string;
   bioHe?: string;
+  role?: string;
   imageUrl?: string;
   schedule: DoctorSchedule[];
 }
@@ -66,6 +68,7 @@ export interface UpdateDoctorInput {
   bio?: string;
   bioEn?: string;
   bioHe?: string;
+  role?: string;
   imageUrl?: string;
   schedule?: DoctorSchedule[];
   isActive?: boolean;

@@ -48,12 +48,37 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
     }).toList();
   }
 
+  /// Group doctors by role, maintaining order: doctor, nurse, secretary
+  Map<String, List<Doctor>> _groupByRole(List<Doctor> doctors) {
+    final Map<String, List<Doctor>> grouped = {};
+    for (final role in ['doctor', 'nurse', 'secretary']) {
+      final members = doctors.where((d) => d.role == role).toList();
+      if (members.isNotEmpty) {
+        grouped[role] = members;
+      }
+    }
+    return grouped;
+  }
+
+  /// Get section header info for a role
+  ({String titleKey, IconData icon}) _getRoleSectionInfo(String role) {
+    switch (role) {
+      case 'nurse':
+        return (titleKey: 'nursesSection', icon: Icons.medical_services);
+      case 'secretary':
+        return (titleKey: 'secretariesSection', icon: Icons.badge);
+      default:
+        return (titleKey: 'doctorsSection', icon: Icons.local_hospital);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final doctorProvider = context.watch<DoctorProvider>();
     final authProvider = context.watch<AuthProvider>();
     final lang = context.watch<LanguageProvider>();
     final filteredDoctors = _filterDoctors(doctorProvider.doctors);
+    final groupedDoctors = _groupByRole(filteredDoctors);
 
     return Scaffold(
       appBar: AppBar(
@@ -118,7 +143,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
             ),
           ),
 
-          // Doctors list
+          // Doctors list grouped by role
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => doctorProvider.loadDoctors(),
@@ -159,37 +184,90 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                                 ],
                               ),
                             )
-                          : ListView.builder(
+                          : ListView(
                               padding: const EdgeInsets.only(
                                 left: AppTheme.spacingM,
                                 right: AppTheme.spacingM,
-                                bottom: 120, // Space for floating nav bar
+                                bottom: 120,
                               ),
-                              itemCount: filteredDoctors.length,
-                              itemBuilder: (context, index) {
-                                return ModernDoctorCard(
-                                  doctor: filteredDoctors[index],
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => DoctorDetailScreen(
-                                          doctorId: filteredDoctors[index].id,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                )
-                                    .animate()
-                                    .fadeIn(
-                                      delay: Duration(milliseconds: 50 * index),
-                                      duration: AppTheme.animMedium,
+                              children: [
+                                for (final entry in groupedDoctors.entries) ...[
+                                  // Section header
+                                  _buildSectionHeader(
+                                    context,
+                                    lang.t(_getRoleSectionInfo(entry.key).titleKey),
+                                    _getRoleSectionInfo(entry.key).icon,
+                                    entry.value.length,
+                                  ),
+                                  // Members in this section
+                                  for (int i = 0; i < entry.value.length; i++)
+                                    ModernDoctorCard(
+                                      doctor: entry.value[i],
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => DoctorDetailScreen(
+                                              doctorId: entry.value[i].id,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     )
-                                    .slideX(begin: 0.1, end: 0);
-                              },
+                                        .animate()
+                                        .fadeIn(
+                                          delay: Duration(milliseconds: 50 * i),
+                                          duration: AppTheme.animMedium,
+                                        )
+                                        .slideX(begin: 0.1, end: 0),
+                                ],
+                              ],
                             ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title, IconData icon, int count) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppTheme.spacingM, bottom: AppTheme.spacingS),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppTheme.radiusS),
+            ),
+            child: Icon(icon, size: 20, color: AppTheme.primaryColor),
+          ),
+          const SizedBox(width: AppTheme.spacingS),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+          ),
+          const SizedBox(width: AppTheme.spacingXS),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppTheme.radiusRound),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ),
+          const Expanded(child: SizedBox()),
         ],
       ),
     );
@@ -250,6 +328,7 @@ class ModernDoctorCard extends StatelessWidget {
     final displayName = doctor.getLocalizedName(languageCode);
     final localizedBio = doctor.getLocalizedBio(languageCode);
     final localizedSpecialties = doctor.getLocalizedSpecialties(languageCode);
+    final localizedQualifications = doctor.getLocalizedQualifications(languageCode);
 
     return ModernCard(
       onTap: onTap,
@@ -282,6 +361,20 @@ class ModernDoctorCard extends StatelessWidget {
                             color: AppTheme.textSecondary,
                           ),
                       textDirection: TextDirection.rtl,
+                    ),
+                  ),
+                // Qualifications (MD, PHD, etc.)
+                if (localizedQualifications.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      localizedQualifications.join(' | '),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.accentColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 // Bio snippet

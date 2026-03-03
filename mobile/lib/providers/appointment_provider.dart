@@ -16,8 +16,8 @@ class AppointmentProvider with ChangeNotifier {
     return _appointments
         .where((a) {
           final appointmentDay = DateTime(a.appointmentDate.year, a.appointmentDate.month, a.appointmentDate.day);
-          // Include today and future dates, exclude cancelled
-          return !appointmentDay.isBefore(today) && a.status != 'cancelled';
+          // Include today and future dates (including cancelled - they show with cancelled badge)
+          return !appointmentDay.isBefore(today) && a.status != 'completed';
         })
         .toList()
       ..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
@@ -28,8 +28,8 @@ class AppointmentProvider with ChangeNotifier {
     return _appointments
         .where((a) {
           final appointmentDay = DateTime(a.appointmentDate.year, a.appointmentDate.month, a.appointmentDate.day);
-          // Past dates, completed, or cancelled status
-          return appointmentDay.isBefore(today) || a.status == 'completed' || a.status == 'cancelled';
+          // Past dates or completed status
+          return appointmentDay.isBefore(today) || a.status == 'completed';
         })
         .toList()
       ..sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));

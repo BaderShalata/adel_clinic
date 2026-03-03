@@ -38,6 +38,7 @@ class Doctor {
   final String? bio;
   final String? bioEn;
   final String? bioHe;
+  final String role;
   final String? imageUrl;
   final List<DoctorSchedule> schedule;
   final bool isActive;
@@ -47,6 +48,7 @@ class Doctor {
     required this.fullName,
     this.fullNameEn,
     this.fullNameHe,
+    this.role = 'doctor',
     required this.specialties,
     this.specialtiesEn,
     this.specialtiesHe,
@@ -67,6 +69,7 @@ class Doctor {
       fullName: json['fullName'] as String,
       fullNameEn: json['fullNameEn'] as String?,
       fullNameHe: json['fullNameHe'] as String?,
+      role: (json['role'] as String?) ?? 'doctor',
       specialties: List<String>.from(json['specialties'] as List),
       specialtiesEn: json['specialtiesEn'] != null
           ? List<String>.from(json['specialtiesEn'] as List)
@@ -130,5 +133,15 @@ class Doctor {
       return bioHe;
     }
     return bio;
+  }
+
+  /// Get the localized role name based on language code
+  String getLocalizedRole(String languageCode) {
+    const roleNames = {
+      'doctor': {'en': 'Doctor', 'ar': 'طبيب', 'he': 'רופא'},
+      'nurse': {'en': 'Nurse', 'ar': 'ممرض/ة', 'he': 'אח/ות'},
+      'secretary': {'en': 'Secretary', 'ar': 'سكرتير/ة', 'he': 'מזכיר/ה'},
+    };
+    return roleNames[role]?[languageCode] ?? roleNames[role]?['en'] ?? role;
   }
 }

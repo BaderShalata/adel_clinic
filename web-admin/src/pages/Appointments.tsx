@@ -57,7 +57,7 @@ import {
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useAppointmentNotification } from '../hooks/useAppointmentNotification';
+import { useIsNewPending } from '../hooks/useAppointmentNotification';
 import dayjs from 'dayjs';
 
 interface Appointment {
@@ -197,12 +197,11 @@ export const Appointments: React.FC = () => {
       return response.data;
     },
     // Poll every 30 seconds to check for new appointments
-    refetchInterval: 500000,
+    refetchInterval: 30000,
     refetchIntervalInBackground: true,
   });
 
-  // Play notification sound when new pending appointments are detected
-  useAppointmentNotification(appointments, true);
+  // Notification sound is handled globally in Layout.tsx
 
   const { data: doctors } = useQuery<Doctor[]>({
     queryKey: ['doctors'],
@@ -1003,7 +1002,12 @@ export const Appointments: React.FC = () => {
 
                         return (
                           <TableRow key={appointment.id} hover>
-                            <TableCell>{appointment.patientName}</TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                {appointment.patientName}
+                                <NewBadge id={appointment.id} label={t('newBadge')} />
+                              </Box>
+                            </TableCell>
                             <TableCell>{patientIdNumber}</TableCell>
                             <TableCell>{appointment.doctorName}</TableCell>
                             <TableCell>{appointment.serviceType || '-'}</TableCell>
@@ -1408,10 +1412,13 @@ export const Appointments: React.FC = () => {
                                     }}
                                     onClick={() => handleOpen(appointment)}
                                   >
-                                    {/* Patient Name */}
-                                    <Typography variant="subtitle2" fontWeight={600} noWrap>
-                                      {appointment.patientName}
-                                    </Typography>
+                                    {/* Patient Name + New Badge */}
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                      <Typography variant="subtitle2" fontWeight={600} noWrap sx={{ flex: 1 }}>
+                                        {appointment.patientName}
+                                      </Typography>
+                                      <NewBadge id={appointment.id} label={t('newBadge')} />
+                                    </Box>
 
                                     {/* Doctor */}
                                     <Typography variant="caption" color="text.secondary" display="block" noWrap>
@@ -2661,6 +2668,37 @@ export const Appointments: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+    </Box>
+  );
+};
+
+/** Small component so we can call the useIsNewPending hook per-appointment. */
+const NewBadge: React.FC<{ id: string; label: string }> = ({ id, label }) => {
+  const isNew = useIsNewPending(id);
+  if (!isNew) return null;
+  return (
+    <Box
+      component="span"
+      sx={{
+        px: 0.75,
+        py: 0.15,
+        borderRadius: 1,
+        bgcolor: '#EF4444',
+        color: 'white',
+        fontSize: '0.6rem',
+        fontWeight: 700,
+        lineHeight: 1.4,
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+        whiteSpace: 'nowrap',
+        animation: 'pulse 2s infinite',
+        '@keyframes pulse': {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0.7 },
+        },
+      }}
+    >
+      {label}
     </Box>
   );
 };

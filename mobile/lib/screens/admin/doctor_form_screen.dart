@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/doctor.dart';
 import '../../providers/doctor_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
@@ -24,6 +25,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   final _apiService = ApiService();
   final _imagePicker = ImagePicker();
   bool _isLoading = false;
+  String _selectedRole = 'doctor';
 
   // Basic info controllers
   final _fullNameController = TextEditingController();
@@ -65,6 +67,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   }
 
   void _loadDoctorData(Doctor doctor) {
+    _selectedRole = doctor.role;
     _fullNameController.text = doctor.fullName;
     _fullNameEnController.text = doctor.fullNameEn ?? '';
     _fullNameHeController.text = doctor.fullNameHe ?? '';
@@ -412,6 +415,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           fullNameHe: _fullNameHeController.text.trim().isNotEmpty
               ? _fullNameHeController.text.trim()
               : null,
+          role: _selectedRole,
           specialties: _specialties,
           specialtiesEn: _specialtiesEn.isNotEmpty ? _specialtiesEn : null,
           qualifications: _qualifications,
@@ -438,6 +442,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           fullNameHe: _fullNameHeController.text.trim().isNotEmpty
               ? _fullNameHeController.text.trim()
               : null,
+          role: _selectedRole,
           specialties: _specialties,
           specialtiesEn: _specialtiesEn.isNotEmpty ? _specialtiesEn : null,
           qualifications: _qualifications,
@@ -492,6 +497,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>();
     final dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return Scaffold(
@@ -515,6 +521,29 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(AppTheme.spacingM),
           children: [
+            // Role Selection
+            _buildSectionHeader(lang.t('role'), Icons.badge),
+            ModernCard(
+              child: DropdownButtonFormField<String>(
+                value: _selectedRole,
+                decoration: InputDecoration(
+                  labelText: lang.t('selectRole'),
+                  border: const OutlineInputBorder(),
+                ),
+                items: [
+                  DropdownMenuItem(value: 'doctor', child: Text(lang.t('roleDoctor'))),
+                  DropdownMenuItem(value: 'nurse', child: Text(lang.t('roleNurse'))),
+                  DropdownMenuItem(value: 'secretary', child: Text(lang.t('roleSecretary'))),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _selectedRole = value);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingL),
+
             // Basic Information Section
             _buildSectionHeader('Basic Information', Icons.person),
             ModernCard(

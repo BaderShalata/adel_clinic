@@ -761,6 +761,7 @@ class ApiService {
     required String fullName,
     String? fullNameEn,
     String? fullNameHe,
+    String? role,
     required List<String> specialties,
     List<String>? specialtiesEn,
     List<String>? specialtiesHe,
@@ -781,6 +782,7 @@ class ApiService {
           'fullName': fullName,
           if (fullNameEn != null) 'fullNameEn': fullNameEn,
           if (fullNameHe != null) 'fullNameHe': fullNameHe,
+          'role': role ?? 'doctor',
           'specialties': specialties,
           if (specialtiesEn != null) 'specialtiesEn': specialtiesEn,
           if (specialtiesHe != null) 'specialtiesHe': specialtiesHe,
@@ -812,6 +814,7 @@ class ApiService {
     String? fullName,
     String? fullNameEn,
     String? fullNameHe,
+    String? role,
     List<String>? specialties,
     List<String>? specialtiesEn,
     List<String>? specialtiesHe,
@@ -830,6 +833,7 @@ class ApiService {
       if (fullName != null) data['fullName'] = fullName;
       if (fullNameEn != null) data['fullNameEn'] = fullNameEn;
       if (fullNameHe != null) data['fullNameHe'] = fullNameHe;
+      if (role != null) data['role'] = role;
       if (specialties != null) data['specialties'] = specialties;
       if (specialtiesEn != null) data['specialtiesEn'] = specialtiesEn;
       if (specialtiesHe != null) data['specialtiesHe'] = specialtiesHe;

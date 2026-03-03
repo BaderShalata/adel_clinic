@@ -80,7 +80,7 @@ class DoctorController {
      */
     async createDoctorWithSchedule(req, res) {
         try {
-            const { userId, fullName, fullNameEn, fullNameHe, specialties, specialtiesEn, specialtiesHe, qualifications, qualificationsEn, qualificationsHe, bio, bioEn, bioHe, imageUrl, scheduleEntries } = req.body;
+            const { userId, fullName, fullNameEn, fullNameHe, role, specialties, specialtiesEn, specialtiesHe, qualifications, qualificationsEn, qualificationsHe, bio, bioEn, bioHe, imageUrl, scheduleEntries } = req.body;
             if (!scheduleEntries || !Array.isArray(scheduleEntries)) {
                 res.status(400).json({ error: 'scheduleEntries array is required' });
                 return;
@@ -112,6 +112,7 @@ class DoctorController {
                 fullName,
                 fullNameEn,
                 fullNameHe,
+                role: role || 'doctor',
                 specialties: specialties || [],
                 specialtiesEn: specialtiesEn || [],
                 specialtiesHe: specialtiesHe || [],

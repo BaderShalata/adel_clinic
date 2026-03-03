@@ -27,6 +27,7 @@ export class DoctorService {
       const doctorData: any = {
         userId: data.userId,
         fullName: data.fullName,
+        role: data.role || 'doctor',
         specialties: data.specialties || [],
         qualifications: data.qualifications || [],
         schedule: cleanSchedule,
@@ -107,6 +108,7 @@ export class DoctorService {
 
       // Copy defined values only
       if (data.fullName !== undefined) cleanData.fullName = data.fullName;
+      if (data.role !== undefined) cleanData.role = data.role;
       if (data.fullNameEn !== undefined) cleanData.fullNameEn = data.fullNameEn;
       if (data.fullNameHe !== undefined) cleanData.fullNameHe = data.fullNameHe;
       if (data.specialties !== undefined) cleanData.specialties = data.specialties;

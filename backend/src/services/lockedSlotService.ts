@@ -99,16 +99,24 @@ export const lockedSlotService = {
   },
 
   /**
-   * Get all locked slots for a doctor
+   * Get all locked slots for a doctor (excludes past dates)
    */
   async getLockedSlotsByDoctor(doctorId: string): Promise<LockedSlot[]> {
     const snapshot = await lockedSlotsCollection
       .where('doctorId', '==', doctorId)
       .get();
 
-    // Sort in memory instead of using orderBy to avoid index
+    // Filter out past locked slots and sort in memory
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     return snapshot.docs
       .map(doc => doc.data() as LockedSlot)
+      .filter(slot => {
+        const slotDate = toDate(slot.date);
+        slotDate.setHours(0, 0, 0, 0);
+        return slotDate >= today;
+      })
       .sort((a, b) => {
         const dateA = toDate(a.date);
         const dateB = toDate(b.date);

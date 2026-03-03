@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 
 class LanguageProvider extends ChangeNotifier {
-  Locale _locale = const Locale('en');
+  Locale _locale = const Locale('he');
 
   Locale get locale => _locale;
 
@@ -52,7 +52,7 @@ class LanguageProvider extends ChangeNotifier {
     // Navigation
     'home': {'en': 'Home', 'ar': 'الرئيسية', 'he': 'בית'},
     'appointments': {'en': 'Appointments', 'ar': 'المواعيد', 'he': 'פגישות'},
-    'doctors': {'en': 'Doctors', 'ar': 'الأطباء', 'he': 'רופאים'},
+    'doctors': {'en': 'Our Crew', 'ar': 'طاقمنا', 'he': 'הצוות שלנו'},
     'profile': {'en': 'Me', 'ar': 'أنا', 'he': 'אני'},
 
     // Actions
@@ -137,7 +137,7 @@ class LanguageProvider extends ChangeNotifier {
     'appointmentCancelled': {'en': 'Appointment cancelled', 'ar': 'تم إلغاء الموعد', 'he': 'התור בוטל'},
 
     // Doctors
-    'ourDoctors': {'en': 'Our Doctors', 'ar': 'أطباؤنا', 'he': 'הרופאים שלנו'},
+    'ourDoctors': {'en': 'Our Crew', 'ar': 'طاقمنا', 'he': 'הצוות שלנו'},
     'doctorDetails': {'en': 'Doctor Details', 'ar': 'تفاصيل الطبيب', 'he': 'פרטי הרופא'},
     'specialties': {'en': 'Specialties', 'ar': 'التخصصات', 'he': 'התמחויות'},
     'qualifications': {'en': 'Qualifications', 'ar': 'المؤهلات', 'he': 'כישורים'},
@@ -154,6 +154,16 @@ class LanguageProvider extends ChangeNotifier {
     'searchDoctors': {'en': 'Search doctors or specialties...', 'ar': 'البحث عن أطباء أو تخصصات...', 'he': 'חפש רופאים או התמחויות...'},
     'addDoctor': {'en': 'Add Doctor', 'ar': 'إضافة طبيب', 'he': 'הוסף רופא'},
     'noDoctorsFound': {'en': 'No doctors found', 'ar': 'لم يتم العثور على أطباء', 'he': 'לא נמצאו רופאים'},
+
+    // Crew roles
+    'role': {'en': 'Role', 'ar': 'الدور', 'he': 'תפקיד'},
+    'selectRole': {'en': 'Select Role', 'ar': 'اختر الدور', 'he': 'בחר תפקיד'},
+    'roleDoctor': {'en': 'Doctor', 'ar': 'طبيب', 'he': 'רופא'},
+    'roleNurse': {'en': 'Nurse', 'ar': 'ممرض/ة', 'he': 'אח/ות'},
+    'roleSecretary': {'en': 'Secretary', 'ar': 'سكرتير/ة', 'he': 'מזכיר/ה'},
+    'doctorsSection': {'en': 'Doctors', 'ar': 'الأطباء', 'he': 'רופאים'},
+    'nursesSection': {'en': 'Nurses', 'ar': 'الممرضين', 'he': 'אחיות'},
+    'secretariesSection': {'en': 'Secretaries', 'ar': 'السكرتارية', 'he': 'מזכירות'},
 
     // News
     'latestNews': {'en': 'Latest News', 'ar': 'آخر الأخبار', 'he': 'חדשות אחרונות'},
@@ -309,5 +319,19 @@ class LanguageProvider extends ChangeNotifier {
     'thu': {'en': 'Thu', 'ar': 'خمي', 'he': 'ה\''},
     'fri': {'en': 'Fri', 'ar': 'جمع', 'he': 'ו\''},
     'sat': {'en': 'Sat', 'ar': 'سبت', 'he': 'ש\''},
+
+    // Month names
+    'jan': {'en': 'Jan', 'ar': 'يناير', 'he': 'ינו\''},
+    'feb': {'en': 'Feb', 'ar': 'فبراير', 'he': 'פבר\''},
+    'mar': {'en': 'Mar', 'ar': 'مارس', 'he': 'מרץ'},
+    'apr': {'en': 'Apr', 'ar': 'أبريل', 'he': 'אפר\''},
+    'may': {'en': 'May', 'ar': 'مايو', 'he': 'מאי'},
+    'jun': {'en': 'Jun', 'ar': 'يونيو', 'he': 'יוני'},
+    'jul': {'en': 'Jul', 'ar': 'يوليو', 'he': 'יולי'},
+    'aug': {'en': 'Aug', 'ar': 'أغسطس', 'he': 'אוג\''},
+    'sep': {'en': 'Sep', 'ar': 'سبتمبر', 'he': 'ספט\''},
+    'oct': {'en': 'Oct', 'ar': 'أكتوبر', 'he': 'אוק\''},
+    'nov': {'en': 'Nov', 'ar': 'نوفمبر', 'he': 'נוב\''},
+    'dec': {'en': 'Dec', 'ar': 'ديسمبر', 'he': 'דצמ\''},
   };
 }
