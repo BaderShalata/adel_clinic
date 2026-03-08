@@ -36,8 +36,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.api = void 0;
+exports.sendDailyReminders = exports.api = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const scheduler_1 = require("firebase-functions/v2/scheduler");
 const functions = require('firebase-functions');
 const v2_1 = require("firebase-functions/v2");
 const admin = __importStar(require("firebase-admin"));
@@ -165,4 +166,37 @@ try {
 catch (e) {
     console.warn('Error while registering authOnCreate trigger:', e);
 }
+// ----- Daily Appointment Reminder (10:00 AM Israel time) -----
+const notificationService_1 = require("./services/notificationService");
+exports.sendDailyReminders = (0, scheduler_1.onSchedule)({ schedule: 'every day 10:00', timeZone: 'Asia/Jerusalem' }, async () => {
+    try {
+        const db = admin.firestore();
+        // Calculate tomorrow's date range
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        const dayAfter = new Date(tomorrow);
+        dayAfter.setDate(dayAfter.getDate() + 1);
+        const tomorrowTimestamp = admin.firestore.Timestamp.fromDate(tomorrow);
+        const dayAfterTimestamp = admin.firestore.Timestamp.fromDate(dayAfter);
+        // Query scheduled appointments for tomorrow
+        const snapshot = await db
+            .collection('appointments')
+            .where('status', '==', 'scheduled')
+            .where('appointmentDate', '>=', tomorrowTimestamp)
+            .where('appointmentDate', '<', dayAfterTimestamp)
+            .get();
+        console.log(`Found ${snapshot.size} appointments for tomorrow's reminders`);
+        for (const doc of snapshot.docs) {
+            const apt = doc.data();
+            const doctorName = apt.doctorName || 'your doctor';
+            const time = apt.appointmentTime || '';
+            notificationService_1.notificationService.sendAppointmentReminder(apt.patientId, time, doctorName);
+        }
+    }
+    catch (error) {
+        console.error('Daily reminder error:', error);
+    }
+});
 //# sourceMappingURL=index.js.map

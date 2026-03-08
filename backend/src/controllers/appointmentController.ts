@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { appointmentService } from '../services/appointmentService';
 import { CreateAppointmentInput, UpdateAppointmentInput } from '../models/Appointment';
 import { AuthRequest } from '../middleware/auth';
+import { notificationService } from '../services/notificationService';
 
 export class AppointmentController {
   async createAppointment(req: Request, res: Response): Promise<void> {
@@ -163,7 +164,27 @@ export class AppointmentController {
     try {
       const { id } = req.params;
       const data: UpdateAppointmentInput = req.body;
+
+      // Fetch current appointment to detect status change
+      const oldAppointment = await appointmentService.getAppointmentById(id as string);
+      const oldStatus = oldAppointment?.status;
+
       const appointment = await appointmentService.updateAppointment(id as string, data);
+
+      // Send notification on status change (fire-and-forget)
+      if (oldStatus && data.status && oldStatus !== data.status) {
+        const aptDate = appointment.appointmentDate as any;
+        const dateObj = typeof aptDate.toDate === 'function' ? aptDate.toDate() : new Date(aptDate);
+        const dateStr = dateObj.toLocaleDateString('en-GB'); // DD/MM/YYYY
+        const timeStr = appointment.appointmentTime;
+
+        if (data.status === 'scheduled') {
+          notificationService.sendAppointmentConfirmed(appointment.patientId, dateStr, timeStr);
+        } else if (data.status === 'cancelled') {
+          notificationService.sendAppointmentCancelled(appointment.patientId, dateStr);
+        }
+      }
+
       res.status(200).json(appointment);
     } catch (error: any) {
       res.status(400).json({ error: error.message });

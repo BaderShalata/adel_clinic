@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.appointmentController = exports.AppointmentController = void 0;
 const appointmentService_1 = require("../services/appointmentService");
+const notificationService_1 = require("../services/notificationService");
 class AppointmentController {
     async createAppointment(req, res) {
         try {
@@ -152,7 +153,23 @@ class AppointmentController {
         try {
             const { id } = req.params;
             const data = req.body;
+            // Fetch current appointment to detect status change
+            const oldAppointment = await appointmentService_1.appointmentService.getAppointmentById(id);
+            const oldStatus = oldAppointment?.status;
             const appointment = await appointmentService_1.appointmentService.updateAppointment(id, data);
+            // Send notification on status change (fire-and-forget)
+            if (oldStatus && data.status && oldStatus !== data.status) {
+                const aptDate = appointment.appointmentDate;
+                const dateObj = typeof aptDate.toDate === 'function' ? aptDate.toDate() : new Date(aptDate);
+                const dateStr = dateObj.toLocaleDateString('en-GB'); // DD/MM/YYYY
+                const timeStr = appointment.appointmentTime;
+                if (data.status === 'scheduled') {
+                    notificationService_1.notificationService.sendAppointmentConfirmed(appointment.patientId, dateStr, timeStr);
+                }
+                else if (data.status === 'cancelled') {
+                    notificationService_1.notificationService.sendAppointmentCancelled(appointment.patientId, dateStr);
+                }
+            }
             res.status(200).json(appointment);
         }
         catch (error) {

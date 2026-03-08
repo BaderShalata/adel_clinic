@@ -257,6 +257,37 @@ class AuthController {
         }
     }
     /**
+     * Update FCM token and locale for push notifications
+     * PUT /api/auth/fcm-token
+     */
+    async updateFcmToken(req, res) {
+        try {
+            const authHeader = req.headers.authorization;
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                res.status(401).json({ error: 'No authorization token provided' });
+                return;
+            }
+            const idToken = authHeader.split('Bearer ')[1];
+            const decodedToken = await authService_1.authService.verifyToken(idToken);
+            const uid = decodedToken.uid;
+            const { fcmToken, locale } = req.body;
+            if (!fcmToken) {
+                res.status(400).json({ error: 'fcmToken is required' });
+                return;
+            }
+            const updateData = { fcmToken };
+            if (locale) {
+                updateData.locale = locale;
+            }
+            await admin.firestore().collection('users').doc(uid).update(updateData);
+            res.status(200).json({ message: 'FCM token updated successfully' });
+        }
+        catch (error) {
+            console.error('Update FCM token error:', error);
+            res.status(400).json({ error: error.message });
+        }
+    }
+    /**
      * Check if email exists in the system
      * POST /api/auth/check-email
      */

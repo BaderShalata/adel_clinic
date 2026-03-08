@@ -936,6 +936,18 @@ class ApiService {
     }
   }
 
+  // FCM Token
+  Future<void> updateFcmToken(String token, String locale) async {
+    try {
+      await _dio.put('/auth/fcm-token', data: {
+        'fcmToken': token,
+        'locale': locale,
+      });
+    } catch (e) {
+      print('Failed to update FCM token: $e');
+    }
+  }
+
   // ─── Clinic Settings ─────────────────────────────────────────────
   Future<bool> getClinicLockStatus() async {
     try {

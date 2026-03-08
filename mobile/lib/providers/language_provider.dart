@@ -1,4 +1,6 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import '../services/storage_service.dart';
 
 class LanguageProvider extends ChangeNotifier {
@@ -29,6 +31,18 @@ class LanguageProvider extends ChangeNotifier {
     _locale = locale;
     await StorageService().setString('language', locale.languageCode);
     notifyListeners();
+
+    // Sync locale to backend for notification language (fire-and-forget)
+    _syncLocaleToBackend(locale.languageCode);
+  }
+
+  Future<void> _syncLocaleToBackend(String languageCode) async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await ApiService().updateFcmToken(token, languageCode);
+      }
+    } catch (_) {}
   }
 
   Future<void> setLanguage(String languageCode) async {
@@ -343,5 +357,9 @@ class LanguageProvider extends ChangeNotifier {
     'oct': {'en': 'Oct', 'ar': 'أكتوبر', 'he': 'אוק\''},
     'nov': {'en': 'Nov', 'ar': 'نوفمبر', 'he': 'נוב\''},
     'dec': {'en': 'Dec', 'ar': 'ديسمبر', 'he': 'דצמ\''},
+
+    // Notifications
+    'notificationPermissionTitle': {'en': 'Enable Notifications', 'ar': 'تفعيل الإشعارات', 'he': 'הפעלת התראות'},
+    'notificationPermissionDesc': {'en': 'Get notified about your appointment updates', 'ar': 'احصل على إشعارات حول تحديثات مواعيدك', 'he': 'קבל התראות על עדכוני התורים שלך'},
   };
 }

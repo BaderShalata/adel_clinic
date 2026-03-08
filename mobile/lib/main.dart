@@ -12,6 +12,7 @@ import 'providers/appointment_provider.dart';
 import 'providers/booking_provider.dart';
 import 'providers/language_provider.dart';
 import 'services/api_service.dart';
+import 'services/notification_service.dart';
 import 'services/storage_service.dart';
 import 'screens/splash/splash_screen.dart';
 import 'theme/app_theme.dart';
@@ -25,10 +26,16 @@ void main() async {
     overlays: [SystemUiOverlay.bottom],
   );
 
+  // Register FCM background handler before Firebase init
+  NotificationService.registerBackgroundHandler();
+
   // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize notification service
+  await NotificationService().initialize();
 
   // Sign out user on app start (fresh session each time)
   await FirebaseAuth.instance.signOut();

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user.dart';
 import 'api_service.dart' show ApiService, ApiException;
+import 'notification_service.dart';
 import 'storage_service.dart';
 
 /// Custom exception for authentication errors with a translation key
@@ -77,6 +78,10 @@ class AuthService {
 
       // Get user data from backend
       final response = await _apiService.login(email, password);
+
+      // Register FCM token (fire-and-forget)
+      NotificationService().registerTokenForCurrentUser();
+
       return AppUser.fromJson(response);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapFirebaseErrorToKey(e.code), e.message);
@@ -126,6 +131,9 @@ class AuthService {
         idNumber: idNumber,
         gender: gender,
       );
+
+      // Register FCM token (fire-and-forget)
+      NotificationService().registerTokenForCurrentUser();
 
       return AppUser.fromJson(response);
     } on FirebaseAuthException catch (e) {

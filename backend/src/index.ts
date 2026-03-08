@@ -1,4 +1,5 @@
 import { onRequest } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 const functions: any = require('firebase-functions');
 import { setGlobalOptions } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
@@ -142,3 +143,47 @@ try {
 } catch (e) {
   console.warn('Error while registering authOnCreate trigger:', e);
 }
+
+// ----- Daily Appointment Reminder (10:00 AM Israel time) -----
+import { notificationService } from './services/notificationService';
+
+export const sendDailyReminders = onSchedule(
+  { schedule: 'every day 10:00', timeZone: 'Asia/Jerusalem' },
+  async () => {
+    try {
+      const db = admin.firestore();
+
+      // Calculate tomorrow's date range
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      const dayAfter = new Date(tomorrow);
+      dayAfter.setDate(dayAfter.getDate() + 1);
+
+      const tomorrowTimestamp = admin.firestore.Timestamp.fromDate(tomorrow);
+      const dayAfterTimestamp = admin.firestore.Timestamp.fromDate(dayAfter);
+
+      // Query scheduled appointments for tomorrow
+      const snapshot = await db
+        .collection('appointments')
+        .where('status', '==', 'scheduled')
+        .where('appointmentDate', '>=', tomorrowTimestamp)
+        .where('appointmentDate', '<', dayAfterTimestamp)
+        .get();
+
+      console.log(`Found ${snapshot.size} appointments for tomorrow's reminders`);
+
+      for (const doc of snapshot.docs) {
+        const apt = doc.data();
+        const doctorName = apt.doctorName || 'your doctor';
+        const time = apt.appointmentTime || '';
+
+        notificationService.sendAppointmentReminder(apt.patientId, time, doctorName);
+      }
+    } catch (error) {
+      console.error('Daily reminder error:', error);
+    }
+  },
+);
