@@ -3,6 +3,7 @@ import { appointmentService } from '../services/appointmentService';
 import { CreateAppointmentInput, UpdateAppointmentInput } from '../models/Appointment';
 import { AuthRequest } from '../middleware/auth';
 import { notificationService } from '../services/notificationService';
+import * as admin from 'firebase-admin';
 
 export class AppointmentController {
   async createAppointment(req: Request, res: Response): Promise<void> {
@@ -171,17 +172,29 @@ export class AppointmentController {
 
       const appointment = await appointmentService.updateAppointment(id as string, data);
 
-      // Send notification on status change (fire-and-forget)
+      // Send notification on status change
       if (oldStatus && data.status && oldStatus !== data.status) {
         const aptDate = appointment.appointmentDate as any;
         const dateObj = typeof aptDate.toDate === 'function' ? aptDate.toDate() : new Date(aptDate);
         const dateStr = dateObj.toLocaleDateString('en-GB'); // DD/MM/YYYY
         const timeStr = appointment.appointmentTime;
 
+        // Resolve the patient's Firebase Auth UID for FCM lookup
+        // patientId may be a patients collection doc ID, not the users collection UID
+        let notifyUid = appointment.patientId;
+        try {
+          const patientDoc = await admin.firestore().collection('patients').doc(appointment.patientId).get();
+          if (patientDoc.exists && patientDoc.data()?.userId) {
+            notifyUid = patientDoc.data()!.userId;
+          }
+        } catch (err) {
+          console.error('Failed to resolve patient userId for notification:', err);
+        }
+
         if (data.status === 'scheduled') {
-          notificationService.sendAppointmentConfirmed(appointment.patientId, dateStr, timeStr);
+          await notificationService.sendAppointmentConfirmed(notifyUid, dateStr, timeStr);
         } else if (data.status === 'cancelled') {
-          notificationService.sendAppointmentCancelled(appointment.patientId, dateStr);
+          await notificationService.sendAppointmentCancelled(notifyUid, dateStr);
         }
       }
 

@@ -39,44 +39,44 @@ const db = admin.firestore();
 const translations = {
     en: {
         appointmentConfirmed: {
-            title: 'Appointment Confirmed',
+            title: 'SBA REHANA',
             body: 'Your appointment has been confirmed for {date} at {time}. We look forward to seeing you!',
         },
         appointmentCancelled: {
-            title: 'Appointment Cancelled',
+            title: 'SBA REHANA',
             body: 'Your appointment on {date} has been cancelled. Please contact us for rescheduling.',
         },
         appointmentReminder: {
-            title: 'Appointment Reminder',
+            title: 'SBA REHANA',
             body: 'Reminder: You have an appointment tomorrow at {time} with {doctorName}.',
         },
     },
     ar: {
         appointmentConfirmed: {
-            title: 'تم تأكيد الموعد',
-            body: 'تم تأكيد موعدك بتاريخ {date} الساعة {time}. نتطلع لرؤيتك!',
+            title: '\u200Fصبا ريحانا',
+            body: '\u200Fتم تأكيد موعدك بتاريخ {date} الساعة {time}. نتطلع لرؤيتك!',
         },
         appointmentCancelled: {
-            title: 'تم إلغاء الموعد',
-            body: 'تم إلغاء موعدك بتاريخ {date}. يرجى الاتصال بنا لإعادة الجدولة.',
+            title: '\u200Fصبا ريحانا',
+            body: '\u200Fتم إلغاء موعدك بتاريخ {date}. يرجى الاتصال بنا لإعادة الجدولة.',
         },
         appointmentReminder: {
-            title: 'تذكير بالموعد',
-            body: 'تذكير: لديك موعد غداً الساعة {time} مع {doctorName}.',
+            title: '\u200Fصبا ريحانا',
+            body: '\u200Fتذكير: لديك موعد غداً الساعة {time} مع {doctorName}.',
         },
     },
     he: {
         appointmentConfirmed: {
-            title: 'התור אושר',
-            body: 'התור שלך אושר לתאריך {date} בשעה {time}. מצפים לראותך!',
+            title: '\u200Fסבא ריחאנה',
+            body: '\u200Fהתור שלך אושר לתאריך {date} בשעה {time}. מצפים לראותך!',
         },
         appointmentCancelled: {
-            title: 'התור בוטל',
-            body: 'התור שלך בתאריך {date} בוטל. אנא צור קשר לתיאום מחדש.',
+            title: '\u200Fסבא ריחאנה',
+            body: '\u200Fהתור שלך בתאריך {date} בוטל. אנא צור קשר לתיאום מחדש.',
         },
         appointmentReminder: {
-            title: 'תזכורת לתור',
-            body: 'תזכורת: יש לך תור מחר בשעה {time} אצל {doctorName}.',
+            title: '\u200Fסבא ריחאנה',
+            body: '\u200Fתזכורת: יש לך תור מחר בשעה {time} אצל {doctorName}.',
         },
     },
 };
@@ -97,8 +97,10 @@ class NotificationService {
     async sendAppointmentConfirmed(patientUid, date, time) {
         try {
             const { fcmToken, locale } = await this.getUserTokenAndLocale(patientUid);
-            if (!fcmToken)
+            if (!fcmToken) {
+                console.warn(`No FCM token found for user ${patientUid}, skipping confirmed notification`);
                 return;
+            }
             const t = getTranslation(locale, 'appointmentConfirmed');
             await this.sendNotification(fcmToken, patientUid, {
                 title: t.title,
@@ -115,8 +117,10 @@ class NotificationService {
     async sendAppointmentCancelled(patientUid, date) {
         try {
             const { fcmToken, locale } = await this.getUserTokenAndLocale(patientUid);
-            if (!fcmToken)
+            if (!fcmToken) {
+                console.warn(`No FCM token found for user ${patientUid}, skipping cancelled notification`);
                 return;
+            }
             const t = getTranslation(locale, 'appointmentCancelled');
             await this.sendNotification(fcmToken, patientUid, {
                 title: t.title,
@@ -173,10 +177,15 @@ class NotificationService {
                     },
                 },
                 apns: {
+                    headers: {
+                        'apns-priority': '10',
+                    },
                     payload: {
                         aps: {
                             sound: 'default',
                             badge: 1,
+                            'content-available': 1,
+                            'mutable-content': 1,
                         },
                     },
                 },

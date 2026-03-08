@@ -279,7 +279,7 @@ class AuthController {
             if (locale) {
                 updateData.locale = locale;
             }
-            await admin.firestore().collection('users').doc(uid).update(updateData);
+            await admin.firestore().collection('users').doc(uid).set(updateData, { merge: true });
             res.status(200).json({ message: 'FCM token updated successfully' });
         }
         catch (error) {

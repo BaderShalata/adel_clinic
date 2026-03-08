@@ -1,8 +1,42 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.appointmentController = exports.AppointmentController = void 0;
 const appointmentService_1 = require("../services/appointmentService");
 const notificationService_1 = require("../services/notificationService");
+const admin = __importStar(require("firebase-admin"));
 class AppointmentController {
     async createAppointment(req, res) {
         try {
@@ -157,17 +191,29 @@ class AppointmentController {
             const oldAppointment = await appointmentService_1.appointmentService.getAppointmentById(id);
             const oldStatus = oldAppointment?.status;
             const appointment = await appointmentService_1.appointmentService.updateAppointment(id, data);
-            // Send notification on status change (fire-and-forget)
+            // Send notification on status change
             if (oldStatus && data.status && oldStatus !== data.status) {
                 const aptDate = appointment.appointmentDate;
                 const dateObj = typeof aptDate.toDate === 'function' ? aptDate.toDate() : new Date(aptDate);
                 const dateStr = dateObj.toLocaleDateString('en-GB'); // DD/MM/YYYY
                 const timeStr = appointment.appointmentTime;
+                // Resolve the patient's Firebase Auth UID for FCM lookup
+                // patientId may be a patients collection doc ID, not the users collection UID
+                let notifyUid = appointment.patientId;
+                try {
+                    const patientDoc = await admin.firestore().collection('patients').doc(appointment.patientId).get();
+                    if (patientDoc.exists && patientDoc.data()?.userId) {
+                        notifyUid = patientDoc.data().userId;
+                    }
+                }
+                catch (err) {
+                    console.error('Failed to resolve patient userId for notification:', err);
+                }
                 if (data.status === 'scheduled') {
-                    notificationService_1.notificationService.sendAppointmentConfirmed(appointment.patientId, dateStr, timeStr);
+                    await notificationService_1.notificationService.sendAppointmentConfirmed(notifyUid, dateStr, timeStr);
                 }
                 else if (data.status === 'cancelled') {
-                    notificationService_1.notificationService.sendAppointmentCancelled(appointment.patientId, dateStr);
+                    await notificationService_1.notificationService.sendAppointmentCancelled(notifyUid, dateStr);
                 }
             }
             res.status(200).json(appointment);

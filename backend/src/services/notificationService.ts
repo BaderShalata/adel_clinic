@@ -12,43 +12,43 @@ type TranslationKey = 'appointmentConfirmed' | 'appointmentCancelled' | 'appoint
 const translations: Record<string, Record<TranslationKey, NotificationTranslations>> = {
   en: {
     appointmentConfirmed: {
-      title: 'Appointment Confirmed',
+      title: 'SBA REHANA',
       body: 'Your appointment has been confirmed for {date} at {time}. We look forward to seeing you!',
     },
     appointmentCancelled: {
-      title: 'Appointment Cancelled',
+      title: 'SBA REHANA',
       body: 'Your appointment on {date} has been cancelled. Please contact us for rescheduling.',
     },
     appointmentReminder: {
-      title: 'Appointment Reminder',
+      title: 'SBA REHANA',
       body: 'Reminder: You have an appointment tomorrow at {time} with {doctorName}.',
     },
   },
   ar: {
     appointmentConfirmed: {
-      title: 'تم تأكيد الموعد',
+      title: 'صبا ريحانا ',
       body: 'تم تأكيد موعدك بتاريخ {date} الساعة {time}. نتطلع لرؤيتك!',
     },
     appointmentCancelled: {
-      title: 'تم إلغاء الموعد',
+      title: 'صبا ريحانا ',
       body: 'تم إلغاء موعدك بتاريخ {date}. يرجى الاتصال بنا لإعادة الجدولة.',
     },
     appointmentReminder: {
-      title: 'تذكير بالموعد',
+      title: 'صبا ريحانا',
       body: 'تذكير: لديك موعد غداً الساعة {time} مع {doctorName}.',
     },
   },
   he: {
     appointmentConfirmed: {
-      title: 'התור אושר',
+      title: 'סבא ריחאנה',
       body: 'התור שלך אושר לתאריך {date} בשעה {time}. מצפים לראותך!',
     },
     appointmentCancelled: {
-      title: 'התור בוטל',
+      title: 'סבא ריחאנה',
       body: 'התור שלך בתאריך {date} בוטל. אנא צור קשר לתיאום מחדש.',
     },
     appointmentReminder: {
-      title: 'תזכורת לתור',
+      title: 'סבא ריחאנה',
       body: 'תזכורת: יש לך תור מחר בשעה {time} אצל {doctorName}.',
     },
   },
@@ -73,7 +73,10 @@ export class NotificationService {
   async sendAppointmentConfirmed(patientUid: string, date: string, time: string): Promise<void> {
     try {
       const { fcmToken, locale } = await this.getUserTokenAndLocale(patientUid);
-      if (!fcmToken) return;
+      if (!fcmToken) {
+        console.warn(`No FCM token found for user ${patientUid}, skipping confirmed notification`);
+        return;
+      }
 
       const t = getTranslation(locale, 'appointmentConfirmed');
       await this.sendNotification(fcmToken, patientUid, {
@@ -91,7 +94,10 @@ export class NotificationService {
   async sendAppointmentCancelled(patientUid: string, date: string): Promise<void> {
     try {
       const { fcmToken, locale } = await this.getUserTokenAndLocale(patientUid);
-      if (!fcmToken) return;
+      if (!fcmToken) {
+        console.warn(`No FCM token found for user ${patientUid}, skipping cancelled notification`);
+        return;
+      }
 
       const t = getTranslation(locale, 'appointmentCancelled');
       await this.sendNotification(fcmToken, patientUid, {
@@ -154,10 +160,15 @@ export class NotificationService {
           },
         },
         apns: {
+          headers: {
+            'apns-priority': '10',
+          },
           payload: {
             aps: {
               sound: 'default',
               badge: 1,
+              'content-available': 1,
+              'mutable-content': 1,
             },
           },
         },
