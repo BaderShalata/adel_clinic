@@ -22,7 +22,6 @@ import {
   Snackbar,
   Paper,
   Slide,
-  Switch,
   Dialog,
   DialogTitle,
   DialogContent,
