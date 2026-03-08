@@ -57,7 +57,7 @@ import {
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useIsNewPending } from '../hooks/useAppointmentNotification';
+import { useIsNewPending, clearNewPendingId } from '../hooks/useAppointmentNotification';
 import dayjs from 'dayjs';
 
 interface Appointment {
@@ -354,6 +354,23 @@ export const Appointments: React.FC = () => {
     },
   });
 
+  // Auto-complete past scheduled appointments
+  useEffect(() => {
+    if (!appointments) return;
+    const today = dayjs().startOf('day');
+    appointments.forEach(apt => {
+      if (apt.status === 'scheduled') {
+        const aptDate = typeof apt.appointmentDate === 'string'
+          ? dayjs(apt.appointmentDate)
+          : dayjs(apt.appointmentDate._seconds * 1000);
+        if (aptDate.isBefore(today)) {
+          updateStatusMutation.mutate({ id: apt.id, status: 'completed' });
+        }
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointments]);
+
   // Helper to check if appointment is before today (yesterday or earlier)
   // EXCEPTION: Pending appointments are NEVER archived - admins need to see them
   const isAppointmentArchived = (appointment: Appointment) => {
@@ -415,10 +432,13 @@ export const Appointments: React.FC = () => {
 
   // Status update mutation for drag and drop
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id, status, appointmentDate }: { id: string; status: string; appointmentDate?: string }) => {
+      clearNewPendingId(id);
       const token = await getToken();
       if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      return await apiClient.put(`/appointments/${id}`, { status });
+      const data: any = { status };
+      if (appointmentDate) data.appointmentDate = appointmentDate;
+      return await apiClient.put(`/appointments/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
@@ -455,8 +475,12 @@ export const Appointments: React.FC = () => {
         // If appointment already has doctor, date, time, and service - schedule directly
         if (draggedAppointment.doctorId && draggedAppointment.appointmentDate &&
             draggedAppointment.appointmentTime && draggedAppointment.serviceType) {
-          // Schedule directly with existing data - no dialog needed
-          updateStatusMutation.mutate({ id: draggedAppointment.id, status: 'scheduled' });
+          // Schedule directly — always reschedule to today
+          updateStatusMutation.mutate({
+            id: draggedAppointment.id,
+            status: 'scheduled',
+            appointmentDate: dayjs().format('YYYY-MM-DD'),
+          });
         } else {
           // Missing data - show scheduling dialog to fill in
           setAppointmentToSchedule(draggedAppointment);
@@ -573,6 +597,7 @@ export const Appointments: React.FC = () => {
 
   const handleOpen = (appointment?: Appointment) => {
     if (appointment) {
+      clearNewPendingId(appointment.id);
       setEditingId(appointment.id);
       const doctor = doctors?.find(d => d.id === appointment.doctorId);
       const patient = patients?.find(p => p.id === appointment.patientId);
@@ -1024,7 +1049,11 @@ export const Appointments: React.FC = () => {
                                 onChange={(e: SelectChangeEvent) => {
                                   const newStatus = e.target.value as Appointment['status'];
                                   if (newStatus !== appointment.status) {
-                                    updateStatusMutation.mutate({ id: appointment.id, status: newStatus });
+                                    const data: { id: string; status: string; appointmentDate?: string } = { id: appointment.id, status: newStatus };
+                                    if (appointment.status === 'pending' && newStatus === 'scheduled') {
+                                      data.appointmentDate = dayjs().format('YYYY-MM-DD');
+                                    }
+                                    updateStatusMutation.mutate(data);
                                   }
                                 }}
                                 sx={{
@@ -1448,6 +1477,24 @@ export const Appointments: React.FC = () => {
                                           fontSize: '0.65rem',
                                         }}
                                       />
+                                    )}
+
+                                    {/* Notes */}
+                                    {appointment.notes && (
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          mt: 0.75,
+                                          display: 'block',
+                                          color: 'text.secondary',
+                                          fontStyle: 'italic',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap',
+                                        }}
+                                      >
+                                        📝 {appointment.notes}
+                                      </Typography>
                                     )}
 
                                     {/* Quick Actions */}

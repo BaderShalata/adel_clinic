@@ -14,6 +14,7 @@ import '../../widgets/common/modern_card.dart';
 import '../../widgets/common/section_header.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/error_view.dart';
+import '../../utils/clinic_lock_helper.dart';
 import '../doctors/doctors_screen.dart';
 import '../booking/service_selection_screen.dart';
 import '../auth/login_screen.dart';
@@ -31,7 +32,13 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     super.initState();
     Future.microtask(() {
       context.read<NewsProvider>().loadNews();
+      _checkClinicLocked();
     });
+  }
+
+  Future<void> _checkClinicLocked() async {
+    if (!mounted) return;
+    await checkClinicLockedAndBlock(context);
   }
 
   @override
@@ -248,7 +255,10 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
               icon: Icons.calendar_month,
               label: languageProvider.t('bookAppointment'),
               color: AppTheme.primaryColor,
-              onTap: () {
+              onTap: () async {
+                // Check if clinic is locked
+                if (await checkClinicLockedAndBlock(context)) return;
+                if (!context.mounted) return;
                 // Check if user is logged in before allowing booking
                 if (!authProvider.isLoggedIn) {
                   _showLoginRequiredDialog(context, languageProvider);

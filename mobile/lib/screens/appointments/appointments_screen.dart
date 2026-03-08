@@ -15,6 +15,7 @@ import '../../widgets/common/modern_card.dart';
 import '../../widgets/common/doctor_avatar.dart';
 import '../auth/login_screen.dart';
 import '../booking/service_selection_screen.dart';
+import '../../utils/clinic_lock_helper.dart';
 
 // Status colors matching web admin
 class StatusColors {
@@ -128,7 +129,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 100),
         child: FloatingActionButton.extended(
-          onPressed: () {
+          onPressed: () async {
+            if (await checkClinicLockedAndBlock(context)) return;
+            if (!context.mounted) return;
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ServiceSelectionScreen()),

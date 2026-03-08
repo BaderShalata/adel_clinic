@@ -411,7 +411,7 @@ export const News: React.FC = () => {
           </TextField>
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
             <Chip
-              icon={<FilterIcon />}
+              icon={<FilterIcon sx={{ color: statusFilter === 'all' ? 'white !important' : undefined }} />}
               label={t('all')}
               onClick={() => setStatusFilter('all')}
               variant={statusFilter === 'all' ? 'filled' : 'outlined'}

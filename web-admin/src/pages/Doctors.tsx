@@ -574,7 +574,7 @@ export const Doctors: React.FC = () => {
           />
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1 }}>
             <Chip
-              icon={<FilterIcon />}
+              icon={<FilterIcon sx={{ color: statusFilter === 'all' ? 'white !important' : undefined }} />}
               label={t('all')}
               onClick={() => setStatusFilter('all')}
               variant={statusFilter === 'all' ? 'filled' : 'outlined'}

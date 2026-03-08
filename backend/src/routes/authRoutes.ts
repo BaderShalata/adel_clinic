@@ -7,6 +7,7 @@ const router = Router();
 // Public endpoints that rely on Firebase ID token in Authorization header
 router.post('/register', authController.register.bind(authController));
 router.post('/login', authController.login.bind(authController));
+router.post('/check-email', authController.checkEmail.bind(authController));
 
 // Set admin claims for web admin users (call after signup)
 router.post('/set-admin-claims', authController.setAdminClaims.bind(authController));

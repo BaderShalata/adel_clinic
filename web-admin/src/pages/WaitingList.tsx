@@ -513,7 +513,7 @@ export const WaitingList: React.FC = () => {
           </FormControl>
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
             <Chip
-              icon={<FilterIcon sx={{color: healthcareColors.neutral[600]}} />}
+              icon={<FilterIcon sx={{ color: !filterStatus ? 'white !important' : healthcareColors.neutral[600] }} />}
               label={t('all')}
               onClick={() => setFilterStatus('')}
               variant={!filterStatus ? 'filled' : 'outlined'}

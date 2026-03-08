@@ -1,5 +1,5 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Paper,
@@ -9,6 +9,13 @@ import {
   Avatar,
   Chip,
   alpha,
+  Switch,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import {
   People as PeopleIcon,
@@ -20,6 +27,8 @@ import {
   Cancel as CancelIcon,
   HourglassEmpty as PendingIcon,
   PersonOff as NoShowIcon,
+  Lock as LockIcon,
+  LockOpen as LockOpenIcon,
 } from '@mui/icons-material';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { apiClient } from '../lib/api';
@@ -196,6 +205,37 @@ const StatusItem: React.FC<{
 export const Dashboard: React.FC = () => {
   const { getToken, user } = useAuth();
   const { t } = useLanguage();
+  const queryClient = useQueryClient();
+  const [lockDialogOpen, setLockDialogOpen] = useState(false);
+
+  // Clinic lock status
+  const { data: clinicStatus } = useQuery<{ isLocked: boolean }>({
+    queryKey: ['clinic-status'],
+    queryFn: async () => {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      const response = await apiClient.get('/settings/clinic/status');
+      return response.data;
+    },
+    refetchInterval: 30000,
+  });
+
+  const clinicLockMutation = useMutation({
+    mutationFn: async (isLocked: boolean) => {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      const response = await apiClient.post('/settings/clinic/lock', { isLocked });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clinic-status'] });
+    },
+  });
+
+  const handleConfirmToggleLock = () => {
+    clinicLockMutation.mutate(!clinicStatus?.isLocked);
+    setLockDialogOpen(false);
+  };
 
   const { data: analytics, isLoading, error: analyticsError } = useQuery<AnalyticsData>({
     queryKey: ['analytics'],
@@ -261,6 +301,74 @@ export const Dashboard: React.FC = () => {
           {t('welcomeMessage')}
         </Typography>
       </Box>
+
+      {/* Clinic Lock/Unlock Card */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 3,
+          p: 2.5,
+          borderRadius: 3,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: clinicStatus?.isLocked
+            ? `linear-gradient(135deg, ${alpha(healthcareColors.error, 0.08)} 0%, ${alpha(healthcareColors.error, 0.03)} 100%)`
+            : `linear-gradient(135deg, ${alpha(healthcareColors.success, 0.08)} 0%, ${alpha(healthcareColors.success, 0.03)} 100%)`,
+          border: `1px solid ${alpha(clinicStatus?.isLocked ? healthcareColors.error : healthcareColors.success, 0.2)}`,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar
+            sx={{
+              width: 48,
+              height: 48,
+              bgcolor: alpha(clinicStatus?.isLocked ? healthcareColors.error : healthcareColors.success, 0.15),
+            }}
+          >
+            {clinicStatus?.isLocked
+              ? <LockIcon sx={{ color: healthcareColors.error, fontSize: 26 }} />
+              : <LockOpenIcon sx={{ color: healthcareColors.success, fontSize: 26 }} />
+            }
+          </Avatar>
+          <Box>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ color: clinicStatus?.isLocked ? healthcareColors.error : healthcareColors.success }}>
+              {clinicStatus?.isLocked ? t('clinicLocked') : t('clinicOpen')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {clinicStatus?.isLocked ? t('lockClinicConfirm') : t('unlockClinicConfirm')}
+            </Typography>
+          </Box>
+        </Box>
+        <Switch
+          checked={!clinicStatus?.isLocked}
+          onChange={() => setLockDialogOpen(true)}
+          color={clinicStatus?.isLocked ? 'error' : 'success'}
+          disabled={clinicLockMutation.isPending}
+        />
+      </Paper>
+
+      {/* Lock Confirmation Dialog */}
+      <Dialog open={lockDialogOpen} onClose={() => setLockDialogOpen(false)}>
+        <DialogTitle>
+          {clinicStatus?.isLocked ? t('unlockClinic') : t('lockClinic')}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {clinicStatus?.isLocked ? t('unlockClinicConfirm') : t('lockClinicConfirm')}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLockDialogOpen(false)}>{t('cancel')}</Button>
+          <Button
+            onClick={handleConfirmToggleLock}
+            variant="contained"
+            color={clinicStatus?.isLocked ? 'success' : 'error'}
+          >
+            {clinicStatus?.isLocked ? t('unlockClinic') : t('lockClinic')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {isLoading ? (
         <Box

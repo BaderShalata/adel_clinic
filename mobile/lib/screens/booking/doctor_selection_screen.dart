@@ -184,14 +184,19 @@ class _DoctorCard extends StatelessWidget {
               CircleAvatar(
                 radius: 30,
                 backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                child: Text(
-                  _getInitials(context),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
+                backgroundImage: doctor.imageUrl != null && doctor.imageUrl!.isNotEmpty
+                    ? NetworkImage(doctor.imageUrl!)
+                    : null,
+                child: doctor.imageUrl == null || doctor.imageUrl!.isEmpty
+                    ? Text(
+                        _getInitials(context),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(width: AppTheme.spacingM),
               Expanded(

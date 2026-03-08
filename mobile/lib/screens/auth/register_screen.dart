@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../shell/main_shell.dart';
 
@@ -36,30 +37,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
-    if (_formKey.currentState!.validate()) {
-      final success = await context.read<AuthProvider>().register(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-            displayName: _nameController.text.trim(),
-            phoneNumber: _phoneController.text.trim(),
-            idNumber: _idNumberController.text.trim(),
-            gender: _selectedGender!,
-          );
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedGender == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.read<LanguageProvider>().t('selectGender')),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
+    final success = await context.read<AuthProvider>().register(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      displayName: _nameController.text.trim(),
+      phoneNumber: _phoneController.text.trim(),
+      idNumber: _idNumberController.text.trim(),
+      gender: _selectedGender!,
+    );
 
-      if (mounted) {
-        if (success) {
-          // Navigate to main shell and clear all previous routes
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const MainShell()),
-            (route) => false,
+    if (mounted) {
+      if (success) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const MainShell()),
+          (route) => false,
+        );
+      } else {
+        final errorKey = context.read<AuthProvider>().errorKey;
+        final lang = context.read<LanguageProvider>();
+        final errorMessage = errorKey != null
+            ? lang.t(errorKey)
+            : lang.t('registrationFailed');
+
+        // Show dialog with reset password option for duplicate account errors
+        if (errorKey == 'idNumberAlreadyExists' || errorKey == 'emailAlreadyInUse') {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(lang.t('accountExists')),
+              content: Text(errorMessage),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(lang.t('cancel')),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _showResetPasswordDialog();
+                  },
+                  child: Text(lang.t('resetPassword')),
+                ),
+              ],
+            ),
           );
         } else {
-          final errorKey = context.read<AuthProvider>().errorKey;
-          final lang = context.read<LanguageProvider>();
-          final errorMessage = errorKey != null
-              ? lang.t(errorKey)
-              : lang.t('registrationFailed');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
@@ -76,6 +109,68 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       }
     }
+  }
+
+  void _showResetPasswordDialog() {
+    final resetEmailController = TextEditingController(text: _emailController.text.trim());
+    final lang = context.read<LanguageProvider>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(lang.t('resetPassword')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(lang.t('resetPasswordDescription')),
+            const SizedBox(height: 16),
+            TextField(
+              controller: resetEmailController,
+              decoration: InputDecoration(
+                labelText: lang.t('email'),
+                prefixIcon: const Icon(Icons.email_outlined),
+                border: const OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(lang.t('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = resetEmailController.text.trim();
+              if (email.isEmpty) return;
+              Navigator.pop(ctx);
+              try {
+                await AuthService().sendPasswordResetEmail(email);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(lang.t('resetPasswordEmailSent')),
+                      backgroundColor: AppTheme.successColor,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(lang.t('resetPasswordFailed')),
+                      backgroundColor: AppTheme.errorColor,
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text(lang.t('sendResetLink')),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -180,27 +275,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: AppTheme.spacingM),
 
               // Gender
-              DropdownButtonFormField<String>(
-                value: _selectedGender,
-                decoration: InputDecoration(
-                  labelText: lang.t('gender'),
-                  prefixIcon: const Icon(Icons.wc_outlined),
-                ),
-                items: [
-                  DropdownMenuItem(value: 'male', child: Text(lang.t('male'))),
-                  DropdownMenuItem(value: 'female', child: Text(lang.t('female'))),
+              Text(
+                lang.t('gender'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _GenderOption(
+                    icon: Icons.male,
+                    label: lang.t('male'),
+                    selected: _selectedGender == 'male',
+                    onTap: () => setState(() => _selectedGender = 'male'),
+                    color: const Color(0xFF2196F3),
+                  ),
+                  const SizedBox(width: 12),
+                  _GenderOption(
+                    icon: Icons.female,
+                    label: lang.t('female'),
+                    selected: _selectedGender == 'female',
+                    onTap: () => setState(() => _selectedGender = 'female'),
+                    color: const Color(0xFFE91E63),
+                  ),
                 ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedGender = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return lang.t('selectGender');
-                  }
-                  return null;
-                },
               ),
               const SizedBox(height: AppTheme.spacingM),
 
@@ -303,6 +402,57 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               ),
               const SizedBox(height: AppTheme.spacingL),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GenderOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final Color color;
+
+  const _GenderOption({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: selected ? color.withValues(alpha: 0.1) : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? color : Colors.grey[300]!,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: selected ? color : Colors.grey[500], size: 28),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  color: selected ? color : Colors.grey[600],
+                ),
+              ),
             ],
           ),
         ),

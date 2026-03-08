@@ -225,27 +225,37 @@ class ProfileScreen extends StatelessWidget {
                 Container(
                   width: 100,
                   height: 100,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppTheme.primaryLight,
-                        AppTheme.primaryColor,
-                      ],
-                    ),
+                  decoration: BoxDecoration(
+                    gradient: user?.photoUrl == null || user!.photoUrl!.isEmpty
+                        ? const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppTheme.primaryLight,
+                              AppTheme.primaryColor,
+                            ],
+                          )
+                        : null,
                     shape: BoxShape.circle,
+                    image: user?.photoUrl != null && user!.photoUrl!.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(user!.photoUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: Center(
-                    child: Text(
-                      (user?.displayName ?? user?.email ?? 'U')[0].toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  child: user?.photoUrl == null || user!.photoUrl!.isEmpty
+                      ? Center(
+                          child: Text(
+                            (user?.displayName ?? user?.email ?? 'U')[0].toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(height: AppTheme.spacingM),
                 Text(
@@ -262,6 +272,42 @@ class ProfileScreen extends StatelessWidget {
                   Text(
                     user!.phoneNumber!,
                     style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+                if (user?.idNumber != null && user!.idNumber!.isNotEmpty) ...[
+                  const SizedBox(height: AppTheme.spacingXS),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.badge_outlined, size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        user!.idNumber!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (user?.gender != null && user!.gender!.isNotEmpty) ...[
+                  const SizedBox(height: AppTheme.spacingXS),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        user!.gender == 'male' ? Icons.male : user!.gender == 'female' ? Icons.female : Icons.transgender,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        languageProvider.t(user!.gender!),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                      ),
+                    ],
                   ),
                 ],
               ],

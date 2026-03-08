@@ -7,6 +7,7 @@ const router = (0, express_1.Router)();
 // Public endpoints that rely on Firebase ID token in Authorization header
 router.post('/register', authController_1.authController.register.bind(authController_1.authController));
 router.post('/login', authController_1.authController.login.bind(authController_1.authController));
+router.post('/check-email', authController_1.authController.checkEmail.bind(authController_1.authController));
 // Set admin claims for web admin users (call after signup)
 router.post('/set-admin-claims', authController_1.authController.setAdminClaims.bind(authController_1.authController));
 // Protected endpoint to get current user

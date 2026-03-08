@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
 
@@ -156,6 +157,81 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showResetPasswordDialog() {
+    final authProvider = context.read<AuthProvider>();
+    final email = authProvider.user?.email ?? '';
+    final resetEmailController = TextEditingController(text: email);
+    final lang = context.read<LanguageProvider>();
+    final errorNotifier = ValueNotifier<String?>(null);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(lang.t('resetPassword')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(lang.t('resetPasswordDescription')),
+            const SizedBox(height: 16),
+            TextField(
+              controller: resetEmailController,
+              decoration: InputDecoration(
+                labelText: lang.t('email'),
+                prefixIcon: const Icon(Icons.email_outlined),
+                border: const OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            ValueListenableBuilder<String?>(
+              valueListenable: errorNotifier,
+              builder: (_, error, _) {
+                if (error == null) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(
+                    error,
+                    style: const TextStyle(color: AppTheme.errorColor, fontSize: 13),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(lang.t('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final emailText = resetEmailController.text.trim();
+              if (emailText.isEmpty) return;
+              errorNotifier.value = null;
+              try {
+                await AuthService().sendPasswordResetEmail(emailText);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(lang.t('resetPasswordEmailSent')),
+                      backgroundColor: AppTheme.successColor,
+                    ),
+                  );
+                }
+              } on AuthException catch (e) {
+                errorNotifier.value = lang.t(e.translationKey);
+              } catch (_) {
+                errorNotifier.value = lang.t('resetPasswordFailed');
+              }
+            },
+            child: Text(lang.t('sendResetLink')),
+          ),
+        ],
       ),
     );
   }
@@ -371,32 +447,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                     const SizedBox(height: AppTheme.spacingM),
 
-                    // Gender Dropdown
-                    DropdownButtonFormField<String>(
-                      value: _selectedGender,
-                      decoration: InputDecoration(
-                        labelText: lang.t('gender'),
-                        prefixIcon: const Icon(Icons.person_outline),
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'male',
-                          child: Text(lang.t('male')),
+                    // Gender Selection
+                    Text(
+                      lang.t('gender'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _GenderOption(
+                          icon: Icons.male,
+                          label: lang.t('male'),
+                          selected: _selectedGender == 'male',
+                          onTap: () => setState(() => _selectedGender = 'male'),
+                          color: const Color(0xFF2196F3),
                         ),
-                        DropdownMenuItem(
-                          value: 'female',
-                          child: Text(lang.t('female')),
+                        const SizedBox(width: 12),
+                        _GenderOption(
+                          icon: Icons.female,
+                          label: lang.t('female'),
+                          selected: _selectedGender == 'female',
+                          onTap: () => setState(() => _selectedGender = 'female'),
+                          color: const Color(0xFFE91E63),
                         ),
-                        DropdownMenuItem(
-                          value: 'other',
-                          child: Text(lang.t('other')),
+                        const SizedBox(width: 12),
+                        _GenderOption(
+                          icon: Icons.transgender,
+                          label: lang.t('other'),
+                          selected: _selectedGender == 'other',
+                          onTap: () => setState(() => _selectedGender = 'other'),
+                          color: const Color(0xFF9C27B0),
                         ),
                       ],
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedGender = value;
-                        });
-                      },
                     ),
                   ],
                 ),
@@ -419,6 +503,74 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                         )
                       : Text(lang.t('save')),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+
+              // Reset Password button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _showResetPasswordDialog,
+                  icon: const Icon(Icons.lock_reset_rounded),
+                  label: Text(lang.t('resetPassword')),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryColor,
+                    side: const BorderSide(color: AppTheme.primaryColor),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GenderOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final Color color;
+
+  const _GenderOption({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: selected ? color.withValues(alpha: 0.1) : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? color : Colors.grey[300]!,
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: selected ? color : Colors.grey[500], size: 28),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  color: selected ? color : Colors.grey[600],
                 ),
               ),
             ],

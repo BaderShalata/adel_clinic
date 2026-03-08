@@ -79,6 +79,14 @@ function addNewPendingIds(ids: string[]) {
   if (changed) emitChange();
 }
 
+/** Remove an appointment from the "new" set (e.g. when admin clicks or moves it). */
+export function clearNewPendingId(id: string) {
+  if (newPendingIds.has(id)) {
+    newPendingIds.delete(id);
+    emitChange();
+  }
+}
+
 /** React hook — returns true if this appointment ID is "new" (arrived since page load). */
 export function useIsNewPending(id: string): boolean {
   useSyncExternalStore(subscribe, getSnapshot);

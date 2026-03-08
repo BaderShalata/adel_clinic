@@ -82,6 +82,9 @@ class AuthService {
       throw AuthException(_mapFirebaseErrorToKey(e.code), e.message);
     } catch (e) {
       if (e is AuthException) rethrow;
+      if (e.toString().contains('USER_NOT_FOUND')) {
+        throw AuthException('userNotFound', e.toString());
+      }
       throw AuthException('loginFailed', e.toString());
     }
   }
@@ -192,6 +195,24 @@ class AuthService {
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException('failedToUpdateProfile', e.toString());
+    }
+  }
+
+  /// Send password reset email (only if account exists in our system)
+  Future<void> sendPasswordResetEmail(String email) async {
+    // Check if email exists in our backend first
+    final exists = await _apiService.checkEmailExists(email);
+    if (!exists) {
+      throw AuthException('userNotFound');
+    }
+
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        throw AuthException('userNotFound');
+      }
+      throw AuthException('resetPasswordFailed');
     }
   }
 }

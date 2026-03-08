@@ -68,6 +68,7 @@ import analyticsRoutes from './routes/analyticsRoutes';
 import waitingListRoutes from './routes/waitingListRoutes';
 import lockedSlotRoutes from './routes/lockedSlotRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import settingsRoutes from './routes/settingsRoutes';
 
 // ----- Prefix Routes -----
 app.use('/api/appointments', appointmentRoutes);
@@ -81,6 +82,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/waiting-list', waitingListRoutes);
 app.use('/api/locked-slots', lockedSlotRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // ----- Health Check -----
 app.get('/', (_req, res) => res.json({ status: 'ok', message: 'Adel Clinic API is running' }));

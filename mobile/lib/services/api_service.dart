@@ -296,6 +296,18 @@ class ApiService {
   }
 
   // Auth APIs
+  Future<bool> checkEmailExists(String email) async {
+    try {
+      final response = await _dio.post(
+        '/auth/check-email',
+        data: {'email': email},
+      );
+      return response.data['exists'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final response = await _dio.post(
@@ -306,6 +318,11 @@ class ApiService {
         },
       );
       return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw Exception('USER_NOT_FOUND');
+      }
+      throw Exception('Failed to login: $e');
     } catch (e) {
       throw Exception('Failed to login: $e');
     }
@@ -916,6 +933,16 @@ class ApiService {
         }
       }
       throw Exception('Failed to upload image: $e');
+    }
+  }
+
+  // ─── Clinic Settings ─────────────────────────────────────────────
+  Future<bool> getClinicLockStatus() async {
+    try {
+      final response = await _dio.get('/settings/clinic/status');
+      return response.data['isLocked'] == true;
+    } catch (e) {
+      return false;
     }
   }
 }

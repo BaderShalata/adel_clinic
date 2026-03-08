@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Drawer,
@@ -22,6 +22,13 @@ import {
   Snackbar,
   Paper,
   Slide,
+  Switch,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -38,6 +45,8 @@ import {
   Close as CloseIcon,
   AccessTime as TimeIcon,
   Person as PersonIcon,
+  Lock as LockIcon,
+  LockOpen as LockOpenIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage, type Language } from '../contexts/LanguageContext';
@@ -51,10 +60,46 @@ export const Layout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [langAnchorEl, setLangAnchorEl] = useState<null | HTMLElement>(null);
+  const [lockDialogOpen, setLockDialogOpen] = useState(false);
   const { user, signOut, getToken } = useAuth();
   const { language, setLanguage, t, direction } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
+
+  // Clinic lock status
+  const { data: clinicStatus } = useQuery<{ isLocked: boolean }>({
+    queryKey: ['clinic-status'],
+    queryFn: async () => {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      const response = await apiClient.get('/settings/clinic/status');
+      return response.data;
+    },
+    refetchInterval: 30000,
+  });
+
+  const clinicLockMutation = useMutation({
+    mutationFn: async (isLocked: boolean) => {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      const response = await apiClient.post('/settings/clinic/lock', { isLocked });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clinic-status'] });
+    },
+  });
+
+  const handleToggleClinicLock = () => {
+    setLockDialogOpen(true);
+  };
+
+  const handleConfirmToggleLock = () => {
+    const newLocked = !clinicStatus?.isLocked;
+    clinicLockMutation.mutate(newLocked);
+    setLockDialogOpen(false);
+  };
 
   // Global appointment polling — shares cache with Appointments page via same query key
   const { data: globalAppointments } = useQuery<NotificationAppointment[]>({
@@ -320,6 +365,21 @@ export const Layout: React.FC = () => {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* Clinic Lock Toggle */}
+            <Tooltip title={clinicStatus?.isLocked ? t('clinicLocked') : t('clinicOpen')}>
+              <IconButton
+                onClick={handleToggleClinicLock}
+                sx={{
+                  color: clinicStatus?.isLocked ? healthcareColors.error : healthcareColors.success,
+                  '&:hover': {
+                    bgcolor: alpha(clinicStatus?.isLocked ? healthcareColors.error : healthcareColors.success, 0.1),
+                  },
+                }}
+              >
+                {clinicStatus?.isLocked ? <LockIcon /> : <LockOpenIcon />}
+              </IconButton>
+            </Tooltip>
+
             {/* Language Switcher */}
             <Tooltip title={t('language')}>
               <IconButton
@@ -496,6 +556,28 @@ export const Layout: React.FC = () => {
         <Toolbar />
         <Outlet />
       </Box>
+
+      {/* Clinic Lock Confirmation Dialog */}
+      <Dialog open={lockDialogOpen} onClose={() => setLockDialogOpen(false)}>
+        <DialogTitle>
+          {clinicStatus?.isLocked ? t('unlockClinic') : t('lockClinic')}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {clinicStatus?.isLocked ? t('unlockClinicConfirm') : t('lockClinicConfirm')}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLockDialogOpen(false)}>{t('cancel')}</Button>
+          <Button
+            onClick={handleConfirmToggleLock}
+            variant="contained"
+            color={clinicStatus?.isLocked ? 'success' : 'error'}
+          >
+            {clinicStatus?.isLocked ? t('unlockClinic') : t('lockClinic')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* New appointment toast notification */}
       <Snackbar

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../shell/main_shell.dart';
 import 'register_screen.dart';
@@ -18,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  int _failedAttempts = 0;
 
   @override
   void dispose() {
@@ -35,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (mounted) {
         if (success) {
-          // Navigate to main shell and clear all previous routes
+          _failedAttempts = 0;
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const MainShell()),
@@ -47,22 +49,108 @@ class _LoginScreenState extends State<LoginScreen> {
           final errorMessage = errorKey != null
               ? lang.t(errorKey)
               : lang.t('loginFailed');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(errorMessage)),
-                ],
+
+          // Only count failed attempts for credential errors (wrong password)
+          final isUserNotFound = errorKey == 'userNotFound';
+          if (!isUserNotFound) {
+            setState(() => _failedAttempts++);
+          }
+
+          if (!isUserNotFound && _failedAttempts >= 5) {
+            setState(() => _failedAttempts = 0);
+            _showResetPasswordDialog();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(errorMessage)),
+                  ],
+                ),
+                backgroundColor: AppTheme.errorColor,
+                behavior: SnackBarBehavior.floating,
               ),
-              backgroundColor: AppTheme.errorColor,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+            );
+          }
         }
       }
     }
+  }
+
+  void _showResetPasswordDialog() {
+    final resetEmailController = TextEditingController(text: _emailController.text.trim());
+    final lang = context.read<LanguageProvider>();
+    final errorNotifier = ValueNotifier<String?>(null);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(lang.t('resetPassword')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(lang.t('resetPasswordDescription')),
+            const SizedBox(height: 16),
+            TextField(
+              controller: resetEmailController,
+              decoration: InputDecoration(
+                labelText: lang.t('email'),
+                prefixIcon: const Icon(Icons.email_outlined),
+                border: const OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            ValueListenableBuilder<String?>(
+              valueListenable: errorNotifier,
+              builder: (_, error, __) {
+                if (error == null) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(
+                    error,
+                    style: const TextStyle(color: AppTheme.errorColor, fontSize: 13),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(lang.t('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = resetEmailController.text.trim();
+              if (email.isEmpty) return;
+              errorNotifier.value = null;
+              try {
+                await AuthService().sendPasswordResetEmail(email);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (mounted) {
+                  setState(() => _failedAttempts = 0);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(lang.t('resetPasswordEmailSent')),
+                      backgroundColor: AppTheme.successColor,
+                    ),
+                  );
+                }
+              } on AuthException catch (e) {
+                errorNotifier.value = lang.t(e.translationKey);
+              } catch (_) {
+                errorNotifier.value = lang.t('resetPasswordFailed');
+              }
+            },
+            child: Text(lang.t('sendResetLink')),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -174,7 +262,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: AppTheme.spacingXL),
+              // Forgot Password
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: TextButton(
+                  onPressed: _showResetPasswordDialog,
+                  child: Text(
+                    lang.t('forgotPassword'),
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingS),
 
               // Login Button
               SizedBox(

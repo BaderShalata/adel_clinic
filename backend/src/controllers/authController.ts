@@ -93,11 +93,8 @@ export class AuthController {
       let user = await authService.getUserByUid(uid);
 
       if (!user) {
-        // User doesn't exist in Firestore, create them
-        user = await authService.registerUser(uid, {
-          email: decodedToken.email || '',
-          displayName: decodedToken.name || 'Unknown',
-        });
+        res.status(404).json({ error: 'User not found. Please register first.' });
+        return;
       }
 
       // Return user data in format expected by mobile app
@@ -251,6 +248,24 @@ export class AuthController {
       });
     } catch (error: any) {
       console.error('Set admin claims error:', error);
+      res.status(400).json({ error: error.message });
+    }
+  }
+  /**
+   * Check if email exists in the system
+   * POST /api/auth/check-email
+   */
+  async checkEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        res.status(400).json({ error: 'Email is required' });
+        return;
+      }
+      const exists = await authService.checkEmailExists(email);
+      res.status(200).json({ exists });
+    } catch (error: any) {
+      console.error('Check email error:', error);
       res.status(400).json({ error: error.message });
     }
   }

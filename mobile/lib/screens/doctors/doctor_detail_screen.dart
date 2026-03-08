@@ -12,6 +12,7 @@ import '../../widgets/common/modern_card.dart';
 import '../auth/login_screen.dart';
 import '../booking/slot_selection_screen.dart';
 import '../admin/doctor_form_screen.dart';
+import '../../utils/clinic_lock_helper.dart';
 
 class DoctorDetailScreen extends StatefulWidget {
   final String doctorId;
@@ -57,7 +58,11 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
     return name[0].toUpperCase();
   }
 
-  void _handleBookAppointment() {
+  Future<void> _handleBookAppointment() async {
+    // Check if clinic is locked
+    if (await checkClinicLockedAndBlock(context)) return;
+    if (!mounted) return;
+
     final authProvider = context.read<AuthProvider>();
     final doctorProvider = context.read<DoctorProvider>();
     final bookingProvider = context.read<BookingProvider>();

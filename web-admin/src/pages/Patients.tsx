@@ -316,7 +316,7 @@ export const Patients: React.FC = () => {
           />
           <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap' }}>
             <Chip
-              icon={<FilterIcon />}
+              icon={<FilterIcon sx={{ color: genderFilter === 'all' ? 'white !important' : undefined }} />}
               label={t('all')}
               onClick={() => setGenderFilter('all')}
               variant={genderFilter === 'all' ? 'filled' : 'outlined'}
@@ -330,7 +330,7 @@ export const Patients: React.FC = () => {
               }}
             />
             <Chip
-              icon={<MaleIcon />}
+              icon={<MaleIcon sx={{ color: genderFilter === 'male' ? 'white !important' : undefined }} />}
               label={t('male')}
               onClick={() => setGenderFilter('male')}
               variant={genderFilter === 'male' ? 'filled' : 'outlined'}
@@ -344,7 +344,7 @@ export const Patients: React.FC = () => {
               }}
             />
             <Chip
-              icon={<FemaleIcon />}
+              icon={<FemaleIcon sx={{ color: genderFilter === 'female' ? 'white !important' : undefined }} />}
               label={t('female')}
               onClick={() => setGenderFilter('female')}
               variant={genderFilter === 'female' ? 'filled' : 'outlined'}

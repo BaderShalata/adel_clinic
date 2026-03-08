@@ -117,17 +117,6 @@ class AuthService {
         try {
             const doc = await this.usersCollection.doc(uid).get();
             if (!doc.exists) {
-                // User exists in Firebase Auth but not in Firestore
-                // This shouldn't happen normally, but handle it gracefully
-                const firebaseUser = await auth.getUser(uid);
-                if (firebaseUser) {
-                    // Auto-create user record
-                    return await this.registerUser(uid, {
-                        email: firebaseUser.email || '',
-                        displayName: firebaseUser.displayName || 'Unknown',
-                        phoneNumber: firebaseUser.phoneNumber,
-                    });
-                }
                 return null;
             }
             const userData = doc.data();
@@ -148,6 +137,16 @@ class AuthService {
         catch (error) {
             throw new Error(`Failed to get user: ${error.message}`);
         }
+    }
+    /**
+     * Check if an email exists in the users collection
+     */
+    async checkEmailExists(email) {
+        const snapshot = await this.usersCollection
+            .where('email', '==', email)
+            .limit(1)
+            .get();
+        return !snapshot.empty;
     }
     /**
      * Verify Firebase ID token and return decoded token

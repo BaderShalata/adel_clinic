@@ -1,12 +1,14 @@
 version 8.2
-(1) lockedslots should be disregarded after the date of the locked slot
-(2) sound should play without needing to refresh page
-(3) cancelled appointments should  stay it upcoming but show cancelled, when date is passed move to Past
-(4) screenshots rtemove battery and time
-(5) WhatsApp Talk with Dad
-(6) Appointments in anvigation bar doEsnt appear all of it
-(6.1) In Doctors page, if arabic or hebew show full name of the day. also, add Qualifications in that page such as MD PHD
-(6.2) In  appintment booking, show the date in arabic/hebrew if lang set that way
-(7) SMS Service
-(8) homepage logo make it bigger
-(9) Make default language Hebrew
+(1) Admin Dashboard in admin ability to lock clinic and sohw pop up page when logging in the application
+(2) When signing up check if account already exists based on the ID Number (Also show th correct error msssg currently it shows signin up failed withut feedback).
+ If yes, show a message to reset password for that account and implement logic for resetting password for an account
+(3) Appointments that are in the past, if they are pending keep them in current. The scheduled ones change their status to completed
+(4) Show the Avatar of the doctor (image if any is provDed) when selectin ga doctor, currently its showing initials, remove the initials everywhere and display image if exists, if not then initials
+(5) In admin dashboard show and display the notes if user input any in the appointments
+(6) Currently in admin dashboard I have the NEW badge if the appointment is new, I want it to be removed when the admin clicks on the card or page or if its moved from one stage to another
+(7) If admin dashbvaord has pending and its moved to scheduled using Kanban or the list, change the date of the appointment to current day, not the one the user appointed, because if it is in the past and now we are processing it, we need to re-schedule it for today.
+(8) Make admin dashboard All flilter in News and Crew has white icon not dark.
+(9) When setting Gender or editing it in profile maek the dropdown nicer
+(10) In profile section for use,r show the profile picture if its set.
+(10.1) Show ID Number and Gender if its set in the editing profile.
+() SMS Service (also for waiting list when its set to scheduled)
