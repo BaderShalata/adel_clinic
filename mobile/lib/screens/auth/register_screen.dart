@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
 import '../../theme/app_theme.dart';
 import '../shell/main_shell.dart';
 
@@ -58,6 +59,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (mounted) {
       if (success) {
+        // Save credentials for biometric login
+        StorageService().saveCredentials(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const MainShell()),

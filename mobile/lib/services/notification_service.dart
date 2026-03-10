@@ -57,8 +57,38 @@ class NotificationService {
       sound: true,
     );
 
+    // Clear badge count when app opens
+    await clearBadge();
+
     // Handle foreground messages — show as local notification
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+  }
+
+  /// Clear the notification badge (red circle on app icon)
+  Future<void> clearBadge() async {
+    // iOS: set badge number to 0
+    final iosPlugin = _localNotifications
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+    if (iosPlugin != null) {
+      // Show a silent notification with badge 0 to reset badge count
+      await _localNotifications.show(
+        0,
+        null,
+        null,
+        const NotificationDetails(
+          iOS: DarwinNotificationDetails(
+            presentAlert: false,
+            presentBadge: true,
+            presentSound: false,
+            badgeNumber: 0,
+          ),
+        ),
+      );
+      await _localNotifications.cancel(0);
+    }
+
+    // Android: cancel all notifications from the tray
+    await _localNotifications.cancelAll();
   }
 
   /// Request notification permission from the OS

@@ -221,9 +221,9 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${lang.t('service')}: ${bookingProvider.selectedService}'),
+            Text('${lang.t('service')}: ${bookingProvider.selectedServiceDisplay}'),
             const SizedBox(height: 8),
-            Text('${lang.t('doctor')}: ${bookingProvider.selectedDoctor?.fullName}'),
+            Text('${lang.t('doctor')}: ${bookingProvider.selectedDoctor?.getLocalizedName(lang.languageCode)}'),
             const SizedBox(height: 8),
             Text(
               '${lang.t('date')}: ${DateFormat('d/M/yyyy', lang.locale.toString()).format(_selectedDate)}',
@@ -268,12 +268,20 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
       // Pop all booking screens and go back to main
       Navigator.of(context).popUntil((route) => route.isFirst);
     } else {
+      final errorMsg = bookingProvider.errorMessage;
+      final displayMsg = (errorMsg == '__slotTaken__')
+          ? lang.t('slotNoLongerAvailable')
+          : (errorMsg ?? lang.t('failedToBook'));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(bookingProvider.errorMessage ?? lang.t('failedToBook')),
+          content: Text(displayMsg),
           backgroundColor: AppTheme.errorColor,
         ),
       );
+      // Refresh slots so user sees updated availability
+      if (errorMsg == '__slotTaken__') {
+        bookingProvider.loadAvailableSlots(bookingProvider.selectedDate!);
+      }
     }
   }
 
@@ -389,7 +397,23 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
               itemBuilder: (context, index) {
                 final slot = slots.slots[index];
                 final isSelected = bookingProvider.selectedTimeSlot == slot.time;
-                final isAvailable = slot.available;
+
+                // Disable past timeslots if booking for today
+                bool isAvailable = slot.available;
+                if (isAvailable && bookingProvider.selectedDate != null) {
+                  final now = DateTime.now();
+                  final selDate = bookingProvider.selectedDate!;
+                  if (selDate.year == now.year && selDate.month == now.month && selDate.day == now.day) {
+                    final parts = slot.time.split(':');
+                    if (parts.length == 2) {
+                      final slotHour = int.tryParse(parts[0]) ?? 0;
+                      final slotMin = int.tryParse(parts[1]) ?? 0;
+                      if (slotHour < now.hour || (slotHour == now.hour && slotMin <= now.minute)) {
+                        isAvailable = false;
+                      }
+                    }
+                  }
+                }
 
                 return GestureDetector(
                   onTap: isAvailable
@@ -480,14 +504,14 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      bookingProvider.selectedDoctor?.fullName ?? lang.t('doctor'),
+                      bookingProvider.selectedDoctor?.getLocalizedName(lang.languageCode) ?? lang.t('doctor'),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                     ),
                     const SizedBox(height: AppTheme.spacingXS),
                     Text(
-                      bookingProvider.selectedService ?? '',
+                      bookingProvider.selectedServiceDisplay ?? '',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppTheme.primaryColor,
                           ),

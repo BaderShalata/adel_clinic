@@ -28,8 +28,9 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
 
   Future<void> _loadServices() async {
     final bookingProvider = context.read<BookingProvider>();
+    final lang = context.read<LanguageProvider>();
     bookingProvider.reset();
-    final services = await bookingProvider.getAllServices();
+    final services = await bookingProvider.getAllServices(languageCode: lang.languageCode);
     if (mounted) {
       setState(() {
         _services = services;

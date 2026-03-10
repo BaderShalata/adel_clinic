@@ -256,6 +256,7 @@ class LanguageProvider extends ChangeNotifier {
     'couldNotOpen': {'en': 'Could not open', 'ar': 'تعذر الفتح', 'he': 'לא ניתן לפתוח'},
     'couldNotOpenMaps': {'en': 'Could not open maps', 'ar': 'تعذر فتح الخرائط', 'he': 'לא ניתן לפתוח מפות'},
     'failedToBook': {'en': 'Failed to book appointment', 'ar': 'فشل في حجز الموعد', 'he': 'הזמנת התור נכשלה'},
+    'slotNoLongerAvailable': {'en': 'This time slot was just booked by someone else. Please choose a different time.', 'ar': 'تم حجز هذا الموعد من قبل شخص آخر. يرجى اختيار وقت آخر.', 'he': 'התור הזה נתפס על ידי מישהו אחר. אנא בחר שעה אחרת.'},
     'failedToJoinWaitingList': {'en': 'Failed to join waiting list', 'ar': 'فشل في الانضمام لقائمة الانتظار', 'he': 'ההצטרפות לרשימת ההמתנה נכשלה'},
 
     // Auth Errors
@@ -357,6 +358,10 @@ class LanguageProvider extends ChangeNotifier {
     'oct': {'en': 'Oct', 'ar': 'أكتوبر', 'he': 'אוק\''},
     'nov': {'en': 'Nov', 'ar': 'نوفمبر', 'he': 'נוב\''},
     'dec': {'en': 'Dec', 'ar': 'ديسمبر', 'he': 'דצמ\''},
+
+    // Biometric Auth
+    'biometricLogin': {'en': 'Sign in with Biometrics', 'ar': 'تسجيل الدخول بالبصمة', 'he': 'התחבר עם זיהוי ביומטרי'},
+    'biometricReason': {'en': 'Authenticate to sign in', 'ar': 'قم بالمصادقة لتسجيل الدخول', 'he': 'אמת את זהותך כדי להתחבר'},
 
     // Notifications
     'notificationPermissionTitle': {'en': 'Enable Notifications', 'ar': 'تفعيل الإشعارات', 'he': 'הפעלת התראות'},

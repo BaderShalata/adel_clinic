@@ -8,7 +8,8 @@ class BookingProvider extends ChangeNotifier {
   final ApiService _apiService = ApiService();
 
   // State
-  String? _selectedService;
+  String? _selectedService; // Original API service name
+  String? _selectedServiceDisplay; // Localized display name
   Doctor? _selectedDoctor;
   DateTime? _selectedDate;
   String? _selectedTimeSlot;
@@ -19,6 +20,7 @@ class BookingProvider extends ChangeNotifier {
 
   // Getters
   String? get selectedService => _selectedService;
+  String? get selectedServiceDisplay => _selectedServiceDisplay ?? _selectedService;
   Doctor? get selectedDoctor => _selectedDoctor;
   DateTime? get selectedDate => _selectedDate;
   String? get selectedTimeSlot => _selectedTimeSlot;
@@ -27,8 +29,16 @@ class BookingProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // Get all unique services from doctors
-  Future<List<String>> getAllServices() async {
+  // Service name mapping: localized display name -> original API name
+  Map<String, String> _serviceDisplayToOriginal = {};
+
+  /// Get the original (API) service name from a display name
+  String getOriginalServiceName(String displayName) {
+    return _serviceDisplayToOriginal[displayName] ?? displayName;
+  }
+
+  /// Get all unique services from doctors, localized by language code
+  Future<List<String>> getAllServices({String languageCode = 'ar'}) async {
     try {
       _isLoading = true;
       _errorMessage = null;
@@ -36,8 +46,16 @@ class BookingProvider extends ChangeNotifier {
 
       final doctors = await _apiService.getDoctors();
       final services = <String>{};
+      _serviceDisplayToOriginal = {};
+
       for (final doctor in doctors) {
-        services.addAll(doctor.specialties);
+        final localizedSpecialties = doctor.getLocalizedSpecialties(languageCode);
+        for (int i = 0; i < doctor.specialties.length; i++) {
+          final original = doctor.specialties[i];
+          final localized = i < localizedSpecialties.length ? localizedSpecialties[i] : original;
+          services.add(localized);
+          _serviceDisplayToOriginal[localized] = original;
+        }
       }
 
       _isLoading = false;
@@ -53,14 +71,16 @@ class BookingProvider extends ChangeNotifier {
 
   // Select a service and load doctors for it
   Future<void> selectService(String service) async {
-    _selectedService = service;
+    final originalService = getOriginalServiceName(service);
+    _selectedServiceDisplay = service;
+    _selectedService = originalService;
     _selectedDoctor = null;
     _selectedDate = null;
     _selectedTimeSlot = null;
     _availableSlots = null;
     notifyListeners();
 
-    await loadDoctorsForService(service);
+    await loadDoctorsForService(originalService);
   }
 
   // Load doctors for a specific service/specialty
@@ -169,7 +189,14 @@ class BookingProvider extends ChangeNotifier {
       return created;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = e.toString();
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('slot') && errStr.contains('available') ||
+          errStr.contains('already booked') ||
+          errStr.contains('double booking')) {
+        _errorMessage = '__slotTaken__';
+      } else {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+      }
       notifyListeners();
       return null;
     }
@@ -197,6 +224,7 @@ class BookingProvider extends ChangeNotifier {
   // Reset all selections
   void reset() {
     _selectedService = null;
+    _selectedServiceDisplay = null;
     _selectedDoctor = null;
     _selectedDate = null;
     _selectedTimeSlot = null;

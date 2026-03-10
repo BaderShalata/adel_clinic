@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
 import '../../theme/app_theme.dart';
 import '../shell/main_shell.dart';
 import 'register_screen.dart';
@@ -18,8 +20,67 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _localAuth = LocalAuthentication();
+  final _storage = StorageService();
   bool _obscurePassword = true;
   int _failedAttempts = 0;
+  bool _biometricAvailable = false;
+  bool _hasSavedCredentials = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initBiometric();
+  }
+
+  Future<void> _initBiometric() async {
+    try {
+      final canCheck = await _localAuth.canCheckBiometrics || await _localAuth.isDeviceSupported();
+      final hasCreds = await _storage.hasCredentials();
+
+      if (hasCreds) {
+        final creds = await _storage.getCredentials();
+        if (creds != null && mounted) {
+          _emailController.text = creds['email']!;
+          _passwordController.text = creds['password']!;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _biometricAvailable = canCheck;
+          _hasSavedCredentials = hasCreds;
+        });
+
+        // Auto-trigger biometric if credentials are saved
+        if (canCheck && hasCreds) {
+          _handleBiometricLogin();
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    try {
+      final lang = context.read<LanguageProvider>();
+      final authenticated = await _localAuth.authenticate(
+        localizedReason: lang.t('biometricReason'),
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: false,
+        ),
+      );
+
+      if (authenticated && mounted) {
+        final creds = await _storage.getCredentials();
+        if (creds != null) {
+          _emailController.text = creds['email']!;
+          _passwordController.text = creds['password']!;
+          _handleLogin();
+        }
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -38,6 +99,11 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         if (success) {
           _failedAttempts = 0;
+          // Save credentials for biometric login
+          _storage.saveCredentials(
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const MainShell()),
@@ -298,6 +364,28 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                 ),
               ),
+              // Biometric Login Button
+              if (_biometricAvailable && _hasSavedCredentials)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppTheme.spacingS),
+                  child: SizedBox(
+                    height: 56,
+                    child: OutlinedButton.icon(
+                      onPressed: authProvider.isLoading ? null : _handleBiometricLogin,
+                      icon: const Icon(Icons.fingerprint, size: 28),
+                      label: Text(
+                        lang.t('biometricLogin'),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppTheme.primaryColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               const SizedBox(height: AppTheme.spacingM),
 
               // Register Link
