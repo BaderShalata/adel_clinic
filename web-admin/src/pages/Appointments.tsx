@@ -475,11 +475,10 @@ export const Appointments: React.FC = () => {
         // If appointment already has doctor, date, time, and service - schedule directly
         if (draggedAppointment.doctorId && draggedAppointment.appointmentDate &&
             draggedAppointment.appointmentTime && draggedAppointment.serviceType) {
-          // Schedule directly — always reschedule to today
+          // Schedule directly — keep the original appointment date
           updateStatusMutation.mutate({
             id: draggedAppointment.id,
             status: 'scheduled',
-            appointmentDate: dayjs().format('YYYY-MM-DD'),
           });
         } else {
           // Missing data - show scheduling dialog to fill in
@@ -1049,10 +1048,7 @@ export const Appointments: React.FC = () => {
                                 onChange={(e: SelectChangeEvent) => {
                                   const newStatus = e.target.value as Appointment['status'];
                                   if (newStatus !== appointment.status) {
-                                    const data: { id: string; status: string; appointmentDate?: string } = { id: appointment.id, status: newStatus };
-                                    if (appointment.status === 'pending' && newStatus === 'scheduled') {
-                                      data.appointmentDate = dayjs().format('YYYY-MM-DD');
-                                    }
+                                    const data: { id: string; status: string } = { id: appointment.id, status: newStatus };
                                     updateStatusMutation.mutate(data);
                                   }
                                 }}
@@ -2107,7 +2103,22 @@ export const Appointments: React.FC = () => {
                       size="small"
                       label={t('idNumber')}
                       value={newPatientData.idNumber}
-                      onChange={(e) => setNewPatientData({ ...newPatientData, idNumber: e.target.value })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewPatientData({ ...newPatientData, idNumber: val });
+                        if (val && patients) {
+                          const existing = patients.find(p => p.idNumber === val);
+                          if (existing) {
+                            setIsNewPatient(false);
+                            setSelectedPatient(existing);
+                            setNewPatientData({ fullName: '', idNumber: '', phoneNumber: '' });
+                          }
+                        }
+                      }}
+                      helperText={newPatientData.idNumber && patients?.find(p => p.idNumber === newPatientData.idNumber)
+                        ? `Patient "${patients.find(p => p.idNumber === newPatientData.idNumber)?.fullName}" already exists`
+                        : undefined}
+                      error={!!newPatientData.idNumber && !!patients?.find(p => p.idNumber === newPatientData.idNumber)}
                     />
                     <TextField
                       fullWidth

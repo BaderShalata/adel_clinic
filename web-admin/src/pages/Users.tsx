@@ -23,6 +23,7 @@ interface User {
   email: string;
   fullName: string;
   phoneNumber?: string;
+  idNumber?: string;
   role: string;
   isActive: boolean;
 }
@@ -181,6 +182,7 @@ export const Users: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell>{t('name')}</TableCell>
+              <TableCell>{t('idNumber')}</TableCell>
               <TableCell>{t('email')}</TableCell>
               <TableCell>{t('phone')}</TableCell>
               <TableCell>{t('role')}</TableCell>
@@ -192,6 +194,7 @@ export const Users: React.FC = () => {
             {users?.map((user) => (
               <TableRow key={user.uid} hover>
                 <TableCell>{user.fullName}</TableCell>
+                <TableCell>{user.idNumber || '-'}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.phoneNumber || '-'}</TableCell>
                 <TableCell>

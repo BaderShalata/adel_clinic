@@ -53,30 +53,30 @@ const translations = {
     },
     ar: {
         appointmentConfirmed: {
-            title: '\u200Fصبا ريحانا',
-            body: '\u200Fتم تأكيد موعدك بتاريخ {date} الساعة {time}. نتطلع لرؤيتك!',
+            title: 'صبا ريحانا ',
+            body: 'تم تأكيد موعدك بتاريخ {date} الساعة {time}. نتطلع لرؤيتك!',
         },
         appointmentCancelled: {
-            title: '\u200Fصبا ريحانا',
-            body: '\u200Fتم إلغاء موعدك بتاريخ {date}. يرجى الاتصال بنا لإعادة الجدولة.',
+            title: 'صبا ريحانا ',
+            body: 'تم إلغاء موعدك بتاريخ {date}. يرجى الاتصال بنا لإعادة الجدولة.',
         },
         appointmentReminder: {
-            title: '\u200Fصبا ريحانا',
-            body: '\u200Fتذكير: لديك موعد غداً الساعة {time} مع {doctorName}.',
+            title: 'صبا ريحانا',
+            body: 'تذكير: لديك موعد غداً الساعة {time} مع {doctorName}.',
         },
     },
     he: {
         appointmentConfirmed: {
-            title: '\u200Fסבא ריחאנה',
-            body: '\u200Fהתור שלך אושר לתאריך {date} בשעה {time}. מצפים לראותך!',
+            title: 'סבא ריחאנה',
+            body: 'התור שלך אושר לתאריך {date} בשעה {time}. מצפים לראותך!',
         },
         appointmentCancelled: {
-            title: '\u200Fסבא ריחאנה',
-            body: '\u200Fהתור שלך בתאריך {date} בוטל. אנא צור קשר לתיאום מחדש.',
+            title: 'סבא ריחאנה',
+            body: 'התור שלך בתאריך {date} בוטל. אנא צור קשר לתיאום מחדש.',
         },
         appointmentReminder: {
-            title: '\u200Fסבא ריחאנה',
-            body: '\u200Fתזכורת: יש לך תור מחר בשעה {time} אצל {doctorName}.',
+            title: 'סבא ריחאנה',
+            body: 'תזכורת: יש לך תור מחר בשעה {time} אצל {doctorName}.',
         },
     },
 };
