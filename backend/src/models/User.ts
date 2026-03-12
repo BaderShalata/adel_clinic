@@ -9,6 +9,7 @@ export interface User {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   photoURL?: string;
+  idNumber?: string;
   isActive: boolean;
 }
 

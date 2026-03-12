@@ -12,6 +12,27 @@ export class AppointmentController {
       const createdBy = (req as any).user?.uid || '';
       const role = (req as any).user?.role || 'user';
       const appointment = await appointmentService.createAppointment(data, createdBy, role);
+
+      // Send notification when admin creates a scheduled appointment
+      if (role === 'admin' && appointment.status === 'scheduled') {
+        const aptDate = appointment.appointmentDate as any;
+        const dateObj = typeof aptDate.toDate === 'function' ? aptDate.toDate() : new Date(aptDate);
+        const dateStr = dateObj.toLocaleDateString('en-GB');
+        const timeStr = appointment.appointmentTime;
+
+        let notifyUid = appointment.patientId;
+        try {
+          const patientDoc = await admin.firestore().collection('patients').doc(appointment.patientId).get();
+          if (patientDoc.exists && patientDoc.data()?.userId) {
+            notifyUid = patientDoc.data()!.userId;
+          }
+        } catch (err) {
+          console.error('Failed to resolve patient userId for notification:', err);
+        }
+
+        await notificationService.sendAppointmentConfirmed(notifyUid, dateStr, timeStr);
+      }
+
       res.status(201).json(appointment);
     } catch (error: any) {
       res.status(400).json({ error: error.message });

@@ -107,7 +107,9 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen> {
     bool isNewPatient = false;
     final newPatientNameController = TextEditingController();
     final newPatientPhoneController = TextEditingController();
+    final newPatientIdController = TextEditingController();
     final notesController = TextEditingController();
+    String? idCheckError;
 
     showModalBottomSheet(
       context: context,
@@ -193,10 +195,19 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen> {
                       ),
                       hint: const Text('Select patient'),
                       value: selectedPatient,
-                      items: _patients.map((p) => DropdownMenuItem(
-                        value: p,
-                        child: Text('${p['fullName'] ?? 'Unknown'}${p['phoneNumber'] != null ? ' (${p['phoneNumber']})' : ''}'),
-                      )).toList(),
+                      items: _patients.map((p) {
+                        final name = p['fullName'] ?? 'Unknown';
+                        final phone = p['phoneNumber'] ?? '';
+                        final idNum = p['idNumber'] ?? '';
+                        final details = [
+                          if (idNum.toString().isNotEmpty) idNum.toString(),
+                          if (phone.toString().isNotEmpty) phone.toString(),
+                        ].join(' | ');
+                        return DropdownMenuItem(
+                          value: p,
+                          child: Text('$name${details.isNotEmpty ? ' ($details)' : ''}'),
+                        );
+                      }).toList(),
                       onChanged: (val) => setModalState(() => selectedPatient = val),
                     )
                   else ...[
@@ -206,6 +217,36 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen> {
                         labelText: 'Patient Name *',
                         border: OutlineInputBorder(),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: newPatientIdController,
+                      decoration: InputDecoration(
+                        labelText: 'ID Number (Teudat Zehut)',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.badge),
+                        errorText: idCheckError,
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (val) {
+                        if (val.isNotEmpty) {
+                          final existing = _patients.firstWhere(
+                            (p) => p['idNumber']?.toString() == val,
+                            orElse: () => <String, dynamic>{},
+                          );
+                          if (existing.isNotEmpty) {
+                            setModalState(() {
+                              idCheckError = 'Patient "${existing['fullName']}" already exists with this ID';
+                              isNewPatient = false;
+                              selectedPatient = existing;
+                            });
+                          } else {
+                            setModalState(() => idCheckError = null);
+                          }
+                        } else {
+                          setModalState(() => idCheckError = null);
+                        }
+                      },
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -356,6 +397,7 @@ class _AdminAppointmentsScreenState extends State<AdminAppointmentsScreen> {
                                   final newPatient = await _apiService.createPatient(
                                     fullName: newPatientNameController.text,
                                     phoneNumber: newPatientPhoneController.text,
+                                    idNumber: newPatientIdController.text,
                                   );
                                   patientId = newPatient['id'];
                                 } else {

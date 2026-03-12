@@ -69,10 +69,32 @@ export class UserService {
       }
 
       const snapshot = await query.get();
-      return snapshot.docs.map(doc => ({
+      const users = snapshot.docs.map(doc => ({
         uid: doc.id,
         ...doc.data()
       } as User));
+
+      // Enrich users with idNumber from patients collection
+      const patientsSnapshot = await db.collection('patients').get();
+      const patientIdMap = new Map<string, string>();
+      for (const pDoc of patientsSnapshot.docs) {
+        const pData = pDoc.data();
+        if (pData.idNumber) {
+          // Map by userId field or by doc ID
+          if (pData.userId) {
+            patientIdMap.set(pData.userId, pData.idNumber);
+          }
+          patientIdMap.set(pDoc.id, pData.idNumber);
+        }
+      }
+
+      for (const user of users) {
+        if (!user.idNumber) {
+          user.idNumber = patientIdMap.get(user.uid) || undefined;
+        }
+      }
+
+      return users;
     } catch (error: any) {
       throw new Error(`Failed to get users: ${error.message}`);
     }
@@ -92,6 +114,27 @@ export class UserService {
         await auth.updateUser(uid, { displayName: data.fullName });
       }
 
+      // Sync relevant fields to patients collection
+      const syncFields: Record<string, any> = {};
+      if (data.fullName) syncFields.fullName = data.fullName;
+      if (data.phoneNumber !== undefined) syncFields.phoneNumber = data.phoneNumber;
+      if ((data as any).idNumber !== undefined) syncFields.idNumber = (data as any).idNumber;
+
+      if (Object.keys(syncFields).length > 0) {
+        // Find patient doc by userId field matching this uid
+        const patientsSnapshot = await db.collection('patients').where('userId', '==', uid).get();
+        if (!patientsSnapshot.empty) {
+          for (const doc of patientsSnapshot.docs) {
+            await doc.ref.update({ ...syncFields, updatedAt: admin.firestore.Timestamp.now() });
+          }
+        }
+        // Also check if patient doc ID matches uid directly
+        const directPatientDoc = await db.collection('patients').doc(uid).get();
+        if (directPatientDoc.exists && patientsSnapshot.empty) {
+          await directPatientDoc.ref.update({ ...syncFields, updatedAt: admin.firestore.Timestamp.now() });
+        }
+      }
+
       const updatedUser = await this.getUserById(uid);
       if (!updatedUser) {
         throw new Error('User not found after update');
@@ -107,8 +150,20 @@ export class UserService {
     try {
       // Delete from Firebase Auth
       await auth.deleteUser(uid);
-      // Delete from Firestore
+      // Delete from Firestore users collection
       await this.usersCollection.doc(uid).delete();
+
+      // Delete corresponding patient record
+      // Check by userId field
+      const patientsSnapshot = await db.collection('patients').where('userId', '==', uid).get();
+      for (const doc of patientsSnapshot.docs) {
+        await doc.ref.delete();
+      }
+      // Also check if patient doc ID matches uid directly
+      const directPatientDoc = await db.collection('patients').doc(uid).get();
+      if (directPatientDoc.exists) {
+        await directPatientDoc.ref.delete();
+      }
     } catch (error: any) {
       throw new Error(`Failed to delete user: ${error.message}`);
     }
