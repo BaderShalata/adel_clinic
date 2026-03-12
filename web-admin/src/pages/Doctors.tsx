@@ -1166,20 +1166,6 @@ export const Doctors: React.FC = () => {
             placeholder="תיאור קצר על הרופא..."
           />
 
-          {!editingId && (
-            <>
-              <Divider sx={{ my: 2 }} />
-              <TextField
-                fullWidth
-                label={t('userId')}
-                value={formData.userId}
-                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                margin="dense"
-                helperText={t('linkToUserAccount')}
-              />
-            </>
-          )}
-
           <Divider sx={{ my: 3 }} />
           <Typography variant="h6" gutterBottom>{t('schedule')}</Typography>
           {scheduleEntries.map((entry, index) => (
