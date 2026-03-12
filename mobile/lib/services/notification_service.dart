@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api_service.dart';
@@ -142,22 +143,25 @@ class NotificationService {
     final notification = message.notification;
     if (notification == null) return;
 
-    _localNotifications.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'appointment_notifications',
-          'Appointment Notifications',
-          channelDescription:
-              'Notifications for appointment status changes and reminders',
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
+    // iOS: setForegroundNotificationPresentationOptions already handles display
+    // Android: must show a local notification manually (FCM doesn't auto-display foreground)
+    if (Platform.isAndroid) {
+      _localNotifications.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'appointment_notifications',
+            'Appointment Notifications',
+            channelDescription:
+                'Notifications for appointment status changes and reminders',
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
         ),
-        iOS: DarwinNotificationDetails(),
-      ),
-    );
+      );
+    }
   }
 }
