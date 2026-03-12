@@ -79,6 +79,12 @@ export class AuthService {
       if (data.phoneNumber) {
         userData.phoneNumber = data.phoneNumber;
       }
+      if (data.idNumber) {
+        userData.idNumber = data.idNumber;
+      }
+      if (data.gender) {
+        userData.gender = data.gender;
+      }
 
       await this.usersCollection.doc(uid).set(userData);
 

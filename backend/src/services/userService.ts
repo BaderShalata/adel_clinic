@@ -74,23 +74,25 @@ export class UserService {
         ...doc.data()
       } as User));
 
-      // Enrich users with idNumber from patients collection
+      // Enrich users with data from patients collection (joint query)
       const patientsSnapshot = await db.collection('patients').get();
-      const patientIdMap = new Map<string, string>();
+      const patientMap = new Map<string, Record<string, any>>();
       for (const pDoc of patientsSnapshot.docs) {
         const pData = pDoc.data();
-        if (pData.idNumber) {
-          // Map by userId field or by doc ID
-          if (pData.userId) {
-            patientIdMap.set(pData.userId, pData.idNumber);
-          }
-          patientIdMap.set(pDoc.id, pData.idNumber);
+        const key = pData.userId || pDoc.id;
+        patientMap.set(key, pData);
+        // Also map by doc ID if userId is different
+        if (pData.userId && pData.userId !== pDoc.id) {
+          patientMap.set(pDoc.id, pData);
         }
       }
 
       for (const user of users) {
-        if (!user.idNumber) {
-          user.idNumber = patientIdMap.get(user.uid) || undefined;
+        const patient = patientMap.get(user.uid);
+        if (patient) {
+          if (!user.idNumber && patient.idNumber) user.idNumber = patient.idNumber;
+          if (!(user as any).gender && patient.gender) (user as any).gender = patient.gender;
+          if (!user.phoneNumber && patient.phoneNumber) user.phoneNumber = patient.phoneNumber;
         }
       }
 

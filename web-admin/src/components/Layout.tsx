@@ -40,7 +40,6 @@ import {
   Person as UsersIcon,
   Logout as LogoutIcon,
   Public as LanguageIcon,
-  MedicalServices as ClinicIcon,
   Close as CloseIcon,
   AccessTime as TimeIcon,
   Person as PersonIcon,
@@ -188,19 +187,17 @@ export const Layout: React.FC = () => {
         }}
       >
         <Box
+          component="img"
+          src="/clinic-logo.jpg"
+          alt="SBA REHANA"
           sx={{
             width: 46,
             height: 46,
             borderRadius: 2.5,
-            background: gradients.primary,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            objectFit: 'cover',
             boxShadow: shadows.colored(healthcareColors.primary.main),
           }}
-        >
-          <ClinicIcon sx={{ color: 'white', fontSize: 26 }} />
-        </Box>
+        />
         <Box>
           <Typography
             variant="h5"
@@ -214,7 +211,7 @@ export const Layout: React.FC = () => {
               fontSize: '1.35rem',
             }}
           >
-            Adel Clinic
+            SBA REHANA
           </Typography>
           <Typography
             variant="body2"
@@ -313,7 +310,7 @@ export const Layout: React.FC = () => {
             fontWeight: 500,
           }}
         >
-          © 2024 Adel Clinic
+          © 2026 SBA REHANA
         </Typography>
       </Box>
     </Box>

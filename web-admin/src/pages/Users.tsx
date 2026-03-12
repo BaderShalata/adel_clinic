@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Button, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Typography, Dialog, DialogContent,
-  DialogContentText, DialogActions, TextField, Chip, MenuItem, Tooltip, Stack, alpha, IconButton,
+  DialogContentText, DialogActions, TextField, Chip, MenuItem, Tooltip, Stack, alpha, IconButton, InputAdornment,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -12,6 +12,7 @@ import {
   Block,
   CheckCircle,
   Close as CloseIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import { healthcareColors, gradients, glassStyles } from '../theme/healthcareTheme';
 import { apiClient } from '../lib/api';
@@ -24,6 +25,7 @@ interface User {
   fullName: string;
   phoneNumber?: string;
   idNumber?: string;
+  gender?: string;
   role: string;
   isActive: boolean;
 }
@@ -33,6 +35,7 @@ export const Users: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -53,6 +56,17 @@ export const Users: React.FC = () => {
       const response = await apiClient.get('/users');
       return response.data;
     },
+  });
+
+  const filteredUsers = users?.filter((user) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      user.fullName?.toLowerCase().includes(q) ||
+      user.email?.toLowerCase().includes(q) ||
+      user.phoneNumber?.toLowerCase().includes(q) ||
+      user.idNumber?.toLowerCase().includes(q)
+    );
   });
 
   const createMutation = useMutation({
@@ -177,6 +191,24 @@ export const Users: React.FC = () => {
         </Button>
       </Box>
 
+      <TextField
+        fullWidth
+        size="small"
+        placeholder={t('search') + '...'}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: healthcareColors.neutral[400] }} />
+              </InputAdornment>
+            ),
+          },
+        }}
+        sx={{ mb: 2 }}
+      />
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -191,7 +223,7 @@ export const Users: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {users?.map((user) => (
+            {filteredUsers?.map((user) => (
               <TableRow key={user.uid} hover>
                 <TableCell>{user.fullName}</TableCell>
                 <TableCell>{user.idNumber || '-'}</TableCell>
@@ -340,7 +372,6 @@ export const Users: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
             >
               <MenuItem value="admin">{t('admin')}</MenuItem>
-              <MenuItem value="doctor">{t('doctor')}</MenuItem>
               <MenuItem value="patient">{t('patient')}</MenuItem>
             </TextField>
           </Box>

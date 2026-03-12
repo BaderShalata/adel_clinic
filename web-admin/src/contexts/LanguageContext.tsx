@@ -40,7 +40,7 @@ const translations: Translations = {
   actions: { en: 'Actions', ar: 'إجراءات', he: 'פעולות' },
 
   // Dashboard
-  welcomeMessage: { en: 'Welcome to Adel Clinic Admin Panel', ar: 'مرحباً بك في لوحة إدارة عيادة عادل', he: 'ברוכים הבאים לפאנל הניהול של מרפאת עדל' },
+  welcomeMessage: { en: 'Welcome to SBA REHANA Admin Panel', ar: 'مرحباً بك في لوحة إدارة صبا ريحانة', he: 'ברוכים הבאים לפאנל הניהול של סבא ריחאנה' },
   totalPatients: { en: 'Total Patients', ar: 'إجمالي المرضى', he: 'סה״כ מטופלים' },
   totalDoctors: { en: 'Total Doctors', ar: 'إجمالي الأطباء', he: 'סה״כ רופאים' },
   todayAppointments: { en: "Today's Appointments", ar: 'مواعيد اليوم', he: 'פגישות היום' },
@@ -119,7 +119,7 @@ const translations: Translations = {
   activePractitioners: { en: 'Active practitioners', ar: 'أطباء نشطين', he: 'רופאים פעילים' },
   upcoming: { en: 'Upcoming', ar: 'القادمة', he: 'קרובות' },
   scheduledAppointments: { en: 'Scheduled appointments', ar: 'مواعيد مجدولة', he: 'פגישות מתוכננות' },
-  getStarted: { en: 'Get Started with Adel Clinic', ar: 'ابدأ مع عيادة عادل', he: 'התחל עם מרפאת עדל' },
+  getStarted: { en: 'Get Started with SBA REHANA', ar: 'ابدأ مع صبا ريحانة', he: 'התחל עם סבא ריחאנה' },
   startByAdding: { en: 'Start by adding doctors, patients, and scheduling appointments.', ar: 'ابدأ بإضافة أطباء ومرضى وجدولة المواعيد.', he: 'התחל על ידי הוספת רופאים, מטופלים וקביעת פגישות.' },
   addDoctorsAction: { en: 'Add doctors', ar: 'إضافة أطباء', he: 'הוסף רופאים' },
   registerPatientsAction: { en: 'Register patients', ar: 'تسجيل مرضى', he: 'רשום מטופלים' },

@@ -12,7 +12,7 @@ import {
   IconButton,
   InputAdornment,
 } from '@mui/material';
-import { Visibility, VisibilityOff, MedicalServices as ClinicIcon } from '@mui/icons-material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import apiClient from '../lib/api';
@@ -106,25 +106,24 @@ export const Signup: React.FC = () => {
             {/* Logo */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
               <Box
+                component="img"
+                src="/clinic-logo.jpg"
+                alt="SBA REHANA"
                 sx={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 2,
-                  bgcolor: 'primary.main',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  boxShadow: 3,
                 }}
-              >
-                <ClinicIcon sx={{ color: 'white', fontSize: 32 }} />
-              </Box>
+              />
             </Box>
 
             <Typography variant="h4" component="h1" gutterBottom align="center" fontWeight={600}>
               Create Admin Account
             </Typography>
             <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-              Register your admin account for Adel Clinic
+              Register your admin account for SBA REHANA
             </Typography>
 
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
