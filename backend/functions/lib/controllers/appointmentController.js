@@ -208,6 +208,17 @@ class AppointmentController {
             // Fetch current appointment to detect status change
             const oldAppointment = await appointmentService_1.appointmentService.getAppointmentById(id);
             const oldStatus = oldAppointment?.status;
+            // If changing a past pending appointment to scheduled, reset date to today
+            if (data.status === 'scheduled' && oldStatus === 'pending' && oldAppointment?.appointmentDate) {
+                const oldDate = oldAppointment.appointmentDate instanceof Date
+                    ? oldAppointment.appointmentDate
+                    : oldAppointment.appointmentDate.toDate();
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (oldDate < today) {
+                    data.appointmentDate = new Date();
+                }
+            }
             const appointment = await appointmentService_1.appointmentService.updateAppointment(id, data);
             // Send notification on status change
             if (oldStatus && data.status && oldStatus !== data.status) {
