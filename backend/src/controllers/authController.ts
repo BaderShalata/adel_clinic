@@ -45,6 +45,9 @@ export class AuthController {
         email: user.email,
         displayName: user.fullName,
         phoneNumber: user.phoneNumber,
+        idNumber: (user as any).idNumber,
+        gender: (user as any).gender,
+        photoUrl: (user as any).photoUrl,
         role: user.role,
         message: 'Registration successful',
       });
@@ -103,6 +106,9 @@ export class AuthController {
         email: user.email,
         displayName: user.fullName,
         phoneNumber: user.phoneNumber,
+        idNumber: (user as any).idNumber,
+        gender: (user as any).gender,
+        photoUrl: (user as any).photoUrl,
         role: user.role,
         patientId: user.patientId,
       });
@@ -141,6 +147,9 @@ export class AuthController {
         email: user.email,
         displayName: user.fullName,
         phoneNumber: user.phoneNumber,
+        idNumber: (user as any).idNumber,
+        gender: (user as any).gender,
+        photoUrl: (user as any).photoUrl,
         role: user.role,
         patientId: user.patientId,
       });

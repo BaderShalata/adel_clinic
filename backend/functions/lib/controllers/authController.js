@@ -73,6 +73,9 @@ class AuthController {
                 email: user.email,
                 displayName: user.fullName,
                 phoneNumber: user.phoneNumber,
+                idNumber: user.idNumber,
+                gender: user.gender,
+                photoUrl: user.photoUrl,
                 role: user.role,
                 message: 'Registration successful',
             });
@@ -124,6 +127,9 @@ class AuthController {
                 email: user.email,
                 displayName: user.fullName,
                 phoneNumber: user.phoneNumber,
+                idNumber: user.idNumber,
+                gender: user.gender,
+                photoUrl: user.photoUrl,
                 role: user.role,
                 patientId: user.patientId,
             });
@@ -158,6 +164,9 @@ class AuthController {
                 email: user.email,
                 displayName: user.fullName,
                 phoneNumber: user.phoneNumber,
+                idNumber: user.idNumber,
+                gender: user.gender,
+                photoUrl: user.photoUrl,
                 role: user.role,
                 patientId: user.patientId,
             });

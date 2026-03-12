@@ -189,6 +189,12 @@ class AuthService {
             if (data.photoUrl !== undefined) {
                 updateData.photoUrl = data.photoUrl;
             }
+            if (data.idNumber !== undefined) {
+                updateData.idNumber = data.idNumber;
+            }
+            if (data.gender !== undefined) {
+                updateData.gender = data.gender;
+            }
             // Update Firestore user document
             await this.usersCollection.doc(uid).update(updateData);
             // If user is a patient, also update the patient record
