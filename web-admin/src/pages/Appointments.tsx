@@ -896,7 +896,9 @@ export const Appointments: React.FC = () => {
   };
 
   const calendarDays = getDaysInMonth(calendarDate);
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekDays = [t('sun'), t('mon'), t('tue'), t('wed'), t('thu'), t('fri'), t('sat')];
+  const monthNames = [t('january'), t('february'), t('march'), t('april'), t('may'), t('june'), t('july'), t('august'), t('september'), t('october'), t('november'), t('december')];
+  const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
 
   return (
     <Box>
@@ -1792,7 +1794,7 @@ export const Appointments: React.FC = () => {
             </IconButton>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h5" fontWeight={700} color={healthcareColors.neutral[800]}>
-                {calendarDate.format('MMMM YYYY')}
+                {monthNames[calendarDate.month()]} {calendarDate.format('YYYY')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {t('upcomingAppointmentsCount').replace('{count}', String(activeAppointments.length))}
@@ -2008,7 +2010,7 @@ export const Appointments: React.FC = () => {
               </IconButton>
               <Box>
                 <Typography variant="h6" fontWeight={600}>
-                  {selectedDay.format('dddd, MMMM D, YYYY')}
+                  {dayNames[selectedDay.day()]}, {monthNames[selectedDay.month()]} {selectedDay.format('D, YYYY')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {t('appointmentsCount').replace('{count}', String(getAppointmentsForDate(selectedDay).length))}

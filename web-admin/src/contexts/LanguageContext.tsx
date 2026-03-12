@@ -340,6 +340,20 @@ const translations: Translations = {
   deleteUser: { en: 'Delete User', ar: 'حذف المستخدم', he: 'מחק משתמש' },
   confirmDeleteUser: { en: 'Are you sure you want to delete', ar: 'هل أنت متأكد من حذف', he: 'האם אתה בטוח שברצונך למחוק את' },
 
+  // Months
+  january:   { en: 'January',   ar: 'يناير',    he: 'ינואר' },
+  february:  { en: 'February',  ar: 'فبراير',   he: 'פברואר' },
+  march:     { en: 'March',     ar: 'مارس',     he: 'מרץ' },
+  april:     { en: 'April',     ar: 'أبريل',    he: 'אפריל' },
+  may:       { en: 'May',       ar: 'مايو',     he: 'מאי' },
+  june:      { en: 'June',      ar: 'يونيو',    he: 'יוני' },
+  july:      { en: 'July',      ar: 'يوليو',    he: 'יולי' },
+  august:    { en: 'August',    ar: 'أغسطس',   he: 'אוגוסט' },
+  september: { en: 'September', ar: 'سبتمبر',  he: 'ספטמבר' },
+  october:   { en: 'October',   ar: 'أكتوبر',  he: 'אוקטובר' },
+  november:  { en: 'November',  ar: 'نوفمبر',  he: 'נובמבר' },
+  december:  { en: 'December',  ar: 'ديسمبر',  he: 'דצמבר' },
+
   // Error messages
   idNumberAlreadyExists: { en: 'An account with this ID number already exists.', ar: 'يوجد حساب بهذا الرقم الهوية بالفعل.', he: 'כבר קיים חשבון עם מספר תעודת זהות זה.' },
 };
