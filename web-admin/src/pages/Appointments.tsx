@@ -50,6 +50,7 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   ArrowBack as ArrowBackIcon,
+  ArrowForward as ArrowForwardIcon,
   Archive as ArchiveIcon,
   EventAvailable as ActiveIcon,
   Close as CloseIcon,
@@ -896,7 +897,7 @@ export const Appointments: React.FC = () => {
   };
 
   const calendarDays = getDaysInMonth(calendarDate);
-  const weekDays = [t('sun'), t('mon'), t('tue'), t('wed'), t('thu'), t('fri'), t('sat')];
+  const weekDays = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
   const monthNames = [t('january'), t('february'), t('march'), t('april'), t('may'), t('june'), t('july'), t('august'), t('september'), t('october'), t('november'), t('december')];
   const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
 
@@ -1780,14 +1781,24 @@ export const Appointments: React.FC = () => {
         </Box>
       ) : viewMode === 'calendar' ? (
         /* Calendar View */
-        <Paper sx={{ p: 3, ...glassStyles.card, boxShadow: shadows.md }}>
+        <Paper sx={{ overflow: 'hidden', ...glassStyles.card, borderRadius: 3, boxShadow: shadows.md }}>
           {/* Calendar Header */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            px: 3,
+            py: 2.5,
+            borderBottom: `1px solid ${alpha(healthcareColors.neutral[500], 0.28)}`,
+            background: `linear-gradient(135deg, ${alpha(healthcareColors.primary.main, 0.04)} 0%, transparent 100%)`,
+          }}>
             <IconButton
               onClick={() => setCalendarDate(calendarDate.subtract(1, 'month'))}
               sx={{
                 bgcolor: healthcareColors.neutral[100],
-                '&:hover': { bgcolor: healthcareColors.neutral[200] }
+                borderRadius: 1,
+                transition: 'all 0.2s',
+                '&:hover': { bgcolor: healthcareColors.primary.main, color: '#fff' },
               }}
             >
               {isRtl ? <ChevronRightIcon /> : <ChevronLeftIcon />}
@@ -1800,34 +1811,50 @@ export const Appointments: React.FC = () => {
                 {t('upcomingAppointmentsCount').replace('{count}', String(activeAppointments.length))}
               </Typography>
             </Box>
-            <IconButton
-              onClick={() => setCalendarDate(calendarDate.add(1, 'month'))}
-              sx={{
-                bgcolor: healthcareColors.neutral[100],
-                '&:hover': { bgcolor: healthcareColors.neutral[200] }
-              }}
-            >
-              {isRtl ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </IconButton>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setCalendarDate(dayjs())}
+                sx={{ borderRadius: 1, textTransform: 'none', fontSize: '0.75rem', px: 1.5, py: 0.5, minWidth: 'auto', borderColor: healthcareColors.neutral[300], color: healthcareColors.neutral[600], '&:hover': { borderColor: healthcareColors.primary.main, color: healthcareColors.primary.main } }}
+              >
+                {t('today')}
+              </Button>
+              <IconButton
+                onClick={() => setCalendarDate(calendarDate.add(1, 'month'))}
+                sx={{
+                  bgcolor: healthcareColors.neutral[100],
+                  borderRadius: 2,
+                  transition: 'all 0.2s',
+                  '&:hover': { bgcolor: healthcareColors.primary.main, color: '#fff' },
+                }}
+              >
+                {isRtl ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+              </IconButton>
+            </Box>
           </Box>
 
           {/* Week Days Header */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, mb: 1 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: `1px solid ${alpha(healthcareColors.neutral[500], 0.28)}` }}>
             {weekDays.map((day, idx) => (
               <Box
                 key={day}
                 sx={{
                   textAlign: 'center',
-                  py: 1.5,
-                  bgcolor: idx === 0 || idx === 6 ? alpha(healthcareColors.neutral[500], 0.05) : 'transparent',
-                  borderRadius: 1,
+                  py: 1.25,
+                  bgcolor: idx === 0 || idx === 6 ? alpha(healthcareColors.neutral[500], 0.04) : alpha(healthcareColors.primary.main, 0.02),
+                  borderRight: idx < 6 ? `1px solid ${alpha(healthcareColors.neutral[500], 0.28)}` : 'none',
                 }}
               >
                 <Typography
                   variant="caption"
                   fontWeight={600}
-                  color={idx === 0 || idx === 6 ? healthcareColors.neutral[400] : healthcareColors.neutral[600]}
-                  sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                  sx={{
+                    fontSize: '0.68rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.07em',
+                    color: idx === 0 || idx === 6 ? healthcareColors.neutral[400] : healthcareColors.primary.main,
+                  }}
                 >
                   {day}
                 </Typography>
@@ -1836,10 +1863,21 @@ export const Appointments: React.FC = () => {
           </Box>
 
           {/* Calendar Grid */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
             {calendarDays.map((day, index) => {
+              const colIdx = index % 7;
               if (!day) {
-                return <Box key={`empty-${index}`} sx={{ minHeight: 110, bgcolor: healthcareColors.neutral[50], borderRadius: 2 }} />;
+                return (
+                  <Box
+                    key={`empty-${index}`}
+                    sx={{
+                      minHeight: 80,
+                      bgcolor: alpha(healthcareColors.neutral[500], 0.02),
+                      borderRight: colIdx < 6 ? `1px solid ${alpha(healthcareColors.neutral[500], 0.28)}` : 'none',
+                      borderBottom: `1px solid ${alpha(healthcareColors.neutral[500], 0.28)}`,
+                    }}
+                  />
+                );
               }
 
               const dayAppointments = getAppointmentsForDate(day);
@@ -1855,70 +1893,75 @@ export const Appointments: React.FC = () => {
                     setViewMode('day');
                   }}
                   sx={{
-                    minHeight: 110,
-                    border: '2px solid',
-                    borderColor: isToday ? healthcareColors.primary.main : 'transparent',
-                    borderRadius: 2,
+                    minHeight: 80,
+                    borderRight: colIdx < 6 ? `1px solid ${alpha(healthcareColors.neutral[500], 0.28)}` : 'none',
+                    borderBottom: `1px solid ${alpha(healthcareColors.neutral[500], 0.28)}`,
                     p: 1,
+                    position: 'relative',
                     bgcolor: isToday
-                      ? alpha(healthcareColors.primary.main, 0.08)
+                      ? alpha(healthcareColors.primary.main, 0.06)
                       : isPast
-                        ? healthcareColors.neutral[50]
+                        ? alpha(healthcareColors.neutral[500], 0.02)
                         : isWeekend
-                          ? alpha(healthcareColors.neutral[500], 0.03)
+                          ? alpha(healthcareColors.neutral[500], 0.025)
                           : '#fff',
                     overflow: 'hidden',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isToday ? `0 4px 12px ${alpha(healthcareColors.primary.main, 0.2)}` : shadows.sm,
+                    transition: 'background 0.15s',
                     '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: shadows.md,
-                      borderColor: healthcareColors.primary.light,
+                      bgcolor: isToday
+                        ? alpha(healthcareColors.primary.main, 0.1)
+                        : alpha(healthcareColors.primary.main, 0.04),
                     },
                   }}
                 >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                    <Typography
-                      variant="body2"
-                      fontWeight={isToday ? 700 : 500}
-                      sx={{
-                        color: isToday ? healthcareColors.primary.main : isPast ? healthcareColors.neutral[400] : healthcareColors.neutral[700],
-                        width: 28,
-                        height: 28,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '50%',
-                        bgcolor: isToday ? healthcareColors.primary.main : 'transparent',
-                        ...(isToday && { color: '#fff' }),
-                      }}
-                    >
-                      {day.date()}
-                    </Typography>
-                    {dayAppointments.length > 0 && (
-                      <Chip
-                        label={dayAppointments.length}
-                        size="small"
+                  {/* Today top accent bar */}
+                  {isToday && (
+                    <Box sx={{
+                      position: 'absolute',
+                      top: 0, left: 0, right: 0,
+                      height: 3,
+                      bgcolor: healthcareColors.primary.main,
+                    }} />
+                  )}
+
+                  {/* Date number + count badge */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.75, mt: isToday ? 0.5 : 0 }}>
+                    <Box sx={{
+                      width: 28, height: 28,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      borderRadius: '50%',
+                      bgcolor: isToday ? healthcareColors.primary.main : 'transparent',
+                    }}>
+                      <Typography
                         sx={{
-                          height: 20,
-                          minWidth: 20,
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          bgcolor: alpha(healthcareColors.info, 0.15),
-                          color: healthcareColors.info,
-                          '& .MuiChip-label': {
-                            px: 0.5,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          },
+                          fontSize: '0.8rem',
+                          fontWeight: isToday ? 700 : isPast ? 400 : 500,
+                          color: isToday ? '#fff' : isPast ? healthcareColors.neutral[400] : isWeekend ? healthcareColors.neutral[500] : healthcareColors.neutral[700],
+                          lineHeight: 1,
                         }}
-                      />
+                      >
+                        {day.date()}
+                      </Typography>
+                    </Box>
+                    {dayAppointments.length > 0 && (
+                      <Box sx={{
+                        minWidth: 18, height: 18,
+                        borderRadius: '9px',
+                        bgcolor: healthcareColors.primary.main,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        px: 0.5,
+                      }}>
+                        <Typography sx={{ fontSize: '0.58rem', fontWeight: 700, color: '#fff', lineHeight: 1 }}>
+                          {dayAppointments.length}
+                        </Typography>
+                      </Box>
                     )}
                   </Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                    {dayAppointments.slice(0, 2).map(apt => (
+
+                  {/* Appointment pills */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.35 }}>
+                    {dayAppointments.slice(0, 3).map(apt => (
                       <Box
                         key={apt.id}
                         onClick={(e) => {
@@ -1926,71 +1969,30 @@ export const Appointments: React.FC = () => {
                           handleOpen(apt);
                         }}
                         sx={{
-                          bgcolor: alpha(getStatusBorderColor(apt.status), 0.12),
-                          borderLeft: `3px solid ${getStatusBorderColor(apt.status)}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                          bgcolor: alpha(getStatusBorderColor(apt.status), 0.1),
                           borderRadius: 1,
                           px: 0.75,
-                          py: 0.25,
+                          py: 0.3,
                           cursor: 'pointer',
-                          transition: 'all 0.15s',
-                          '&:hover': {
-                            bgcolor: alpha(getStatusBorderColor(apt.status), 0.2),
-                          },
+                          transition: 'background 0.15s',
+                          '&:hover': { bgcolor: alpha(getStatusBorderColor(apt.status), 0.22) },
                         }}
                       >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            fontSize: '0.65rem',
-                            fontWeight: 600,
-                            color: getStatusBorderColor(apt.status),
-                            display: 'block',
-                            lineHeight: 1.2,
-                          }}
-                        >
+                        <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: getStatusBorderColor(apt.status), flexShrink: 0 }} />
+                        <Typography sx={{ fontSize: '0.62rem', fontWeight: 600, color: getStatusBorderColor(apt.status), whiteSpace: 'nowrap', flexShrink: 0 }}>
                           {apt.appointmentTime}
                         </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            fontSize: '0.6rem',
-                            color: healthcareColors.neutral[600],
-                            display: 'block',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
+                        <Typography sx={{ fontSize: '0.62rem', color: healthcareColors.neutral[600], overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {apt.patientName}
                         </Typography>
-                        {apt.notes && (
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              fontSize: '0.55rem',
-                              color: healthcareColors.neutral[500],
-                              display: 'block',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              fontStyle: 'italic',
-                            }}
-                          >
-                            {apt.notes}
-                          </Typography>
-                        )}
                       </Box>
                     ))}
-                    {dayAppointments.length > 2 && (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontSize: '0.6rem',
-                          color: healthcareColors.primary.main,
-                          fontWeight: 500,
-                        }}
-                      >
-                        +{dayAppointments.length - 2} {t('more')}
+                    {dayAppointments.length > 3 && (
+                      <Typography sx={{ fontSize: '0.6rem', color: healthcareColors.primary.main, fontWeight: 600, pl: 0.5 }}>
+                        +{dayAppointments.length - 3} {t('more')}
                       </Typography>
                     )}
                   </Box>
@@ -2006,7 +2008,7 @@ export const Appointments: React.FC = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <IconButton onClick={() => setViewMode('calendar')}>
-                <ArrowBackIcon />
+                {isRtl ? <ArrowForwardIcon /> : <ArrowBackIcon />}
               </IconButton>
               <Box>
                 <Typography variant="h6" fontWeight={600}>
