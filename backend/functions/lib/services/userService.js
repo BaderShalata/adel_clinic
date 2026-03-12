@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userService = exports.UserService = void 0;
 const admin = __importStar(require("firebase-admin"));
+const appointmentService_1 = require("./appointmentService");
 const db = admin.firestore();
 const auth = admin.auth();
 class UserService {
@@ -174,19 +175,23 @@ class UserService {
     }
     async deleteUser(uid) {
         try {
+            // Delete appointments linked to this user's UID
+            await appointmentService_1.appointmentService.deleteAppointmentsByPatientId(uid);
             // Delete from Firebase Auth
             await auth.deleteUser(uid);
             // Delete from Firestore users collection
             await this.usersCollection.doc(uid).delete();
-            // Delete corresponding patient record
+            // Delete corresponding patient record and their appointments
             // Check by userId field
             const patientsSnapshot = await db.collection('patients').where('userId', '==', uid).get();
             for (const doc of patientsSnapshot.docs) {
+                await appointmentService_1.appointmentService.deleteAppointmentsByPatientId(doc.id);
                 await doc.ref.delete();
             }
             // Also check if patient doc ID matches uid directly
             const directPatientDoc = await db.collection('patients').doc(uid).get();
             if (directPatientDoc.exists) {
+                await appointmentService_1.appointmentService.deleteAppointmentsByPatientId(uid);
                 await directPatientDoc.ref.delete();
             }
         }

@@ -17,6 +17,7 @@ router.delete('/my/:id', appointmentController_1.appointmentController.deleteMyA
 router.post('/', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.createAppointment.bind(appointmentController_1.appointmentController));
 router.get('/', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.getAllAppointments.bind(appointmentController_1.appointmentController));
 router.get('/today', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.getTodayAppointments.bind(appointmentController_1.appointmentController));
+router.delete('/archived', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.deleteAllArchived.bind(appointmentController_1.appointmentController));
 router.get('/:id', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.getAppointmentById.bind(appointmentController_1.appointmentController));
 router.put('/:id', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.updateAppointment.bind(appointmentController_1.appointmentController));
 router.delete('/:id', auth_1.authorizeDoctorOrAdmin, appointmentController_1.appointmentController.deleteAppointment.bind(appointmentController_1.appointmentController));

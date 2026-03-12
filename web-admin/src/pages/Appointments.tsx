@@ -1611,7 +1611,7 @@ export const Appointments: React.FC = () => {
                                       const phone = patient?.phoneNumber;
                                       return (idNum || phone) ? (
                                         <Typography variant="caption" color="text.secondary" display="block" noWrap>
-                                          {idNum && `ID: ${idNum}`}{idNum && phone && ' • '}{phone && phone}
+                                          {idNum && `${t('idNumber')}: ${idNum}`}{idNum && phone && ' • '}{phone && phone}
                                         </Typography>
                                       ) : null;
                                     })()}
@@ -2061,7 +2061,7 @@ export const Appointments: React.FC = () => {
                                     const phone = patient?.phoneNumber;
                                     return (idNum || phone) ? (
                                       <Typography variant="caption" color="text.secondary" display="block">
-                                        {idNum && `ID: ${idNum}`}{idNum && phone && ' • '}{phone && phone}
+                                        {idNum && `${t('idNumber')}: ${idNum}`}{idNum && phone && ' • '}{phone && phone}
                                       </Typography>
                                     ) : null;
                                   })()}

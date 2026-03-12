@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.patientService = exports.PatientService = void 0;
 const admin = __importStar(require("firebase-admin"));
+const appointmentService_1 = require("./appointmentService");
 const db = admin.firestore();
 class PatientService {
     constructor() {
@@ -192,6 +193,8 @@ class PatientService {
     }
     async deletePatient(id) {
         try {
+            // Cascade: delete all appointments for this patient
+            await appointmentService_1.appointmentService.deleteAppointmentsByPatientId(id);
             await this.patientsCollection.doc(id).delete();
         }
         catch (error) {

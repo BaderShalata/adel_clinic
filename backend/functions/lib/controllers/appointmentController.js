@@ -240,6 +240,15 @@ class AppointmentController {
             res.status(400).json({ error: error.message });
         }
     }
+    async deleteAllArchived(req, res) {
+        try {
+            const deletedCount = await appointmentService_1.appointmentService.deleteArchivedAppointments();
+            res.status(200).json({ message: `Deleted ${deletedCount} archived appointments`, deletedCount });
+        }
+        catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
     async deleteAppointment(req, res) {
         try {
             const { id } = req.params;
