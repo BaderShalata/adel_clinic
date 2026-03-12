@@ -1097,13 +1097,14 @@ export const Appointments: React.FC = () => {
                         {t('status')}
                       </TableSortLabel>
                     </TableCell>
+                    <TableCell>{t('notes')}</TableCell>
                     <TableCell align="right">{t('actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {(listTab === 'active' ? filteredActiveAppointments : filteredArchivedAppointments).length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} align="center">
+                      <TableCell colSpan={8} align="center">
                         {searchQuery ? t('noMatchingAppointments') : (listTab === 'active' ? t('noAppointments') : t('noArchivedAppointments'))}
                       </TableCell>
                     </TableRow>
@@ -1238,6 +1239,24 @@ export const Appointments: React.FC = () => {
                                 </MenuItem>
                               </Select>
                             </TableCell>
+                            <TableCell>
+                              {appointment.notes ? (
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: 'text.secondary',
+                                    fontStyle: 'italic',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden',
+                                    maxWidth: 200,
+                                  }}
+                                >
+                                  {appointment.notes}
+                                </Typography>
+                              ) : '-'}
+                            </TableCell>
                             <TableCell align="right">
                               <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                                 <Tooltip title={t('edit')}>
@@ -1357,13 +1376,14 @@ export const Appointments: React.FC = () => {
                     <TableCell>{t('service')}</TableCell>
                     <TableCell>{t('dateTime')}</TableCell>
                     <TableCell>{t('status')}</TableCell>
+                    <TableCell>{t('notes')}</TableCell>
                     <TableCell align="right">{t('actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filteredArchivedAppointments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} align="center">
+                      <TableCell colSpan={8} align="center">
                         {searchQuery ? t('noMatchingAppointments') : t('noArchivedAppointments')}
                       </TableCell>
                     </TableRow>
@@ -1415,6 +1435,24 @@ export const Appointments: React.FC = () => {
                               <MenuItem value="cancelled" sx={{ backgroundColor: '#FEE2E2', color: '#DC2626', fontWeight: 600, '&:hover': { backgroundColor: '#FECACA' } }}>{t('cancelled')}</MenuItem>
                               <MenuItem value="no-show" sx={{ backgroundColor: '#F1F5F9', color: '#475569', fontWeight: 600, '&:hover': { backgroundColor: '#E2E8F0' } }}>{t('noShow')}</MenuItem>
                             </Select>
+                          </TableCell>
+                          <TableCell>
+                            {appointment.notes ? (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'text.secondary',
+                                  fontStyle: 'italic',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                  maxWidth: 200,
+                                }}
+                              >
+                                {appointment.notes}
+                              </Typography>
+                            ) : '-'}
                           </TableCell>
                           <TableCell align="right">
                             <Stack direction="row" spacing={0.5} justifyContent="flex-end">
@@ -1923,6 +1961,22 @@ export const Appointments: React.FC = () => {
                         >
                           {apt.patientName}
                         </Typography>
+                        {apt.notes && (
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontSize: '0.55rem',
+                              color: healthcareColors.neutral[500],
+                              display: 'block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            {apt.notes}
+                          </Typography>
+                        )}
                       </Box>
                     ))}
                     {dayAppointments.length > 2 && (
