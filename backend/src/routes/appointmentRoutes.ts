@@ -19,6 +19,7 @@ router.delete('/my/:id', appointmentController.deleteMyAppointment.bind(appointm
 router.post('/', authorizeDoctorOrAdmin, appointmentController.createAppointment.bind(appointmentController));
 router.get('/', authorizeDoctorOrAdmin, appointmentController.getAllAppointments.bind(appointmentController));
 router.get('/today', authorizeDoctorOrAdmin, appointmentController.getTodayAppointments.bind(appointmentController));
+router.delete('/archived', authorizeDoctorOrAdmin, appointmentController.deleteAllArchived.bind(appointmentController));
 router.get('/:id', authorizeDoctorOrAdmin, appointmentController.getAppointmentById.bind(appointmentController));
 router.put('/:id', authorizeDoctorOrAdmin, appointmentController.updateAppointment.bind(appointmentController));
 router.delete('/:id', authorizeDoctorOrAdmin, appointmentController.deleteAppointment.bind(appointmentController));

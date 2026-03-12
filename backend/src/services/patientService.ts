@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import { Patient, CreatePatientInput, UpdatePatientInput } from '../models/Patient';
+import { appointmentService } from './appointmentService';
 
 const db = admin.firestore();
 
@@ -165,6 +166,8 @@ export class PatientService {
 
   async deletePatient(id: string): Promise<void> {
     try {
+      // Cascade: delete all appointments for this patient
+      await appointmentService.deleteAppointmentsByPatientId(id);
       await this.patientsCollection.doc(id).delete();
     } catch (error: any) {
       throw new Error(`Failed to delete patient: ${error.message}`);

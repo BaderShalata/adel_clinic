@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import { User, CreateUserInput, UpdateUserInput } from '../models/User';
+import { appointmentService } from './appointmentService';
 
 const db = admin.firestore();
 const auth = admin.auth();
@@ -150,20 +151,25 @@ export class UserService {
 
   async deleteUser(uid: string): Promise<void> {
     try {
+      // Delete appointments linked to this user's UID
+      await appointmentService.deleteAppointmentsByPatientId(uid);
+
       // Delete from Firebase Auth
       await auth.deleteUser(uid);
       // Delete from Firestore users collection
       await this.usersCollection.doc(uid).delete();
 
-      // Delete corresponding patient record
+      // Delete corresponding patient record and their appointments
       // Check by userId field
       const patientsSnapshot = await db.collection('patients').where('userId', '==', uid).get();
       for (const doc of patientsSnapshot.docs) {
+        await appointmentService.deleteAppointmentsByPatientId(doc.id);
         await doc.ref.delete();
       }
       // Also check if patient doc ID matches uid directly
       const directPatientDoc = await db.collection('patients').doc(uid).get();
       if (directPatientDoc.exists) {
+        await appointmentService.deleteAppointmentsByPatientId(uid);
         await directPatientDoc.ref.delete();
       }
     } catch (error: any) {

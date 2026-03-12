@@ -34,6 +34,7 @@ import {
   alpha,
   Select,
   TableSortLabel,
+  InputAdornment,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material';
 import { healthcareColors, glassStyles, shadows, gradients } from '../theme/healthcareTheme';
@@ -53,6 +54,9 @@ import {
   EventAvailable as ActiveIcon,
   Close as CloseIcon,
   Schedule as ScheduleIcon,
+  Search as SearchIcon,
+  DeleteSweep as DeleteSweepIcon,
+  Today as TodayIcon,
 } from '@mui/icons-material';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -142,6 +146,11 @@ export const Appointments: React.FC = () => {
   const [sortField, setSortField] = useState<'dateTime' | 'status'>('dateTime');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'tomorrow'>('all');
+  const [deleteAllArchivedDialogOpen, setDeleteAllArchivedDialogOpen] = useState(false);
+
   // Scheduling dialog state (for pending -> scheduled drag)
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [appointmentToSchedule, setAppointmentToSchedule] = useState<Appointment | null>(null);
@@ -174,8 +183,8 @@ export const Appointments: React.FC = () => {
   const autocompleteRtlSx = {
     ...(isRtl && {
       '& .MuiAutocomplete-endAdornment': {
-        right: 'auto',
-        left: 9,
+        right: 'auto !important',
+        left: '9px !important',
       },
       '& .MuiOutlinedInput-root': {
         paddingRight: '14px !important',
@@ -183,6 +192,14 @@ export const Appointments: React.FC = () => {
       },
       '& .MuiAutocomplete-input': {
         textAlign: 'right',
+      },
+      '& .MuiAutocomplete-popupIndicator': {
+        marginRight: 'auto',
+        marginLeft: 0,
+      },
+      '& .MuiAutocomplete-clearIndicator': {
+        marginRight: 'auto',
+        marginLeft: 0,
       },
     }),
   };
@@ -354,6 +371,18 @@ export const Appointments: React.FC = () => {
     },
   });
 
+  const deleteAllArchivedMutation = useMutation({
+    mutationFn: async () => {
+      const token = await getToken();
+      if (token) apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      return await apiClient.delete('/appointments/archived');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      setDeleteAllArchivedDialogOpen(false);
+    },
+  });
+
   // Auto-complete past scheduled appointments
   useEffect(() => {
     if (!appointments) return;
@@ -404,6 +433,38 @@ export const Appointments: React.FC = () => {
       : dayjs(b.appointmentDate._seconds * 1000);
     return dateB.valueOf() - dateA.valueOf();
   }) || [];
+
+  // Search filter helper
+  const filterBySearch = (apt: Appointment) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const patient = patients?.find(p => p.id === apt.patientId);
+    return (
+      apt.patientName?.toLowerCase().includes(q) ||
+      apt.patientIdNumber?.toLowerCase().includes(q) ||
+      patient?.idNumber?.toLowerCase().includes(q) ||
+      patient?.phoneNumber?.includes(q)
+    );
+  };
+
+  // Date filter helper for active appointments
+  const filterByDate = (apt: Appointment) => {
+    if (dateFilter === 'all') return true;
+    const aptDate = typeof apt.appointmentDate === 'string'
+      ? dayjs(apt.appointmentDate)
+      : dayjs(apt.appointmentDate._seconds * 1000);
+    if (dateFilter === 'today') {
+      return aptDate.isSame(dayjs(), 'day');
+    }
+    if (dateFilter === 'tomorrow') {
+      return aptDate.isSame(dayjs().add(1, 'day'), 'day');
+    }
+    return true;
+  };
+
+  // Filtered lists
+  const filteredActiveAppointments = activeAppointments.filter(apt => filterBySearch(apt) && filterByDate(apt));
+  const filteredArchivedAppointments = archivedAppointments.filter(filterBySearch);
 
   // Delete confirmation handlers
   const handleDeleteClick = (appointment: Appointment) => {
@@ -916,30 +977,79 @@ export const Appointments: React.FC = () => {
         <Box>
           {/* Active/Archive Tabs */}
           <Paper sx={{ mb: 2 }}>
-            <Tabs
-              value={listTab}
-              onChange={(_, newTab) => setListTab(newTab)}
-              sx={{ px: 2 }}
-            >
-              <Tab
-                value="active"
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ActiveIcon fontSize="small" />
-                    {t('active')} ({activeAppointments.length})
-                  </Box>
-                }
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Tabs
+                value={listTab}
+                onChange={(_, newTab) => setListTab(newTab)}
+                sx={{ px: 2 }}
+              >
+                <Tab
+                  value="active"
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ActiveIcon fontSize="small" />
+                      {t('active')} ({filteredActiveAppointments.length})
+                    </Box>
+                  }
+                />
+                <Tab
+                  value="archive"
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ArchiveIcon fontSize="small" />
+                      {t('archive')} ({filteredArchivedAppointments.length})
+                    </Box>
+                  }
+                />
+              </Tabs>
+              {listTab === 'archive' && archivedAppointments.length > 0 && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  startIcon={<DeleteSweepIcon />}
+                  onClick={() => setDeleteAllArchivedDialogOpen(true)}
+                  sx={{ mr: 2, borderRadius: 2, fontWeight: 600 }}
+                >
+                  {t('deleteAllArchived')}
+                </Button>
+              )}
+            </Box>
+          </Paper>
+
+          {/* Search Bar and Date Filters */}
+          <Paper sx={{ mb: 2, p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+              <TextField
+                size="small"
+                placeholder={t('searchAppointments')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ minWidth: 280, flex: 1 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                }}
               />
-              <Tab
-                value="archive"
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ArchiveIcon fontSize="small" />
-                    {t('archive')} ({archivedAppointments.length})
-                  </Box>
-                }
-              />
-            </Tabs>
+              {listTab === 'active' && (
+                <ToggleButtonGroup
+                  value={dateFilter}
+                  exclusive
+                  onChange={(_, val) => val && setDateFilter(val)}
+                  size="small"
+                >
+                  <ToggleButton value="all">{t('all')}</ToggleButton>
+                  <ToggleButton value="today">
+                    <TodayIcon sx={{ mr: 0.5, fontSize: 18 }} />
+                    {t('today')}
+                  </ToggleButton>
+                  <ToggleButton value="tomorrow">{t('tomorrow')}</ToggleButton>
+                </ToggleButtonGroup>
+              )}
+            </Box>
           </Paper>
 
           {isLoading ? (
@@ -991,14 +1101,14 @@ export const Appointments: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(listTab === 'active' ? activeAppointments : archivedAppointments).length === 0 ? (
+                  {(listTab === 'active' ? filteredActiveAppointments : filteredArchivedAppointments).length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} align="center">
-                        {listTab === 'active' ? t('noAppointments') : t('noArchivedAppointments')}
+                        {searchQuery ? t('noMatchingAppointments') : (listTab === 'active' ? t('noAppointments') : t('noArchivedAppointments'))}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    (listTab === 'active' ? activeAppointments : archivedAppointments)
+                    (listTab === 'active' ? filteredActiveAppointments : filteredArchivedAppointments)
                       .sort((a, b) => {
                         if (sortField === 'dateTime') {
                           const dateA = typeof a.appointmentDate === 'string'
@@ -1156,30 +1266,79 @@ export const Appointments: React.FC = () => {
         <Box>
           {/* Active/Archive Tabs */}
           <Paper sx={{ mb: 2 }}>
-            <Tabs
-              value={listTab}
-              onChange={(_, newTab) => setListTab(newTab)}
-              sx={{ px: 2 }}
-            >
-              <Tab
-                value="active"
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ActiveIcon fontSize="small" />
-                    {t('active')} ({activeAppointments.length})
-                  </Box>
-                }
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Tabs
+                value={listTab}
+                onChange={(_, newTab) => setListTab(newTab)}
+                sx={{ px: 2 }}
+              >
+                <Tab
+                  value="active"
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ActiveIcon fontSize="small" />
+                      {t('active')} ({filteredActiveAppointments.length})
+                    </Box>
+                  }
+                />
+                <Tab
+                  value="archive"
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ArchiveIcon fontSize="small" />
+                      {t('archive')} ({filteredArchivedAppointments.length})
+                    </Box>
+                  }
+                />
+              </Tabs>
+              {listTab === 'archive' && archivedAppointments.length > 0 && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  startIcon={<DeleteSweepIcon />}
+                  onClick={() => setDeleteAllArchivedDialogOpen(true)}
+                  sx={{ mr: 2, borderRadius: 2, fontWeight: 600 }}
+                >
+                  {t('deleteAllArchived')}
+                </Button>
+              )}
+            </Box>
+          </Paper>
+
+          {/* Search Bar and Date Filters */}
+          <Paper sx={{ mb: 2, p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+              <TextField
+                size="small"
+                placeholder={t('searchAppointments')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ minWidth: 280, flex: 1 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                }}
               />
-              <Tab
-                value="archive"
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ArchiveIcon fontSize="small" />
-                    {t('archive')} ({archivedAppointments.length})
-                  </Box>
-                }
-              />
-            </Tabs>
+              {listTab === 'active' && (
+                <ToggleButtonGroup
+                  value={dateFilter}
+                  exclusive
+                  onChange={(_, val) => val && setDateFilter(val)}
+                  size="small"
+                >
+                  <ToggleButton value="all">{t('all')}</ToggleButton>
+                  <ToggleButton value="today">
+                    <TodayIcon sx={{ mr: 0.5, fontSize: 18 }} />
+                    {t('today')}
+                  </ToggleButton>
+                  <ToggleButton value="tomorrow">{t('tomorrow')}</ToggleButton>
+                </ToggleButtonGroup>
+              )}
+            </Box>
           </Paper>
 
           {isLoading ? (
@@ -1202,14 +1361,14 @@ export const Appointments: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {archivedAppointments.length === 0 ? (
+                  {filteredArchivedAppointments.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} align="center">
-                        {t('noArchivedAppointments')}
+                        {searchQuery ? t('noMatchingAppointments') : t('noArchivedAppointments')}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    archivedAppointments.map((appointment) => {
+                    filteredArchivedAppointments.map((appointment) => {
                       const patient = patients?.find(p => p.id === appointment.patientId);
                       const patientIdNumber = appointment.patientIdNumber || patient?.idNumber || '-';
 
@@ -1290,7 +1449,7 @@ export const Appointments: React.FC = () => {
               }}
             >
               {(['pending', 'scheduled', 'completed', 'cancelled', 'no-show'] as const).map((status) => {
-                const statusAppointments = activeAppointments.filter(apt => apt.status === status);
+                const statusAppointments = filteredActiveAppointments.filter(apt => apt.status === status);
                 const statusLabels: Record<string, string> = {
                   'pending': t('pending'),
                   'scheduled': t('scheduled'),
@@ -1445,6 +1604,18 @@ export const Appointments: React.FC = () => {
                                       <NewBadge id={appointment.id} label={t('newBadge')} />
                                     </Box>
 
+                                    {/* ID Number & Phone */}
+                                    {(() => {
+                                      const patient = patients?.find(p => p.id === appointment.patientId);
+                                      const idNum = appointment.patientIdNumber || patient?.idNumber;
+                                      const phone = patient?.phoneNumber;
+                                      return (idNum || phone) ? (
+                                        <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                                          {idNum && `ID: ${idNum}`}{idNum && phone && ' • '}{phone && phone}
+                                        </Typography>
+                                      ) : null;
+                                    })()}
+
                                     {/* Doctor */}
                                     <Typography variant="caption" color="text.secondary" display="block" noWrap>
                                       Dr. {appointment.doctorName}
@@ -1579,7 +1750,7 @@ export const Appointments: React.FC = () => {
                 '&:hover': { bgcolor: healthcareColors.neutral[200] }
               }}
             >
-              <ChevronLeftIcon />
+              {isRtl ? <ChevronRightIcon /> : <ChevronLeftIcon />}
             </IconButton>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h5" fontWeight={700} color={healthcareColors.neutral[800]}>
@@ -1596,7 +1767,7 @@ export const Appointments: React.FC = () => {
                 '&:hover': { bgcolor: healthcareColors.neutral[200] }
               }}
             >
-              <ChevronRightIcon />
+              {isRtl ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </IconButton>
           </Box>
 
@@ -1696,6 +1867,12 @@ export const Appointments: React.FC = () => {
                           fontWeight: 600,
                           bgcolor: alpha(healthcareColors.info, 0.15),
                           color: healthcareColors.info,
+                          '& .MuiChip-label': {
+                            px: 0.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          },
                         }}
                       />
                     )}
@@ -1786,10 +1963,10 @@ export const Appointments: React.FC = () => {
             </Box>
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
               <IconButton onClick={() => setSelectedDay(selectedDay.subtract(1, 'day'))}>
-                <ChevronLeftIcon />
+                {isRtl ? <ChevronRightIcon /> : <ChevronLeftIcon />}
               </IconButton>
               <IconButton onClick={() => setSelectedDay(selectedDay.add(1, 'day'))}>
-                <ChevronRightIcon />
+                {isRtl ? <ChevronLeftIcon /> : <ChevronRightIcon />}
               </IconButton>
               <Button
                 variant="contained"
@@ -1878,6 +2055,16 @@ export const Appointments: React.FC = () => {
                                   <Typography variant="subtitle2" fontWeight={600}>
                                     {apt.patientName}
                                   </Typography>
+                                  {(() => {
+                                    const patient = patients?.find(p => p.id === apt.patientId);
+                                    const idNum = apt.patientIdNumber || patient?.idNumber;
+                                    const phone = patient?.phoneNumber;
+                                    return (idNum || phone) ? (
+                                      <Typography variant="caption" color="text.secondary" display="block">
+                                        {idNum && `ID: ${idNum}`}{idNum && phone && ' • '}{phone && phone}
+                                      </Typography>
+                                    ) : null;
+                                  })()}
                                   <Typography variant="caption" color="text.secondary">
                                     {apt.doctorName} • {apt.serviceType || t('general')}
                                   </Typography>
@@ -2514,6 +2701,89 @@ export const Appointments: React.FC = () => {
             }}
           >
             {deleteMutation.isPending ? t('deleting') : t('delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete All Archived Dialog */}
+      <Dialog
+        open={deleteAllArchivedDialogOpen}
+        onClose={() => setDeleteAllArchivedDialogOpen(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              ...glassStyles.dialog,
+              overflow: 'hidden',
+            },
+          },
+        }}
+      >
+        <Box
+          sx={{
+            background: gradients.error,
+            px: 3,
+            py: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteSweepIcon sx={{ color: 'white', fontSize: 20 }} />
+            </Box>
+            <Typography variant="h5" fontWeight={700} color="white">
+              {t('deleteAllArchived')}
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setDeleteAllArchivedDialogOpen(false)} size="small" sx={{ color: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        <DialogContent sx={{ pt: 3 }}>
+          <DialogContentText>
+            {t('confirmDeleteAllArchived')}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: healthcareColors.neutral[50], borderTop: `1px solid ${healthcareColors.neutral[200]}` }}>
+          <Button
+            onClick={() => setDeleteAllArchivedDialogOpen(false)}
+            sx={{
+              color: healthcareColors.neutral[600],
+              borderRadius: 1.5,
+              px: 2.5,
+              '&:hover': { bgcolor: healthcareColors.neutral[100] },
+            }}
+          >
+            {t('cancel')}
+          </Button>
+          <Button
+            onClick={() => deleteAllArchivedMutation.mutate()}
+            variant="contained"
+            disabled={deleteAllArchivedMutation.isPending}
+            sx={{
+              background: gradients.error,
+              borderRadius: 1.5,
+              px: 3,
+              boxShadow: 'none',
+              '&:hover': {
+                background: gradients.error,
+                filter: 'brightness(0.95)',
+                boxShadow: 'none',
+              },
+            }}
+          >
+            {deleteAllArchivedMutation.isPending ? t('deletingAll') : t('deleteAllArchived')}
           </Button>
         </DialogActions>
       </Dialog>

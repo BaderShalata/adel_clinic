@@ -282,6 +282,12 @@ const translations: Translations = {
   scheduleAppointment: { en: 'Schedule Appointment', ar: 'جدولة الموعد', he: 'קבע פגישה' },
   scheduling: { en: 'Scheduling...', ar: 'جاري الجدولة...', he: 'מתזמן...' },
   dr: { en: 'Dr.', ar: 'د.', he: 'ד"ר' },
+  deleteAllArchived: { en: 'Delete All Archived', ar: 'حذف كل الأرشيف', he: 'מחק את כל הארכיון' },
+  confirmDeleteAllArchived: { en: 'Are you sure you want to delete all archived appointments? This action cannot be undone.', ar: 'هل أنت متأكد من حذف جميع المواعيد المؤرشفة؟ لا يمكن التراجع عن هذا الإجراء.', he: 'האם אתה בטוח שברצונך למחוק את כל הפגישות בארכיון? לא ניתן לבטל פעולה זו.' },
+  deletingAll: { en: 'Deleting...', ar: 'جاري الحذف...', he: 'מוחק...' },
+  all: { en: 'All', ar: 'الكل', he: 'הכל' },
+  searchAppointments: { en: 'Search by name, phone, or ID number...', ar: 'البحث بالاسم أو الهاتف أو رقم الهوية...', he: 'חיפוש לפי שם, טלפון או מספר ת.ז...' },
+  noMatchingAppointments: { en: 'No appointments match your search', ar: 'لا توجد مواعيد مطابقة للبحث', he: 'אין פגישות התואמות לחיפוש' },
 
   // Waiting List Page - Additional
   waiting: { en: 'Waiting', ar: 'قيد الانتظار', he: 'ממתין' },

@@ -404,6 +404,50 @@ export class AppointmentService {
     }
   }
 
+  async deleteAppointmentsByPatientId(patientId: string): Promise<number> {
+    try {
+      const snapshot = await this.appointmentsCollection
+        .where('patientId', '==', patientId)
+        .get();
+
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+
+      return snapshot.size;
+    } catch (error: any) {
+      throw new Error(`Failed to delete appointments for patient: ${error.message}`);
+    }
+  }
+
+  async deleteArchivedAppointments(): Promise<number> {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const snapshot = await this.appointmentsCollection
+        .where('appointmentDate', '<', admin.firestore.Timestamp.fromDate(today))
+        .get();
+
+      // Filter out pending appointments (they should not be deleted)
+      const toDelete = snapshot.docs.filter(doc => doc.data().status !== 'pending');
+
+      // Firestore batch limit is 500, so chunk if needed
+      let deletedCount = 0;
+      for (let i = 0; i < toDelete.length; i += 500) {
+        const chunk = toDelete.slice(i, i + 500);
+        const batch = db.batch();
+        chunk.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        deletedCount += chunk.length;
+      }
+
+      return deletedCount;
+    } catch (error: any) {
+      throw new Error(`Failed to delete archived appointments: ${error.message}`);
+    }
+  }
+
   async getTodayAppointments(doctorId?: string): Promise<Appointment[]> {
     try {
       const today = new Date();

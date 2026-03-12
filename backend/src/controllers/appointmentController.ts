@@ -225,6 +225,15 @@ export class AppointmentController {
     }
   }
 
+  async deleteAllArchived(req: Request, res: Response): Promise<void> {
+    try {
+      const deletedCount = await appointmentService.deleteArchivedAppointments();
+      res.status(200).json({ message: `Deleted ${deletedCount} archived appointments`, deletedCount });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async deleteAppointment(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
