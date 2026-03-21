@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
@@ -18,6 +19,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
   int _currentIndex = 0;
+  DateTime? _lastBackPress;
   late List<AnimationController> _animationControllers;
   late List<Animation<double>> _scaleAnimations;
 
@@ -84,7 +86,24 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
     ];
 
     // Regular user interface with floating nav bar using Stack
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        final now = DateTime.now();
+        if (_lastBackPress != null && now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
+          SystemNavigator.pop();
+        } else {
+          _lastBackPress = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(languageProvider.t('pressBackToExit')),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
       body: Stack(
         children: [
           // Main content
@@ -157,6 +176,7 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
           ),
         ],
       ),
+    ),
     );
   }
 }

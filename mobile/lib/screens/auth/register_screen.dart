@@ -238,6 +238,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   if (value == null || value.isEmpty) {
                     return lang.t('pleaseEnterIdNumber');
                   }
+                  if (value.length < 9 || value.length > 10) {
+                    return lang.t('idNumberLength');
+                  }
                   return null;
                 },
               ),
@@ -331,7 +334,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   if (value == null || value.isEmpty) {
                     return lang.t('pleaseEnterPassword');
                   }
-                  if (value.length < 6) {
+                  if (value.length < 8) {
                     return lang.t('passwordMinLength');
                   }
                   return null;

@@ -77,6 +77,7 @@ class LanguageProvider extends ChangeNotifier {
     'signIn': {'en': 'Sign In', 'ar': 'تسجيل الدخول', 'he': 'התחבר'},
     'signUp': {'en': 'Sign Up', 'ar': 'إنشاء حساب', 'he': 'הרשמה'},
     'register': {'en': 'Register', 'ar': 'التسجيل', 'he': 'הרשמה'},
+    'pressBackToExit': {'en': 'Press back again to exit', 'ar': 'اضغط مرة أخرى للخروج', 'he': 'לחץ שוב כדי לצאת'},
     'cancel': {'en': 'Cancel', 'ar': 'إلغاء', 'he': 'ביטול'},
     'confirm': {'en': 'Confirm', 'ar': 'تأكيد', 'he': 'אישור'},
     'save': {'en': 'Save', 'ar': 'حفظ', 'he': 'שמור'},
@@ -119,7 +120,8 @@ class LanguageProvider extends ChangeNotifier {
     'pleaseEnterName': {'en': 'Please enter your name', 'ar': 'يرجى إدخال اسمك', 'he': 'אנא הזן את שמך'},
     'pleaseEnterPhone': {'en': 'Please enter your phone number', 'ar': 'يرجى إدخال رقم هاتفك', 'he': 'אנא הזן את מספר הטלפון שלך'},
     'pleaseEnterIdNumber': {'en': 'Please enter your ID number', 'ar': 'يرجى إدخال رقم هويتك', 'he': 'אנא הזן את מספר תעודת הזהות שלך'},
-    'passwordMinLength': {'en': 'Password must be at least 6 characters', 'ar': 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل', 'he': 'הסיסמה חייבת להכיל לפחות 6 תווים'},
+    'passwordMinLength': {'en': 'Password must be at least 8 characters', 'ar': 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل', 'he': 'הסיסמה חייבת להכיל לפחות 8 תווים'},
+    'idNumberLength': {'en': 'ID number must be 9-10 digits', 'ar': 'يجب أن يتكون رقم الهوية من 9-10 أرقام', 'he': 'מספר תעודת זהות חייב להיות 9-10 ספרות'},
     'passwordsDoNotMatch': {'en': 'Passwords do not match', 'ar': 'كلمتا المرور غير متطابقتين', 'he': 'הסיסמאות אינן תואמות'},
     'createAccount': {'en': 'Create Account', 'ar': 'إنشاء حساب', 'he': 'צור חשבון'},
 
