@@ -38,10 +38,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  static const _statusTabs = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: _statusTabs.length, vsync: this);
     Future.microtask(() {
       final authProvider = context.read<AuthProvider>();
       if (authProvider.isLoggedIn) {
@@ -54,6 +56,18 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  List<Appointment> _filterAndSort(List<Appointment> appointments, String status) {
+    final filtered = status == 'all'
+        ? List<Appointment>.from(appointments)
+        : appointments.where((a) => a.status.toLowerCase() == status).toList();
+    filtered.sort((a, b) {
+      final dateComp = b.appointmentDate.compareTo(a.appointmentDate);
+      if (dateComp != 0) return dateComp;
+      return b.appointmentTime.compareTo(a.appointmentTime);
+    });
+    return filtered;
   }
 
   @override
@@ -120,10 +134,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
         title: Text(lang.t('myAppointments')),
         bottom: TabBar(
           controller: _tabController,
-          tabs: [
-            Tab(text: lang.t('upcoming')),
-            Tab(text: lang.t('past')),
-          ],
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          tabs: _statusTabs.map((s) => Tab(text: lang.t(s))).toList(),
         ),
       ),
       floatingActionButton: Padding(
@@ -151,18 +164,16 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                 )
               : TabBarView(
                   controller: _tabController,
-                  children: [
-                    _AppointmentList(
-                      appointments: appointmentProvider.upcomingAppointments,
+                  children: _statusTabs.map((status) {
+                    final filtered = _filterAndSort(appointmentProvider.appointments, status);
+                    return _AppointmentList(
+                      appointments: filtered,
                       emptyMessage: lang.t('noUpcomingAppointments'),
                       emptyIcon: Icons.event_available,
                       showCancelButton: true,
                       isPastTab: false,
-                    ),
-                    _PastAppointmentList(
-                      appointments: appointmentProvider.pastAppointments,
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ),
     );
   }
@@ -243,255 +254,6 @@ class _AppointmentList extends StatelessWidget {
   }
 }
 
-class _PastAppointmentList extends StatelessWidget {
-  final List<Appointment> appointments;
-
-  const _PastAppointmentList({
-    required this.appointments,
-  });
-
-  void _showClearHistoryDialog(BuildContext context, LanguageProvider lang) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppTheme.spacingL),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppTheme.radiusXL),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
-              decoration: BoxDecoration(
-                color: AppTheme.dividerColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(AppTheme.spacingM),
-              decoration: BoxDecoration(
-                color: AppTheme.errorColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.delete_forever,
-                size: 32,
-                color: AppTheme.errorColor,
-              ),
-            ),
-            const SizedBox(height: AppTheme.spacingM),
-            Text(
-              lang.t('deleteAppointmentHistory'),
-              style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            const SizedBox(height: AppTheme.spacingS),
-            Text(
-              lang.t('deleteHistoryWarning'),
-              textAlign: TextAlign.center,
-              style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
-            ),
-            const SizedBox(height: AppTheme.spacingL),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: Text(lang.t('cancel')),
-                  ),
-                ),
-                const SizedBox(width: AppTheme.spacingM),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      // Show loading indicator
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(lang.t('deletingHistory')),
-                            ],
-                          ),
-                          backgroundColor: AppTheme.primaryColor,
-                          duration: const Duration(seconds: 10),
-                        ),
-                      );
-
-                      final deletedCount = await context.read<AppointmentProvider>().clearPastAppointments();
-
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-                      if (deletedCount > 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(Icons.check_circle, color: Colors.white, size: 20),
-                                const SizedBox(width: 8),
-                                Text('$deletedCount ${lang.t('appointmentsDeleted')}'),
-                              ],
-                            ),
-                            backgroundColor: AppTheme.successColor,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(Icons.info_outline, color: Colors.white, size: 20),
-                                const SizedBox(width: 8),
-                                Text(lang.t('noAppointmentsToDelete')),
-                              ],
-                            ),
-                            backgroundColor: AppTheme.warningColor,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.errorColor,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: Text(lang.t('deleteHistory')),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacingS),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final lang = context.watch<LanguageProvider>();
-
-    if (appointments.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppTheme.spacingL),
-              decoration: const BoxDecoration(
-                color: AppTheme.surfaceMedium,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.history,
-                size: 48,
-                color: AppTheme.textHint,
-              ),
-            ),
-            const SizedBox(height: AppTheme.spacingM),
-            Text(
-              lang.t('noPastAppointments'),
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () => context.read<AppointmentProvider>().loadAppointments(),
-      child: CustomScrollView(
-        slivers: [
-          // Header with clear button
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppTheme.spacingM,
-                AppTheme.spacingM,
-                AppTheme.spacingM,
-                0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${appointments.length} ${lang.t('appointments').toLowerCase()}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.textSecondary,
-                        ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => _showClearHistoryDialog(context, lang),
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: Text(lang.t('clearHistory')),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.textSecondary,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Appointments list
-          SliverPadding(
-            padding: const EdgeInsets.only(
-              left: AppTheme.spacingM,
-              right: AppTheme.spacingM,
-              top: AppTheme.spacingM,
-              bottom: 120, // Space for floating nav bar
-            ),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final Widget card = AppointmentCard(
-                    appointment: appointments[index],
-                    showCancelButton: false,
-                  );
-
-                  return card
-                      .animate()
-                      .fadeIn(
-                        delay: Duration(milliseconds: 50 * index),
-                        duration: AppTheme.animMedium,
-                      )
-                      .slideX(begin: 0.05, end: 0);
-                },
-                childCount: appointments.length,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class AppointmentCard extends StatelessWidget {
   final Appointment appointment;

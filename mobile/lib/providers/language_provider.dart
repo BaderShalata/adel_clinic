@@ -146,6 +146,7 @@ class LanguageProvider extends ChangeNotifier {
     'addedToWaitingList': {'en': "Added to waiting list! We'll notify you when a slot opens.", 'ar': 'تمت إضافتك لقائمة الانتظار! سنخطرك عند توفر موعد.', 'he': 'נוספת לרשימת ההמתנה! נודיע לך כשיתפנה תור.'},
 
     // Appointments status
+    'all': {'en': 'All', 'ar': 'الكل', 'he': 'הכל'},
     'pending': {'en': 'Pending', 'ar': 'قيد الانتظار', 'he': 'ממתין'},
     'confirmed': {'en': 'Confirmed', 'ar': 'مؤكد', 'he': 'מאושר'},
     'scheduled': {'en': 'Scheduled', 'ar': 'مجدول', 'he': 'מתוכנן'},

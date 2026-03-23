@@ -478,7 +478,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
 
     if (uri != null) {
       try {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        await launchUrl(uri, mode: LaunchMode.platformDefault);
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
