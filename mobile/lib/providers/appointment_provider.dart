@@ -11,16 +11,31 @@ class AppointmentProvider with ChangeNotifier {
 
   List<Appointment> get appointments => _appointments;
 
+  static const _statusPriority = {
+    'confirmed': 0,
+    'scheduled': 1,
+    'pending': 2,
+    'cancelled': 3,
+    'no-show': 4,
+    'completed': 5,
+  };
+
   List<Appointment> get upcomingAppointments {
     final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     return _appointments
         .where((a) {
           final appointmentDay = DateTime(a.appointmentDate.year, a.appointmentDate.month, a.appointmentDate.day);
-          // Include today and future dates (including cancelled - they show with cancelled badge)
           return !appointmentDay.isBefore(today) && a.status != 'completed';
         })
         .toList()
-      ..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
+      ..sort((a, b) {
+        final statusA = _statusPriority[a.status.toLowerCase()] ?? 99;
+        final statusB = _statusPriority[b.status.toLowerCase()] ?? 99;
+        if (statusA != statusB) return statusA.compareTo(statusB);
+        final dateComp = a.appointmentDate.compareTo(b.appointmentDate);
+        if (dateComp != 0) return dateComp;
+        return a.appointmentTime.compareTo(b.appointmentTime);
+      });
   }
 
   List<Appointment> get pastAppointments {

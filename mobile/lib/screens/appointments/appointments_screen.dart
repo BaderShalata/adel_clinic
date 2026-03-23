@@ -38,12 +38,10 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  static const _statusTabs = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _statusTabs.length, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     Future.microtask(() {
       final authProvider = context.read<AuthProvider>();
       if (authProvider.isLoggedIn) {
@@ -56,18 +54,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  List<Appointment> _filterAndSort(List<Appointment> appointments, String status) {
-    final filtered = status == 'all'
-        ? List<Appointment>.from(appointments)
-        : appointments.where((a) => a.status.toLowerCase() == status).toList();
-    filtered.sort((a, b) {
-      final dateComp = b.appointmentDate.compareTo(a.appointmentDate);
-      if (dateComp != 0) return dateComp;
-      return b.appointmentTime.compareTo(a.appointmentTime);
-    });
-    return filtered;
   }
 
   @override
@@ -134,9 +120,10 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
         title: Text(lang.t('myAppointments')),
         bottom: TabBar(
           controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          tabs: _statusTabs.map((s) => Tab(text: lang.t(s))).toList(),
+          tabs: [
+            Tab(text: lang.t('upcoming')),
+            Tab(text: lang.t('past')),
+          ],
         ),
       ),
       floatingActionButton: Padding(
@@ -164,16 +151,22 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                 )
               : TabBarView(
                   controller: _tabController,
-                  children: _statusTabs.map((status) {
-                    final filtered = _filterAndSort(appointmentProvider.appointments, status);
-                    return _AppointmentList(
-                      appointments: filtered,
+                  children: [
+                    _AppointmentList(
+                      appointments: appointmentProvider.upcomingAppointments,
                       emptyMessage: lang.t('noUpcomingAppointments'),
                       emptyIcon: Icons.event_available,
                       showCancelButton: true,
                       isPastTab: false,
-                    );
-                  }).toList(),
+                    ),
+                    _AppointmentList(
+                      appointments: appointmentProvider.pastAppointments,
+                      emptyMessage: lang.t('noPastAppointments'),
+                      emptyIcon: Icons.history,
+                      showCancelButton: false,
+                      isPastTab: true,
+                    ),
+                  ],
                 ),
     );
   }
