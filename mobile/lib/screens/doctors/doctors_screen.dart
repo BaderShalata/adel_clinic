@@ -44,7 +44,10 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
     return doctors.where((doctor) {
       return doctor.fullName.toLowerCase().contains(query) ||
           (doctor.fullNameEn?.toLowerCase().contains(query) ?? false) ||
-          doctor.specialties.any((s) => s.toLowerCase().contains(query));
+          (doctor.fullNameHe?.toLowerCase().contains(query) ?? false) ||
+          doctor.specialties.any((s) => s.toLowerCase().contains(query)) ||
+          (doctor.specialtiesEn?.any((s) => s.toLowerCase().contains(query)) ?? false) ||
+          (doctor.specialtiesHe?.any((s) => s.toLowerCase().contains(query)) ?? false);
     }).toList();
   }
 

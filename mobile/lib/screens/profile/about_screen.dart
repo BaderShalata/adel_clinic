@@ -6,6 +6,7 @@ import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
 import 'privacy_policy_screen.dart';
+import 'terms_of_service_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -176,7 +177,7 @@ class AboutScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+                        MaterialPageRoute(builder: (_) => const TermsOfServiceScreen()),
                       );
                     },
                   ),

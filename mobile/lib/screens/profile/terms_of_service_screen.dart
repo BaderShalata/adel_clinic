@@ -4,8 +4,8 @@ import '../../providers/language_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/modern_card.dart';
 
-class PrivacyPolicyScreen extends StatelessWidget {
-  const PrivacyPolicyScreen({super.key});
+class TermsOfServiceScreen extends StatelessWidget {
+  const TermsOfServiceScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +13,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(lang.t('privacyPolicy')),
+        title: Text(lang.t('termsOfService')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -33,14 +33,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.privacy_tip_outlined,
+                        Icons.description_outlined,
                         size: 40,
                         color: AppTheme.primaryColor,
                       ),
                     ),
                     const SizedBox(height: AppTheme.spacingM),
                     Text(
-                      lang.t('privacyPolicy'),
+                      lang.t('termsOfService'),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
@@ -61,28 +61,32 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
             const SizedBox(height: AppTheme.spacingM),
 
-            // Sections
-            _PolicySection(
-              title: lang.t('informationWeCollect'),
-              content: lang.t('informationWeCollectContent'),
+            _TermsSection(
+              title: lang.t('acceptanceOfTerms'),
+              content: lang.t('acceptanceOfTermsContent'),
             ),
 
-            _PolicySection(
-              title: lang.t('howWeUseInformation'),
-              content: lang.t('howWeUseInformationContent'),
+            _TermsSection(
+              title: lang.t('useOfService'),
+              content: lang.t('useOfServiceContent'),
             ),
 
-            _PolicySection(
-              title: lang.t('dataSecurity'),
-              content: lang.t('dataSecurityContent'),
+            _TermsSection(
+              title: lang.t('appointmentPolicy'),
+              content: lang.t('appointmentPolicyContent'),
             ),
 
-            _PolicySection(
-              title: lang.t('yourRights'),
-              content: lang.t('yourRightsContent'),
+            _TermsSection(
+              title: lang.t('limitationOfLiability'),
+              content: lang.t('limitationOfLiabilityContent'),
             ),
 
-            _PolicySection(
+            _TermsSection(
+              title: lang.t('changesToTerms'),
+              content: lang.t('changesToTermsContent'),
+            ),
+
+            _TermsSection(
               title: lang.t('contactUs'),
               content: lang.t('contactUsContent'),
             ),
@@ -95,11 +99,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 }
 
-class _PolicySection extends StatelessWidget {
+class _TermsSection extends StatelessWidget {
   final String title;
   final String content;
 
-  const _PolicySection({
+  const _TermsSection({
     required this.title,
     required this.content,
   });

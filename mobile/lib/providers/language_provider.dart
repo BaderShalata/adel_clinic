@@ -233,6 +233,18 @@ class LanguageProvider extends ChangeNotifier {
     'contactUs': {'en': 'Contact Us', 'ar': 'اتصل بنا', 'he': 'צור קשר'},
     'contactUsContent': {'en': 'If you have any questions about this Privacy Policy, please contact us at the clinic or through the app.', 'ar': 'إذا كان لديك أي أسئلة حول سياسة الخصوصية هذه، يرجى الاتصال بنا في العيادة أو من خلال التطبيق.', 'he': 'אם יש לך שאלות כלשהן לגבי מדיניות הפרטיות הזו, אנא צור איתנו קשר במרפאה או דרך האפליקציה.'},
 
+    // Terms of Service
+    'acceptanceOfTerms': {'en': 'Acceptance of Terms', 'ar': 'قبول الشروط', 'he': 'קבלת התנאים'},
+    'acceptanceOfTermsContent': {'en': 'By using the SBA REHANA application, you agree to these Terms of Service. If you do not agree, please do not use the app.', 'ar': 'باستخدام تطبيق SBA REHANA، فإنك توافق على شروط الخدمة هذه. إذا كنت لا توافق، يرجى عدم استخدام التطبيق.', 'he': 'בשימוש באפליקציית SBA REHANA, אתה מסכים לתנאי השימוש האלה. אם אינך מסכים, אנא אל תשתמש באפליקציה.'},
+    'useOfService': {'en': 'Use of Service', 'ar': 'استخدام الخدمة', 'he': 'שימוש בשירות'},
+    'useOfServiceContent': {'en': 'This app is intended to help you book appointments, view doctor information, and manage your healthcare at SBA REHANA clinic. You must provide accurate information when creating an account and booking appointments.', 'ar': 'هذا التطبيق مخصص لمساعدتك في حجز المواعيد وعرض معلومات الأطباء وإدارة الرعاية الصحية الخاصة بك في عيادة SBA REHANA. يجب عليك تقديم معلومات دقيقة عند إنشاء حساب وحجز المواعيد.', 'he': 'אפליקציה זו נועדה לעזור לך לקבוע תורים, לצפות במידע על רופאים ולנהל את הבריאות שלך במרפאת SBA REHANA. עליך לספק מידע מדויק בעת יצירת חשבון וקביעת תורים.'},
+    'appointmentPolicy': {'en': 'Appointment Policy', 'ar': 'سياسة المواعيد', 'he': 'מדיניות תורים'},
+    'appointmentPolicyContent': {'en': 'Appointments booked through the app are subject to confirmation by the clinic. You may cancel an appointment before the scheduled time. Repeated no-shows may result in restrictions on your account.', 'ar': 'المواعيد المحجوزة عبر التطبيق تخضع لتأكيد العيادة. يمكنك إلغاء الموعد قبل الوقت المحدد. قد يؤدي عدم الحضور المتكرر إلى قيود على حسابك.', 'he': 'תורים שנקבעו דרך האפליקציה כפופים לאישור המרפאה. ניתן לבטל תור לפני המועד המתוכנן. אי-הגעה חוזרת עלולה לגרום להגבלות על חשבונך.'},
+    'limitationOfLiability': {'en': 'Limitation of Liability', 'ar': 'حدود المسؤولية', 'he': 'הגבלת אחריות'},
+    'limitationOfLiabilityContent': {'en': 'The app is provided as a convenience tool for appointment management. It does not replace professional medical advice. The clinic is not liable for any technical issues that may affect appointment scheduling.', 'ar': 'يُقدَّم التطبيق كأداة ملائمة لإدارة المواعيد. لا يحل محل المشورة الطبية المهنية. العيادة غير مسؤولة عن أي مشاكل تقنية قد تؤثر على جدولة المواعيد.', 'he': 'האפליקציה מסופקת ככלי נוחות לניהול תורים. היא אינה מחליפה ייעוץ רפואי מקצועי. המרפאה אינה אחראית לבעיות טכניות שעלולות להשפיע על קביעת תורים.'},
+    'changesToTerms': {'en': 'Changes to Terms', 'ar': 'تغييرات على الشروط', 'he': 'שינויים בתנאים'},
+    'changesToTermsContent': {'en': 'We reserve the right to update these terms at any time. Continued use of the app after changes constitutes acceptance of the new terms.', 'ar': 'نحتفظ بالحق في تحديث هذه الشروط في أي وقت. استمرار استخدام التطبيق بعد التغييرات يعني قبول الشروط الجديدة.', 'he': 'אנו שומרים לעצמנו את הזכות לעדכן תנאים אלה בכל עת. המשך השימוש באפליקציה לאחר שינויים מהווה הסכמה לתנאים החדשים.'},
+
     // Location & Social
     'location': {'en': 'Location', 'ar': 'الموقع', 'he': 'מיקום'},
     'visitUs': {'en': 'Visit Us', 'ar': 'زيارتنا', 'he': 'בקרו אותנו'},
