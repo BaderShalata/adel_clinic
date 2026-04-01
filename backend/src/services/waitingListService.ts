@@ -38,7 +38,7 @@ export class WaitingListService {
         return priority > max ? priority : max;
       }, 0);
 
-      const entryData: Omit<WaitingListEntry, 'id'> = {
+      const entryData: Record<string, any> = {
         patientId: data.patientId,
         patientName: patient?.fullName || '',
         doctorId: data.doctorId,
@@ -49,18 +49,20 @@ export class WaitingListService {
           : data.preferredDate,
         status: 'waiting',
         priority: data.priority ?? (maxPriority + 1),
-        notes: data.notes,
         createdAt: admin.firestore.Timestamp.now(),
         updatedAt: admin.firestore.Timestamp.now(),
         createdBy,
       };
+      if (data.notes) {
+        entryData.notes = data.notes;
+      }
 
       const docRef = await this.waitingListCollection.add(entryData);
 
       return {
         id: docRef.id,
         ...entryData,
-      };
+      } as WaitingListEntry;
     } catch (error: any) {
       throw new Error(`Failed to add to waiting list: ${error.message}`);
     }

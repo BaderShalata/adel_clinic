@@ -108,8 +108,8 @@ export const Layout: React.FC = () => {
       const response = await apiClient.get('/appointments');
       return response.data;
     },
-    refetchInterval: 30000,
-    refetchIntervalInBackground: true,
+    refetchInterval: 2 * 60 * 1000, // 2 minutes
+    refetchIntervalInBackground: false,
   });
 
   const { latestNewAppointments, dismissNotification } = useAppointmentNotification(globalAppointments, true);

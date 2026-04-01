@@ -78,11 +78,13 @@ class WaitingListService {
                     : data.preferredDate,
                 status: 'waiting',
                 priority: data.priority ?? (maxPriority + 1),
-                notes: data.notes,
                 createdAt: admin.firestore.Timestamp.now(),
                 updatedAt: admin.firestore.Timestamp.now(),
                 createdBy,
             };
+            if (data.notes) {
+                entryData.notes = data.notes;
+            }
             const docRef = await this.waitingListCollection.add(entryData);
             return {
                 id: docRef.id,

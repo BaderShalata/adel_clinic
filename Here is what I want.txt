@@ -33,11 +33,11 @@ TESTERS:
 
 => RELEASE NEW VERSION WITH ANDROID BIOMTERIC LOGIN
 
-(1) Make condition password more than 8 chars, if not show error but dont create account
+(1) Make condition password more than 8 chars, if not show error and dont create account, also ID Number between 9-10 numbers
 (2) android navigation on the bottom when pressed lets u go out of application, only if pressed twice it goes out
 (3) Facebook show options in android if google chrome or interet or facebook application...
-(4) Make limit for ID
 (5) Order appointments by date/time, also Order by status
 (6) Search Doctor should work in HE/AR. Any letter included should work in Search
 (7) Privacy Policy Center
 (8) Terms of Service should go to a different page than Privacy Policy
+(9) Backend changes to firebase such as waiting list and notes empty, it was not allowing user.
